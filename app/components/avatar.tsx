@@ -21,7 +21,7 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
    const enabled=!renderer.isSoftware&&motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
    const animate=(t:number)=>{if(document.hidden){frame=0;return;}if(t-lastDraw>=80){lastDraw=t;if(!dragging)model.poseTime=t*.001;draw();}frame=requestAnimationFrame(animate);};
    const visibility=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else if(enabled&&!frame)frame=requestAnimationFrame(animate);};document.addEventListener('visibilitychange',visibility);
-   void renderer.ready.then(()=>{if(!cancelled)draw();});if(enabled&&!document.hidden)frame=requestAnimationFrame(animate);else draw();
+   void renderer.ready.then(()=>{if(!cancelled)draw();}).catch(()=>{if(!cancelled)setFailed(true);});if(enabled&&!document.hidden)frame=requestAnimationFrame(animate);else draw();
    cleanup=()=>{observer.disconnect();cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',visibility);element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);m.disposeCharacter(model);renderer.dispose();};
   }catch{setFailed(true);}}).catch(()=>{if(!cancelled)setFailed(true);});return()=>{cancelled=true;cleanup();};
  },[serialized,interactive,motion,visible,contextLost,contextEpoch]);
