@@ -12,6 +12,18 @@ on:
       - 'wrangler.ci.jsonc'
       - 'scripts/test-browser-smoke.mjs'
       - '.github/workflows/browser-proof.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - 'shared/**'
+      - 'server/**'
+      - 'public/**'
+      - 'worker/ci.ts'
+      - 'vite.ci.config.ts'
+      - 'wrangler.ci.jsonc'
+      - 'scripts/test-browser-smoke.mjs'
+      - '.github/workflows/browser-proof.yml'
   workflow_dispatch:
 permissions:
   contents: read
