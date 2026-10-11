@@ -1,0 +1,291 @@
+name: Back up frozen avatar sources
+
+on:
+  push:
+    branches: [codex/game-recovery]
+    paths: [.github/workflows/backup-avatar-sources.yml]
+
+permissions:
+  actions: read
+
+jobs:
+  split-existing-artifact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Verify and split the existing original-source artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BACKUP_DIR: ${{ runner.temp }}/avatar-source-backup
+        run: |
+          python3 - <<'PY'
+          import binascii, hashlib, json, os, stat, sys, zipfile
+          from pathlib import Path, PurePosixPath
+          import urllib.error, urllib.parse, urllib.request
+
+          REPO = "thaweepornaor-ux/coop-ai-game"
+          ARTIFACT, RUN = 11688851271, 38103066739
+          COMMIT = "2ab008ad76d7dbfe798f49318b00ae8faf989e48"
+          ZIP_BYTES, SOURCE_BYTES, FILES = 180865809, 179992532, 60
+          ZIP_SHA = "1d6054aad6deccaff326f750ec82bba75bee83c4253e4dcb75da6ce842d503d8"
+          CREDIT_SUFFIXES = ("assets/characters/LICENSES.md",
+              "assets/characters/rain/ATTRIBUTION.txt",
+              "assets/characters/snow/ATTRIBUTION.txt")
+          root = Path(os.environ["BACKUP_DIR"])
+          root.mkdir(parents=True, exist_ok=False)
+          stage = "metadata"
+
+          def encoded(value):
+              return (json.dumps(value, indent=2, ensure_ascii=False,
+                                 allow_nan=False) + "\n").encode("utf-8")
+
+          def sha_file(path):
+              value = hashlib.sha256()
+              with path.open("rb") as stream:
+                  for data in iter(lambda: stream.read(1048576), b""):
+                      value.update(data)
+              return value.hexdigest()
+
+          class NoAuthRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  url = urllib.parse.urlsplit(newurl)
+                  if (req.get_method() != "GET" or code not in (301, 302, 303, 307, 308)
+                          or url.scheme != "https" or not url.hostname
+                          or url.username is not None or url.password is not None
+                          or url.port not in (None, 443)):
+                      raise ValueError("unsafe_redirect")
+                  # Never forward Authorization/Cookie to the artifact storage host.
+                  return urllib.request.Request(newurl,
+                      headers={"Accept": "application/octet-stream"}, method="GET")
+
+          opener = urllib.request.build_opener(NoAuthRedirect())
+
+          def api(suffix):
+              return urllib.request.Request("https://api.github.com/repos/" + REPO + suffix,
+                  headers={"Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                           "Accept": "application/vnd.github+json",
+                           "X-GitHub-Api-Version": "2022-11-28"}, method="GET")
+
+          def checked_name(info):
+              name = info.filename
+              clean = name[:-1] if info.is_dir() else name
+              path = PurePosixPath(clean)
+              kind = stat.S_IFMT(info.external_attr >> 16)
+              if (not clean or clean.startswith("/") or "\\" in name or ":" in name
+                      or any(ord(c) < 32 or ord(c) == 127 for c in name)
+                      or path.as_posix() != clean or ".." in path.parts
+                      or info.flag_bits & 1
+                      or kind not in (0, stat.S_IFREG, stat.S_IFDIR)):
+                  raise ValueError("unsafe_zip_entry")
+              if info.is_dir():
+                  if info.file_size != 0:
+                      raise ValueError("nonempty_directory")
+              elif not 0 < info.file_size <= 25000000:
+                  raise ValueError("source_entry_size_mismatch")
+              return name
+
+          def copy_info(info):
+              result = zipfile.ZipInfo(info.filename, info.date_time)
+              result.create_system = 3
+              result.external_attr = ((stat.S_IFDIR | 0o755) if info.is_dir()
+                                      else (stat.S_IFREG | 0o644)) << 16
+              result.compress_type = zipfile.ZIP_STORED
+              return result
+
+          try:
+              with opener.open(api("/actions/artifacts/" + str(ARTIFACT)), timeout=90) as response:
+                  raw = response.read(1048577)
+              if len(raw) > 1048576:
+                  raise ValueError("oversized_metadata")
+              meta = json.loads(raw)
+              if (meta.get("id") != ARTIFACT or meta.get("name") != "avatar-render-originals"
+                      or meta.get("expired") is not False
+                      or meta.get("size_in_bytes") != ZIP_BYTES
+                      or meta.get("digest") != "sha256:" + ZIP_SHA
+                      or meta.get("workflow_run", {}).get("id") != RUN
+                      or meta.get("workflow_run", {}).get("head_sha") != COMMIT):
+                  raise ValueError("frozen_artifact_mismatch")
+              stage = "download"
+              original = root / "original.zip"
+              digest, count = hashlib.sha256(), 0
+              with opener.open(api("/actions/artifacts/" + str(ARTIFACT) + "/zip"),
+                               timeout=90) as response, original.open("xb") as output:
+                  while True:
+                      data = response.read(1048576)
+                      if not data:
+                          break
+                      count += len(data)
+                      if count > ZIP_BYTES:
+                          raise ValueError("archive_exceeds_size")
+                      digest.update(data)
+                      output.write(data)
+              if count != ZIP_BYTES or digest.hexdigest() != ZIP_SHA:
+                  raise ValueError("archive_checksum_mismatch")
+
+              stage = "zip_directory"
+              entries, parts = {}, []
+              readme = (
+                  "Frozen avatar source backup. Each source-part-NN.zip is an ordinary "
+                  "independent ZIP, not a multi-volume archive. Verify each SHA256 against "
+                  "recovery-index.json, then extract all three into one empty directory. "
+                  "Paths are preserved; original directories and identical CC-BY-4.0 "
+                  "license/credit files are repeated in every part. No archive files "
+                  "were executed. This backup does not validate models or the game.\n"
+              ).encode("utf-8")
+              with zipfile.ZipFile(original) as source:
+                  infos = source.infolist()
+                  names = [checked_name(info) for info in infos]
+                  directories = [info for info in infos if info.is_dir()]
+                  files = [info for info in infos if not info.is_dir()]
+                  if (len(names) != len(set(names)) or len(infos) > 256
+                          or len(files) != FILES
+                          or sum(info.file_size for info in files) != SOURCE_BYTES):
+                      raise ValueError("source_count_bytes_or_duplicates")
+                  file_names = {info.filename for info in files}
+                  for info in infos:
+                      if any(p.as_posix() in file_names for p in
+                             PurePosixPath(info.filename.rstrip("/")).parents):
+                          raise ValueError("file_directory_collision")
+                  credits = []
+                  for suffix in CREDIT_SUFFIXES:
+                      matching = [info for info in files if info.filename == suffix
+                                  or info.filename.endswith("/" + suffix)]
+                      if len(matching) != 1:
+                          raise ValueError("missing_or_duplicate_credit")
+                      credits.append(matching[0])
+                  credit_names = {info.filename for info in credits}
+                  bins = [[], [], []]
+                  loads = [sum(info.file_size for info in credits)] * 3
+                  for info in sorted((i for i in files if i.filename not in credit_names),
+                                     key=lambda i: (-i.file_size, i.filename)):
+                      target = min(range(3), key=lambda i: (loads[i], i))
+                      bins[target].append(info)
+                      loads[target] += info.file_size
+                  if max(loads) > 79800000:
+                      raise ValueError("part_metadata_reserve_exceeded")
+
+                  for number, assigned in enumerate(bins, 1):
+                      stage = "part_" + str(number)
+                      path = root / ("source-part-" + str(number).zfill(2) + ".zip")
+                      records = []
+                      with zipfile.ZipFile(path, "x", compression=zipfile.ZIP_STORED) as output:
+                          for info in directories:
+                              output.writestr(copy_info(info), b"")
+                          for info in sorted(assigned + credits, key=lambda i: i.filename):
+                              checksum, crc, size = hashlib.sha256(), 0, 0
+                              with source.open(info) as inp, output.open(copy_info(info), "w") as out:
+                                  while True:
+                                      data = inp.read(1048576)
+                                      if not data:
+                                          break
+                                      size += len(data)
+                                      if size > info.file_size:
+                                          raise ValueError("entry_exceeds_size")
+                                      checksum.update(data)
+                                      crc = binascii.crc32(data, crc)
+                                      out.write(data)
+                              crc &= 0xffffffff
+                              if size != info.file_size or crc != info.CRC:
+                                  raise ValueError("entry_size_crc_mismatch")
+                              record = {"path": info.filename, "bytes": size,
+                                  "sha256": checksum.hexdigest(), "crc32": format(crc, "08x"),
+                                  "original_zip_compressed_bytes": info.compress_size,
+                                  "original_zip_method": info.compress_type}
+                              if info.filename in entries and entries[info.filename] != record:
+                                  raise ValueError("repeated_credit_mismatch")
+                              entries[info.filename] = record
+                              records.append(record)
+                          local_index = encoded({"schema_version": 1, "part": number, "parts": 3,
+                              "original_artifact_id": ARTIFACT, "original_archive_sha256": ZIP_SHA,
+                              "entries": records,
+                              "original_directories": [i.filename for i in directories],
+                              "repeated_credits": sorted(credit_names)})
+                          if len(local_index) + len(readme) > 200000:
+                              raise ValueError("metadata_budget_exceeded")
+                          output.writestr("recovery/part-" + str(number).zfill(2) + ".json", local_index)
+                          output.writestr("recovery/README.txt", readme)
+                      with zipfile.ZipFile(path) as check:
+                          if check.testzip() is not None:
+                              raise ValueError("written_zip_crc_failed")
+                          total = sum(i.file_size for i in check.infolist())
+                          if total > 80000000 or path.stat().st_size >= 100000000:
+                              raise ValueError("written_part_size_failed")
+                          for record in records:
+                              info = check.getinfo(record["path"])
+                              if (info.file_size != record["bytes"]
+                                      or format(info.CRC, "08x") != record["crc32"]):
+                                  raise ValueError("written_entry_mismatch")
+                      parts.append({"file": path.name, "bytes": path.stat().st_size,
+                          "uncompressed_bytes": total, "sha256": sha_file(path),
+                          "source_file_count_including_repeated_credits": len(records),
+                          "source_paths": [r["path"] for r in records], "crc_verified": True})
+              if len(entries) != FILES or sum(e["bytes"] for e in entries.values()) != SOURCE_BYTES:
+                  raise ValueError("missing_recovery_entries")
+              stage = "index"
+              index = {"schema_version": 1, "ok": True, "purpose": "Source backup only",
+                  "repository": REPO, "original_artifact_id": ARTIFACT,
+                  "original_run": RUN, "original_commit": COMMIT,
+                  "original_archive": {"bytes": count, "sha256": digest.hexdigest(),
+                                       "github_digest_verified": True},
+                  "source_file_count": len(entries), "source_bytes": SOURCE_BYTES,
+                  "original_directories": [i.filename for i in directories],
+                  "entries": [entries[name] for name in sorted(entries)], "parts": parts,
+                  "limits": {"part_uncompressed_bytes": 80000000,
+                             "part_archive_bytes_exclusive": 100000000},
+                  "archive_files_executed": False, "model_or_game_approved": False}
+              (root / "recovery-index.json").write_bytes(encoded(index))
+              (root / "README.txt").write_bytes(readme)
+              original.unlink()
+              print("AVATAR_BACKUP_PARTS " + json.dumps({"source_files": FILES,
+                  "source_bytes": SOURCE_BYTES, "original_sha256": ZIP_SHA,
+                  "parts": [{k: v for k, v in p.items() if k != "source_paths"} for p in parts]}),
+                    flush=True)
+          except Exception as error:
+              failure = {"ok": False, "stage": stage, "error_type": type(error).__name__}
+              if isinstance(error, urllib.error.HTTPError):
+                  failure["http_status"] = error.code
+              (root / "backup-failure.json").write_bytes(encoded(failure))
+              # Never log exception messages, headers, token or redirect/signed URLs.
+              print("AVATAR_BACKUP_FAILED " + json.dumps(failure), flush=True)
+              sys.exit(1)
+          PY
+
+      - name: Preserve ordinary source ZIP part 1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: avatar-originals-part-01
+          path: ${{ runner.temp }}/avatar-source-backup/source-part-01.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Preserve ordinary source ZIP part 2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: avatar-originals-part-02
+          path: ${{ runner.temp }}/avatar-source-backup/source-part-02.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Preserve ordinary source ZIP part 3
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: avatar-originals-part-03
+          path: ${{ runner.temp }}/avatar-source-backup/source-part-03.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Preserve recovery index and safe failure evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: avatar-originals-recovery-index
+          path: |
+            ${{ runner.temp }}/avatar-source-backup/recovery-index.json
+            ${{ runner.temp }}/avatar-source-backup/README.txt
+            ${{ runner.temp }}/avatar-source-backup/backup-failure.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
