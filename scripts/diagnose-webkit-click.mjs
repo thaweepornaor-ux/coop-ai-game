@@ -203,60 +203,93 @@ function pageErrors(page) { const errors = []; page.on('pageerror', error => err
 const webKitInputAudits = new WeakMap();
 const inputAuditPrefix = 'COOP_WEBKIT_INPUT_AUDIT ';
 async function installWebKitInputAudit(context) {
-  // Runs in each document before app scripts, while the renderer is still idle.
+  // Passive capture starts before app scripts; never log input contents or keys.
   await within(context.addInitScript(prefix => {
-    for (const phase of ['mousedown', 'mouseup', 'click']) {
+    for (const phase of ['mousedown', 'mouseup', 'click', 'keydown', 'keyup']) {
       document.addEventListener(phase, event => {
-        const button = event.target instanceof Element ? event.target.closest('button') : null;
-        if (!button || !button.closest('.character-gender-tabs') ||
-          button.textContent?.trim() !== 'หญิง · 10 แบบ') return;
-        console.debug(prefix + JSON.stringify({ phase: event.type, trusted: event.isTrusted }));
+        const element = event.target instanceof Element ? event.target : null;
+        const button = element?.closest('.character-gender-tabs button');
+        let target;
+        if (button?.textContent?.trim() === 'หญิง · 10 แบบ') {
+          if ((phase === 'keydown' || phase === 'keyup') && event.key !== 'Enter') return;
+          target = 'female-catalogue';
+        } else if (['mousedown', 'mouseup', 'click'].includes(phase) &&
+          element?.matches('.join-fields input[autocomplete="nickname"]')) target = 'name-input';
+        else return;
+        console.debug(prefix + JSON.stringify({ target, phase: event.type, trusted: event.isTrusted }));
       }, { capture: true, passive: true });
     }
   }, inputAuditPrefix), 2_000, 'WebKit early input audit setup');
 }
 function observeWebKitInput(page) {
   const events = [];
+  let resolveControl;
+  const controlEvents = new Promise(resolve => { resolveControl = resolve; });
   const listen = message => {
     const text = message.text();
     if (!text.startsWith(inputAuditPrefix)) return;
     let value;
     try { value = JSON.parse(text.slice(inputAuditPrefix.length)); } catch { return; }
-    if (!value || Object.keys(value).sort().join(',') !== 'phase,trusted' ||
-      !['mousedown', 'mouseup', 'click'].includes(value.phase) ||
-      typeof value.trusted !== 'boolean' || events.length >= 6) return;
-    const event = { phase: value.phase, trusted: value.trusted };
+    if (!value || Object.keys(value).sort().join(',') !== 'phase,target,trusted' ||
+      !['name-input', 'female-catalogue'].includes(value.target) ||
+      !['mousedown', 'mouseup', 'click', 'keydown', 'keyup'].includes(value.phase) ||
+      typeof value.trusted !== 'boolean' || events.length >= 18) return;
+    const event = { target: value.target, phase: value.phase, trusted: value.trusted };
     events.push(event);
     console.log('COOP_WARDROBE_INPUT ' + JSON.stringify({ browser: 'webkit', observed: events.length, ...event }));
+    if (['mousedown', 'mouseup', 'click'].every(phase =>
+      events.some(entry => entry.target === 'name-input' && entry.phase === phase && entry.trusted))) resolveControl();
   };
   page.on('console', listen);
-  webKitInputAudits.set(page, { events, stop: () => page.off('console', listen) });
+  webKitInputAudits.set(page, { events, controlEvents, stop: () => page.off('console', listen) });
+}
+async function readCatalogueState(page) {
+  return within(page.evaluate(() => {
+    const button = [...document.querySelectorAll('.character-gender-tabs button')]
+      .find(node => node.textContent?.trim() === 'หญิง · 10 แบบ');
+    const pressed = button?.getAttribute('aria-pressed');
+    return {
+      femalePressed: pressed === 'true' || pressed === 'false' ? pressed : null,
+      femaleCards: document.querySelectorAll('.character-card[aria-label^="F"]').length,
+      maleCards: document.querySelectorAll('.character-card[aria-label^="M"]').length,
+    };
+  }), 2_000, 'WebKit catalogue state read');
 }
 async function clickFemaleCatalogue(page, browserName) {
   const female = page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true });
   if (browserName !== 'webkit') { await female.click(); return; }
   const audit = webKitInputAudits.get(page);
   assert(audit, 'WebKit input observer must be installed before navigation');
+  const control = { status: 'failed', observerProven: false };
   try {
-    await female.click();
+    // Independent trusted pointer control. Failure must not suppress the original button click.
+    await page.getByLabel(nameLabel, { exact: true }).click({ timeout: 3_000 });
+    await within(audit.controlEvents, 500, 'Trusted positive-control phases');
+    control.status = 'passed'; control.observerProven = true;
+  } catch (controlError) { control.error = safeCaseText(controlError.message); }
+  control.events = audit.events.filter(event => event.target === 'name-input');
+  console.log('COOP_WARDROBE_POSITIVE_CONTROL ' + JSON.stringify({ browser: 'webkit', ...control }));
+  try {
+    await female.click(); // Original ordinary click, with its existing 15-second timeout.
   } catch (error) {
     let state, stateReadError;
-    try {
-      state = await within(page.evaluate(() => {
-        const button = [...document.querySelectorAll('.character-gender-tabs button')]
-          .find(node => node.textContent?.trim() === 'หญิง · 10 แบบ');
-        const pressed = button?.getAttribute('aria-pressed');
-        return {
-          femalePressed: pressed === 'true' || pressed === 'false' ? pressed : null,
-          femaleCards: document.querySelectorAll('.character-card[aria-label^="F"]').length,
-          maleCards: document.querySelectorAll('.character-card[aria-label^="M"]').length,
-        };
-      }), 2_000, 'WebKit click failure state read');
-    } catch (readError) { stateReadError = safeCaseText(readError.message); }
+    try { state = await readCatalogueState(page); }
+    catch (readError) { stateReadError = safeCaseText(readError.message); }
     console.log('COOP_WARDROBE_CLICK_FAILURE ' + JSON.stringify({
-      browser: 'webkit', events: audit.events, state, stateReadError, error: safeCaseText(error.message),
+      browser: 'webkit', observerProven: control.observerProven, events: audit.events,
+      state, stateReadError, error: safeCaseText(error.message),
     }));
-    throw error; // Preserve the actual click failure; no retry, force or bypass.
+    const beforeKeyboard = audit.events.length;
+    const keyboard = { status: 'failed' };
+    try {
+      await within(female.press('Enter', { timeout: 3_000 }), 3_000, 'WebKit keyboard activation diagnostic');
+      keyboard.status = 'completed';
+    } catch (keyboardError) { keyboard.error = safeCaseText(keyboardError.message); }
+    try { keyboard.state = await readCatalogueState(page); }
+    catch (readError) { keyboard.stateReadError = safeCaseText(readError.message); }
+    keyboard.events = audit.events.slice(beforeKeyboard).filter(event => event.target === 'female-catalogue');
+    console.log('COOP_WARDROBE_KEYBOARD_DIAGNOSTIC ' + JSON.stringify({ browser: 'webkit', ...keyboard }));
+    throw error; // Keyboard evidence never turns the original failure into a pass.
   } finally { audit.stop(); }
 }
 
