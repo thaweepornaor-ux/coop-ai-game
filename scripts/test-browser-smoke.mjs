@@ -22,7 +22,10 @@ const report = {
   plannedCases: 12,
   cases: [],
 };
-const deadline = setTimeout(() => { console.error('Browser smoke exceeded its ten minute bound'); process.exit(1); }, 600_000);
+// Twelve independently bounded cases can legitimately take more than ten minutes.
+// Keep the global guard below the 25-minute GitHub job deadline while letting
+// the per-case guards report the actual failing stage.
+const deadline = setTimeout(() => { console.error('Browser smoke exceeded its twenty minute bound'); process.exit(1); }, 1_200_000);
 deadline.unref();
 const sizes = [
   { label: 'mobile-320', width: 320, height: 720, mobile: true },
