@@ -80,7 +80,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       try{const saved=JSON.parse(safeRead(sessionKey(initialRole))||'null') as Session|null;
       if(saved&&saved.role===initialRole&&saved.token&&(!code||saved.room===code)){sessionRef.current=saved;setSession(saved)}}catch{}
     }
-    const previousName=safeRead('coop-ai-game-name');if(previousName)setName(previousName);
+    const previousName=safeRead('coop-ai-game-name');if(previousName)setName(current=>current.trim()?current:previousName);
     try{const previousAvatar=JSON.parse(safeRead('coop-ai-game-avatar')||'null');if(previousAvatar&&typeof previousAvatar==='object')setAvatar(normalizeWardrobe(previousAvatar))}catch{}
     setSound(safeRead('coop-ai-game-sound')!=='off');
     setMotion(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
