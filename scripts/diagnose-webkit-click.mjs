@@ -200,29 +200,43 @@ async function question(page, number) {
 }
 function pageErrors(page) { const errors = []; page.on('pageerror', error => errors.push(error.message.slice(0, 300))); return errors; }
 
-async function clickFemaleCatalogue(page, browserName) {
-  const female = page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true });
-  if (browserName !== 'webkit') { await female.click(); return; }
+const webKitInputAudits = new WeakMap();
+const inputAuditPrefix = 'COOP_WEBKIT_INPUT_AUDIT ';
+async function installWebKitInputAudit(context) {
+  // Runs in each document before app scripts, while the renderer is still idle.
+  await within(context.addInitScript(prefix => {
+    for (const phase of ['mousedown', 'mouseup', 'click']) {
+      document.addEventListener(phase, event => {
+        const button = event.target instanceof Element ? event.target.closest('button') : null;
+        if (!button || !button.closest('.character-gender-tabs') ||
+          button.textContent?.trim() !== 'หญิง · 10 แบบ') return;
+        console.debug(prefix + JSON.stringify({ phase: event.type, trusted: event.isTrusted }));
+      }, { capture: true, passive: true });
+    }
+  }, inputAuditPrefix), 2_000, 'WebKit early input audit setup');
+}
+function observeWebKitInput(page) {
   const events = [];
-  await within(page.exposeFunction('__coopFemaleInputAudit', value => {
-    // Strict allowlist: the page cannot put names, tokens or storage into logs.
-    if (!value || !['mousedown', 'mouseup', 'click'].includes(value.phase) ||
+  const listen = message => {
+    const text = message.text();
+    if (!text.startsWith(inputAuditPrefix)) return;
+    let value;
+    try { value = JSON.parse(text.slice(inputAuditPrefix.length)); } catch { return; }
+    if (!value || Object.keys(value).sort().join(',') !== 'phase,trusted' ||
+      !['mousedown', 'mouseup', 'click'].includes(value.phase) ||
       typeof value.trusted !== 'boolean' || events.length >= 6) return;
     const event = { phase: value.phase, trusted: value.trusted };
     events.push(event);
-    console.log('COOP_WARDROBE_INPUT ' + JSON.stringify({ browser: 'webkit', ...event }));
-  }), 2_000, 'WebKit input audit binding');
-  await within(page.evaluate(() => {
-    const button = [...document.querySelectorAll('.character-gender-tabs button')]
-      .find(node => node.textContent?.trim() === 'หญิง · 10 แบบ');
-    if (!button) throw new Error('Female catalogue button missing before input audit');
-    const observe = event => { void window.__coopFemaleInputAudit({ phase: event.type, trusted: event.isTrusted }); };
-    for (const phase of ['mousedown', 'mouseup', 'click']) button.addEventListener(phase, observe, { capture: true, passive: true });
-    window.__coopFemaleInputAuditCleanup = () => {
-      for (const phase of ['mousedown', 'mouseup', 'click']) button.removeEventListener(phase, observe, true);
-      delete window.__coopFemaleInputAuditCleanup;
-    };
-  }), 2_000, 'WebKit input audit setup');
+    console.log('COOP_WARDROBE_INPUT ' + JSON.stringify({ browser: 'webkit', observed: events.length, ...event }));
+  };
+  page.on('console', listen);
+  webKitInputAudits.set(page, { events, stop: () => page.off('console', listen) });
+}
+async function clickFemaleCatalogue(page, browserName) {
+  const female = page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true });
+  if (browserName !== 'webkit') { await female.click(); return; }
+  const audit = webKitInputAudits.get(page);
+  assert(audit, 'WebKit input observer must be installed before navigation');
   try {
     await female.click();
   } catch (error) {
@@ -231,20 +245,19 @@ async function clickFemaleCatalogue(page, browserName) {
       state = await within(page.evaluate(() => {
         const button = [...document.querySelectorAll('.character-gender-tabs button')]
           .find(node => node.textContent?.trim() === 'หญิง · 10 แบบ');
+        const pressed = button?.getAttribute('aria-pressed');
         return {
-          femalePressed: button?.getAttribute('aria-pressed') ?? null,
+          femalePressed: pressed === 'true' || pressed === 'false' ? pressed : null,
           femaleCards: document.querySelectorAll('.character-card[aria-label^="F"]').length,
           maleCards: document.querySelectorAll('.character-card[aria-label^="M"]').length,
         };
       }), 2_000, 'WebKit click failure state read');
     } catch (readError) { stateReadError = safeCaseText(readError.message); }
     console.log('COOP_WARDROBE_CLICK_FAILURE ' + JSON.stringify({
-      browser: 'webkit', events, state, stateReadError, error: safeCaseText(error.message),
+      browser: 'webkit', events: audit.events, state, stateReadError, error: safeCaseText(error.message),
     }));
     throw error; // Preserve the actual click failure; no retry, force or bypass.
-  } finally {
-    await within(page.evaluate(() => window.__coopFemaleInputAuditCleanup?.()), 2_000, 'WebKit input audit cleanup').catch(() => {});
-  }
+  } finally { audit.stop(); }
 }
 
 async function wardrobe(page, browserName) {
@@ -272,7 +285,9 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
   const label = browserName + '-' + size.label + (reducedMotion === 'reduce' ? '-reduced' : '');
   return boundedCase(browser, label, 75_000, async ({ createContext, createPage, stage }, row) => {
     const context = await createContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
+    if (browserName === 'webkit') await installWebKitInputAudit(context);
     const page = await createPage(context);
+    if (browserName === 'webkit') observeWebKitInput(page);
     let previewImage = null;
     await stage('landing-document');
     await page.goto(preview.origin + '/', { waitUntil: 'domcontentloaded' });
@@ -324,7 +339,9 @@ async function realRoom(browser, browserName) {
   return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage }, row) => {
     const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
     const playerContext = await createContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
+    if (browserName === 'webkit') await installWebKitInputAudit(playerContext);
     const host = await createPage(hostContext); const player = await createPage(playerContext);
+    if (browserName === 'webkit') observeWebKitInput(player);
     await stage('host-create-real-room');
     await host.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
     await host.getByRole('button', { name: /สร้างห้องเกม/ }).click(); await online(host);
