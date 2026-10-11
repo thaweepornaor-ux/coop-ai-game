@@ -17,6 +17,10 @@ STAGING_D1_DATABASE_ID="$STAGING_D1_DATABASE_ID" STAGING_WORKER_NAME="$STAGING_W
 import fs from 'node:fs';
 const base=JSON.parse(fs.readFileSync('wrangler.ci.jsonc','utf8'));
 base.name=process.env.STAGING_WORKER_NAME;
+// Avoid accidental route takeover: staging uses an independently named Worker only.
+delete base.routes;
+delete base.route;
+delete base.workers_dev;
 base.d1_databases=[{...base.d1_databases[0], database_name:'coop-ai-game-staging', database_id:process.env.STAGING_D1_DATABASE_ID, remote:true}];
 fs.writeFileSync('.staging-local/wrangler.staging.json',JSON.stringify(base,null,2)+'\n',{mode:0o600});
 console.log('Generated a staging-only config. No remote action taken.');
