@@ -1,19 +1,21 @@
-name: Render reviewed original avatar bases
+name: Inspect real avatar garments with native drivers
 on:
   push:
-    branches: [main, codex/game-recovery]
+    branches: [codex/game-recovery]
     paths:
-      - 'scripts/bpy-render-avatar-source-proof.py'
+      - 'scripts/bpy-inspect-avatar-garments.py'
+      - 'scripts/ci-restore-frozen-avatar-sources.py'
       - 'scripts/avatar-render-configs/**'
       - '.github/workflows/avatar-render-proof.yml'
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  render-original-bases:
+  inspect-original-garments:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -23,63 +25,31 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
-      - name: Prepare reviewed Blender module
+      - name: Restore and verify the frozen source artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/bpy-inspect-avatar-garments.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-garment-inspection/frozen-source-restore.json"
+      - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-          "$RUNNER_TEMP/bpy-runtime/bin/python" -m py_compile scripts/ci-acquire-mirrored-avatar-sources.py scripts/bpy-inspect-avatar-source.py scripts/blender-inspect-avatar.py
-      - name: Acquire and inspect exact original source data
+      - name: Inspect topology and render native-driver garment views
         run: |
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-acquire-mirrored-avatar-sources.py --out "$RUNNER_TEMP/avatar-mirror-originals"
-      - name: Render source meshes with native CPU Blender
-        run: |
-          source_root="$RUNNER_TEMP/avatar-mirror-originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-render-avatar-source-proof.py --model rain --blend "$source_root/rain/original/Rain v3.3/rain_v3.2.blend" --config scripts/avatar-render-configs/rain.json --out "$RUNNER_TEMP/avatar-base-render/rain" --emit-preview --save-working
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-render-avatar-source-proof.py --model snow --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow.json --out "$RUNNER_TEMP/avatar-base-render/snow" --emit-preview --save-working
-      - name: Emit actual rig control candidates
-        if: always()
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          root = Path(os.environ["RUNNER_TEMP"]) / "avatar-base-render"
-          for model in ("rain", "snow"):
-              proof = root / model / "render-proof.json"
-              if not proof.is_file():
-                  continue
-              data = json.loads(proof.read_text())
-              candidates = [b for b in data["rig"]["bones"] if any(k in b["name"].lower() for k in ("upperarm", "forearm", "arm_fk", "hand_fk", "shoulder", "clavicle")) and not b["deform"]]
-              for bone in candidates[:100]:
-                  print("AVATAR_REAL_CONTROL " + json.dumps({"model":model,"bone":bone}))
-          PY
-      - name: Preserve actual images, audit and working derivatives
+          source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-inspect-avatar-garments.py --model rain --blend "$source_root/rain/original/Rain v3.3/rain_v3.2.blend" --config scripts/avatar-render-configs/rain.json --out "$RUNNER_TEMP/avatar-garment-inspection/rain" --emit-preview
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-inspect-avatar-garments.py --model snow --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow.json --out "$RUNNER_TEMP/avatar-garment-inspection/snow" --emit-preview
+      - name: Preserve the actual inspection checkpoint
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-source-render-proof
-          path: ${{ runner.temp }}/avatar-base-render/
-          if-no-files-found: ignore
-          compression-level: 0
-          retention-days: 14
-      - name: Preserve raw source inventory and provenance
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: avatar-render-source-inspection
+          name: avatar-garment-topology-proof
           path: |
-            ${{ runner.temp }}/avatar-mirror-originals/reports/
-            ${{ runner.temp }}/avatar-mirror-originals/pinned-source-manifest.json
+            ${{ runner.temp }}/avatar-garment-inspection/
             bpy-proof/
-          if-no-files-found: ignore
-          retention-days: 14
-      - name: Preserve verified downloaded originals for subsequent rendering
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: avatar-render-originals
-          path: ${{ runner.temp }}/avatar-mirror-originals/
-          if-no-files-found: ignore
-          compression-level: 0
+          if-no-files-found: error
+          compression-level: 6
           retention-days: 14
