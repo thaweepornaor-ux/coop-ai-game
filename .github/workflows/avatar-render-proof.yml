@@ -1,9 +1,11 @@
-name: Inspect real avatar garments with native drivers
+name: Trace Rain spine and prototype Snow crewneck
 on:
   push:
     branches: [codex/game-recovery]
     paths:
       - 'scripts/bpy-inspect-avatar-garments.py'
+      - 'scripts/bpy-trace-rain-spine.py'
+      - 'scripts/bpy-prototype-snow-crewneck.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
       - 'scripts/avatar-render-configs/**'
       - '.github/workflows/avatar-render-proof.yml'
@@ -15,7 +17,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  inspect-original-garments:
+  trace-and-prototype:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -29,26 +31,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/bpy-inspect-avatar-garments.py
-          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-garment-inspection/frozen-source-restore.json"
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/bpy-inspect-avatar-garments.py scripts/bpy-trace-rain-spine.py scripts/bpy-prototype-snow-crewneck.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-garment-prototype/frozen-source-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Inspect topology and render native-driver garment views
+      - name: Trace the actual Rain spine driver without altering it
         run: |
           source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-inspect-avatar-garments.py --model rain --blend "$source_root/rain/original/Rain v3.3/rain_v3.2.blend" --config scripts/avatar-render-configs/rain.json --out "$RUNNER_TEMP/avatar-garment-inspection/rain" --emit-preview
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-inspect-avatar-garments.py --model snow --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow.json --out "$RUNNER_TEMP/avatar-garment-inspection/snow" --emit-preview
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-trace-rain-spine.py --blend "$source_root/rain/original/Rain v3.3/rain_v3.2.blend" --config scripts/avatar-render-configs/rain.json --out "$RUNNER_TEMP/avatar-garment-prototype/rain-driver"
+      - name: Prototype the Snow crewneck as a separate derivative
+        run: |
+          source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-prototype-snow-crewneck.py --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-garment-prototype/snow" --emit-preview
       - name: Preserve the actual inspection checkpoint
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-garment-topology-proof
+          name: avatar-garment-prototype-proof
           path: |
-            ${{ runner.temp }}/avatar-garment-inspection/
+            ${{ runner.temp }}/avatar-garment-prototype/
             bpy-proof/
           if-no-files-found: error
           compression-level: 6
