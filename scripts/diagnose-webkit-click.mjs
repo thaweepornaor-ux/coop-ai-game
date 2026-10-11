@@ -129,7 +129,8 @@ async function boundedCase(browser, label, budgetMs, body) {
     }, budgetMs);
   });
   try {
-    const result = await Promise.race([body({ createContext, createPage, stage }, row), timeout]);
+    const remainingMs = () => active && !timedOut ? Math.max(0, budgetMs - (Date.now() - started)) : 0;
+    const result = await Promise.race([body({ createContext, createPage, stage, remainingMs }, row), timeout]);
     assert.deepEqual(errors, [], 'Browser runtime exceptions');
     previewImage = result?.previewImage;
     row.status = 'passed';
@@ -209,11 +210,14 @@ async function installWebKitInputAudit(context) {
       document.addEventListener(phase, event => {
         const element = event.target instanceof Element ? event.target : null;
         const button = element?.closest('.character-gender-tabs button');
+        const shirt = element?.closest('.wardrobe-tabs button[role="tab"]');
         let target;
         if (button?.textContent?.trim() === 'หญิง · 10 แบบ') {
           if ((phase === 'keydown' || phase === 'keyup') && event.key !== 'Enter') return;
           target = 'female-catalogue';
         } else if (['mousedown', 'mouseup', 'click'].includes(phase) &&
+          shirt?.querySelector('span')?.textContent?.trim() === 'เสื้อ') target = 'shirt-tab';
+        else if (['mousedown', 'mouseup', 'click'].includes(phase) &&
           element?.matches('.join-fields input[autocomplete="nickname"]')) target = 'name-input';
         else return;
         console.debug(prefix + JSON.stringify({ target, phase: event.type, trusted: event.isTrusted }));
@@ -231,7 +235,8 @@ function observeWebKitInput(page) {
     let value;
     try { value = JSON.parse(text.slice(inputAuditPrefix.length)); } catch { return; }
     if (!value || Object.keys(value).sort().join(',') !== 'phase,target,trusted' ||
-      !['name-input', 'female-catalogue'].includes(value.target) ||
+      !['name-input', 'female-catalogue', 'shirt-tab'].includes(value.target) ||
+      (value.target === 'shirt-tab' && !['mousedown', 'mouseup', 'click'].includes(value.phase)) ||
       !['mousedown', 'mouseup', 'click', 'keydown', 'keyup'].includes(value.phase) ||
       typeof value.trusted !== 'boolean' || events.length >= 18) return;
     const event = { target: value.target, phase: value.phase, trusted: value.trusted };
@@ -255,6 +260,22 @@ async function readCatalogueState(page) {
     };
   }), 2_000, 'WebKit catalogue state read');
 }
+async function readShirtTabState(page, remainingMs) {
+  const budget = Math.min(2_000, Math.max(0, remainingMs()));
+  if (budget === 0) throw new Error('Existing case budget exhausted before shirt state read');
+  return within(page.evaluate(() => {
+    const shirt = [...document.querySelectorAll('.wardrobe-tabs button[role="tab"]')]
+      .find(button => button.querySelector('span')?.textContent?.trim() === 'เสื้อ');
+    const selected = shirt?.getAttribute('aria-selected');
+    const panel = document.querySelector('.wardrobe-panel[role="tabpanel"]');
+    return {
+      shirtSelected: selected === 'true' ? true : selected === 'false' ? false : null,
+      wardrobeTileCount: panel?.querySelectorAll('.wardrobe-tile').length ?? 0,
+      characterCardCount: panel?.querySelectorAll('.character-card').length ?? 0,
+    };
+  }), budget, 'WebKit shirt state read');
+}
+
 function wardrobeOperationMarker(row) {
   return (operation, status, value) => {
     assert([
@@ -310,69 +331,84 @@ async function clickFemaleCatalogue(page, browserName, mark = () => {}) {
     keyboard.events = audit.events.slice(beforeKeyboard).filter(event => event.target === 'female-catalogue');
     console.log('COOP_WARDROBE_KEYBOARD_DIAGNOSTIC ' + JSON.stringify({ browser: 'webkit', ...keyboard }));
     throw error; // Keyboard evidence never turns the original failure into a pass.
-  } finally { audit.stop(); }
+  }
 }
 
-async function wardrobe(page, browserName, mark = () => {}) {
-  const panel = page.getByRole('tabpanel');
-  assert.equal(await page.getByRole('tab').count(), 6);
-  assert.equal(await panel.locator('.character-card').count(), 10);
-  await clickFemaleCatalogue(page, browserName, mark);
-  mark('female-card-count', 'begin');
-  const femaleCardCount = await panel.locator('.character-card').count();
-  mark('female-card-count', 'returned', femaleCardCount);
-  assert.equal(femaleCardCount, 10);
-  mark('f03-click', 'begin');
-  await panel.getByRole('button', { name: /^F03 / }).click();
-  mark('f03-click', 'returned');
-  mark('f03-selection-read', 'begin');
-  const femaleSelected = await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed');
-  mark('f03-selection-read', 'returned', femaleSelected === 'true' ? true : femaleSelected === 'false' ? false : null);
-  assert.equal(femaleSelected, 'true');
-  mark('shirt-tab-click', 'begin');
-  await page.getByRole('tab', { name: 'เสื้อ', exact: true }).click();
-  mark('shirt-tab-click', 'returned');
-  mark('shirt-tile-count', 'begin');
-  const shirtTileCount = await panel.locator('.wardrobe-tile').count();
-  mark('shirt-tile-count', 'returned', shirtTileCount);
-  assert.equal(shirtTileCount, 4);
-  mark('shirt-tile2-click', 'begin');
-  await panel.locator('.wardrobe-tile').nth(2).click();
-  mark('shirt-tile2-click', 'returned');
-  mark('shirt-tile2-selection-read', 'begin');
-  const shirtSelected = await panel.locator('.wardrobe-tile').nth(2).getAttribute('aria-pressed');
-  mark('shirt-tile2-selection-read', 'returned', shirtSelected === 'true' ? true : shirtSelected === 'false' ? false : null);
-  assert.equal(shirtSelected, 'true');
-  mark('swatch-count', 'begin');
-  const swatchCount = await panel.locator('.swatch-button').count();
-  mark('swatch-count', 'returned', swatchCount);
-  assert.equal(swatchCount, 6);
-  mark('swatch2-click', 'begin');
-  await panel.locator('.swatch-button').nth(2).click();
-  mark('swatch2-click', 'returned');
-  mark('swatch2-selection-read', 'begin');
-  const swatchSelected = await panel.locator('.swatch-button').nth(2).getAttribute('aria-pressed');
-  mark('swatch2-selection-read', 'returned', swatchSelected === 'true' ? true : swatchSelected === 'false' ? false : null);
-  assert.equal(swatchSelected, 'true');
-  mark('hat-tab-click', 'begin');
-  await page.getByRole('tab', { name: 'หมวก', exact: true }).click();
-  mark('hat-tab-click', 'returned');
-  mark('hat-tile1-click', 'begin');
-  await panel.locator('.wardrobe-tile').nth(1).click();
-  mark('hat-tile1-click', 'returned');
-  mark('hat-tile1-selection-read', 'begin');
-  const hatSelected = await panel.locator('.wardrobe-tile').nth(1).getAttribute('aria-pressed');
-  mark('hat-tile1-selection-read', 'returned', hatSelected === 'true' ? true : hatSelected === 'false' ? false : null);
-  assert.equal(hatSelected, 'true');
-  mark('select-count', 'begin');
-  const selectCount = await page.locator('select').count();
-  mark('select-count', 'returned', selectCount);
-  assert.equal(selectCount, 0, 'Wardrobe must use visible picture controls');
+async function wardrobe(page, browserName, mark = () => {}, remainingMs = () => 2_000) {
+  const audit = browserName === 'webkit' ? webKitInputAudits.get(page) : null;
+  try {
+    const panel = page.getByRole('tabpanel');
+    assert.equal(await page.getByRole('tab').count(), 6);
+    assert.equal(await panel.locator('.character-card').count(), 10);
+    await clickFemaleCatalogue(page, browserName, mark);
+    mark('female-card-count', 'begin');
+    const femaleCardCount = await panel.locator('.character-card').count();
+    mark('female-card-count', 'returned', femaleCardCount);
+    assert.equal(femaleCardCount, 10);
+    mark('f03-click', 'begin');
+    await panel.getByRole('button', { name: /^F03 / }).click();
+    mark('f03-click', 'returned');
+    mark('f03-selection-read', 'begin');
+    const femaleSelected = await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed');
+    mark('f03-selection-read', 'returned', femaleSelected === 'true' ? true : femaleSelected === 'false' ? false : null);
+    assert.equal(femaleSelected, 'true');
+    mark('shirt-tab-click', 'begin');
+    try {
+      await page.getByRole('tab', { name: 'เสื้อ', exact: true }).click();
+      mark('shirt-tab-click', 'returned');
+    } catch (error) {
+      mark('shirt-tab-click', 'rejected'); // Log before the single subordinate state read.
+      let state, stateReadError;
+      try { state = await readShirtTabState(page, remainingMs); }
+      catch (readError) { stateReadError = safeCaseText(readError.message); }
+      console.log('COOP_WARDROBE_SHIRT_CLICK_FAILURE ' + JSON.stringify({
+        target: 'shirt-tab', events: audit?.events.filter(event => event.target === 'shirt-tab') ?? [],
+        state, stateUnavailable: Boolean(stateReadError), stateReadError,
+      }));
+      throw error; // State evidence cannot advance the wardrobe or turn failure into a pass.
+    }
+    mark('shirt-tile-count', 'begin');
+    const shirtTileCount = await panel.locator('.wardrobe-tile').count();
+    mark('shirt-tile-count', 'returned', shirtTileCount);
+    assert.equal(shirtTileCount, 4);
+    mark('shirt-tile2-click', 'begin');
+    await panel.locator('.wardrobe-tile').nth(2).click();
+    mark('shirt-tile2-click', 'returned');
+    mark('shirt-tile2-selection-read', 'begin');
+    const shirtSelected = await panel.locator('.wardrobe-tile').nth(2).getAttribute('aria-pressed');
+    mark('shirt-tile2-selection-read', 'returned', shirtSelected === 'true' ? true : shirtSelected === 'false' ? false : null);
+    assert.equal(shirtSelected, 'true');
+    mark('swatch-count', 'begin');
+    const swatchCount = await panel.locator('.swatch-button').count();
+    mark('swatch-count', 'returned', swatchCount);
+    assert.equal(swatchCount, 6);
+    mark('swatch2-click', 'begin');
+    await panel.locator('.swatch-button').nth(2).click();
+    mark('swatch2-click', 'returned');
+    mark('swatch2-selection-read', 'begin');
+    const swatchSelected = await panel.locator('.swatch-button').nth(2).getAttribute('aria-pressed');
+    mark('swatch2-selection-read', 'returned', swatchSelected === 'true' ? true : swatchSelected === 'false' ? false : null);
+    assert.equal(swatchSelected, 'true');
+    mark('hat-tab-click', 'begin');
+    await page.getByRole('tab', { name: 'หมวก', exact: true }).click();
+    mark('hat-tab-click', 'returned');
+    mark('hat-tile1-click', 'begin');
+    await panel.locator('.wardrobe-tile').nth(1).click();
+    mark('hat-tile1-click', 'returned');
+    mark('hat-tile1-selection-read', 'begin');
+    const hatSelected = await panel.locator('.wardrobe-tile').nth(1).getAttribute('aria-pressed');
+    mark('hat-tile1-selection-read', 'returned', hatSelected === 'true' ? true : hatSelected === 'false' ? false : null);
+    assert.equal(hatSelected, 'true');
+    mark('select-count', 'begin');
+    const selectCount = await page.locator('select').count();
+    mark('select-count', 'returned', selectCount);
+    assert.equal(selectCount, 0, 'Wardrobe must use visible picture controls');
+  } finally { audit?.stop(); }
 }
 
 async function surfaces(browser, browserName, size, reducedMotion = 'no-preference') {
   const label = browserName + '-' + size.label + (reducedMotion === 'reduce' ? '-reduced' : '');
-  return boundedCase(browser, label, 75_000, async ({ createContext, createPage, stage }, row) => {
+  return boundedCase(browser, label, 75_000, async ({ createContext, createPage, stage, remainingMs }, row) => {
     const context = await createContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
     if (browserName === 'webkit') await installWebKitInputAudit(context);
     const page = await createPage(context);
@@ -405,7 +441,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     }
     await page.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
     await stage('wardrobe-controls');
-    await wardrobe(page, browserName, wardrobeOperationMarker(row));
+    await wardrobe(page, browserName, wardrobeOperationMarker(row), remainingMs);
     await stage('wardrobe-avatar');
     row.avatarRaster = await avatarPainted(page, '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
@@ -425,7 +461,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
 }
 
 async function realRoom(browser, browserName) {
-  return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage }, row) => {
+  return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage, remainingMs }, row) => {
     const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
     const playerContext = await createContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
     if (browserName === 'webkit') await installWebKitInputAudit(playerContext);
@@ -443,7 +479,7 @@ async function realRoom(browser, browserName) {
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
-    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player, browserName, wardrobeOperationMarker(row));
+    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player, browserName, wardrobeOperationMarker(row), remainingMs);
     const [sent] = await Promise.all([
       player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
       player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
