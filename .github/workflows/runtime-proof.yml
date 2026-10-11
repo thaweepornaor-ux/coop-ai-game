@@ -1,0 +1,74 @@
+name: Runtime proof
+on:
+  push:
+    branches: [main, codex/game-recovery, codex/avatar-preview-refresh-20261011]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: runtime-proof-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  node-validator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Prove Node execution
+        run: node --version
+      - name: Exercise validator CLI
+        run: node scripts/validate-avatar-production-glb.mjs --self-test
+  recovered-tests:
+    needs: node-validator
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Verify project package manager
+        run: |
+          node -e "const p=require('./package.json'); if(p.packageManager!=='pnpm@11.25.0')throw new Error('Unexpected packageManager');"
+          corepack pnpm --version
+      - name: Install locked dependencies
+        id: install
+        run: corepack pnpm install --frozen-lockfile
+      - name: Test question bank regression
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node --test tests/questions-regression.test.mjs
+      - name: Test game rules
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node --experimental-transform-types --test server/game.test.ts
+      - name: Test game integration
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node scripts/test-game-integration.mjs
+      - name: Test avatar renderer
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node scripts/test-avatar-renderer.mjs
+      - name: Test avatar persistence
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: node scripts/test-avatar-recovery.mjs
+  asset-access-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read official character download links
+        run: python3 scripts/discover-avatar-assets.py

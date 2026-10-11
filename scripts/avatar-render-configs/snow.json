@@ -1,0 +1,26 @@
+{
+  "model": "snow",
+  "rig_name": "RIG-Snow",
+  "mesh_names": [
+    "GEO-snow-body",
+    "GEO-snow-eye_dots",
+    "GEO-snow-eyebrows",
+    "GEO-snow-eyes",
+    "GEO-snow-gums_lower",
+    "GEO-snow-gums_upper",
+    "GEO-snow-hair_base",
+    "GEO-snow-head",
+    "GEO-snow-pants",
+    "GEO-snow-shirt",
+    "GEO-snow-shoes_base",
+    "GEO-snow-shoes_bottom",
+    "GEO-snow-shoes_parts",
+    "GEO-snow-teeth_lower",
+    "GEO-snow-teeth_upper",
+    "GEO-snow-tongue",
+    "GEO-snow_eye_corneas"
+  ],
+  "poses": {
+    "neutral": []
+  }
+}
