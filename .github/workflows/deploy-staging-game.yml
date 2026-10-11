@@ -49,10 +49,10 @@ jobs:
       - name: Verify generated worker is staging-only
         run: |
           node --input-type=module <<'NODE'
-          import {globSync,readFileSync} from 'node:fs';
+          import {readFileSync} from 'node:fs';
           import assert from 'node:assert/strict';
           import {existsSync} from 'node:fs';
-          const file='dist/coop-ai-game-staging/wrangler.json';
+          const file='dist/server/wrangler.json';
           assert.ok(existsSync(file),'Expected staging Worker bundle missing: '+file);
           const cfg=JSON.parse(readFileSync(file,'utf8'));
           assert.equal(cfg.name,'coop-ai-game-staging');
@@ -79,4 +79,4 @@ jobs:
         if: inputs.publish
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: corepack pnpm exec wrangler deploy --config dist/coop-ai-game-staging/wrangler.json
+        run: corepack pnpm exec wrangler deploy --config dist/server/wrangler.json
