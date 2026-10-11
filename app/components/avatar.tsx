@@ -4,15 +4,17 @@ import { renderAvatar } from '../../shared/avatar.js';
 import type { AvatarChoices } from '../../shared/avatar.js';
 export { AVATAR_OPTIONS } from '../../shared/avatar.js';
 export type { AvatarChoices, AvatarOption, AvatarOptionKey } from '../../shared/avatar.js';
-export interface AvatarProps {options?:AvatarChoices|Record<string,unknown>;className?:string;interactive?:boolean;motion?:boolean;}
-export function Avatar({options={},className,interactive=false,motion=true}:AvatarProps){
+export interface AvatarProps {options?:AvatarChoices|Record<string,unknown>;className?:string;interactive?:boolean;motion?:boolean;thumbnail3d?:boolean;}
+export function Avatar({options={},className,interactive=false,motion=true,thumbnail3d=true}:AvatarProps){
  const container=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);const[thumbnail,setThumbnail]=useState<{key:string;url:string}|null>(null),[failed,setFailed]=useState(false),[visible,setVisible]=useState(interactive),[contextLost,setContextLost]=useState(false),[contextEpoch,setContextEpoch]=useState(0);const serialized=JSON.stringify(options);
  // Display a lightweight, wardrobe-aware image immediately while WebGL thumbnails are queued.
  const fallbackUrl=useMemo(()=> 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(renderAvatar(JSON.parse(serialized))),[serialized]);
- const previewUrl=thumbnail?.key===serialized?thumbnail.url:fallbackUrl;
+ const previewUrl=thumbnail3d&&thumbnail?.key===serialized?thumbnail.url:fallbackUrl;
  useEffect(()=>{if(interactive)setContextLost(false);const element=canvas.current;if(!element)return;const lost=(e:Event)=>{e.preventDefault();setContextLost(true);};const restored=()=>{setContextLost(false);setFailed(false);setContextEpoch(v=>v+1);};element.addEventListener('webglcontextlost',lost);element.addEventListener('webglcontextrestored',restored);return()=>{element.removeEventListener('webglcontextlost',lost);element.removeEventListener('webglcontextrestored',restored);};},[interactive]);
  useEffect(()=>{if(!container.current)return;const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'120px'});observer.observe(container.current);return()=>observer.disconnect();},[]);
- useEffect(()=>{if(!visible)return;let cancelled=false;const controller=new AbortController();import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized),controller.signal)).then(url=>{if(!cancelled)setThumbnail({key:serialized,url});}).catch(()=>{if(!cancelled){const svg=renderAvatar(JSON.parse(serialized));setThumbnail({key:serialized,url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});}});return()=>{cancelled=true;controller.abort();};},[serialized,visible,contextEpoch]);
+ // Interactive avatars already render live WebGL; do not build a second thumbnail.
+ // Catalogue cards only request expensive 3D thumbnails when explicitly enabled.
+ useEffect(()=>{if(!visible||!thumbnail3d||interactive)return;let cancelled=false;const controller=new AbortController();import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized),controller.signal)).then(url=>{if(!cancelled)setThumbnail({key:serialized,url});}).catch(()=>{if(!cancelled){const svg=renderAvatar(JSON.parse(serialized));setThumbnail({key:serialized,url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});}});return()=>{cancelled=true;controller.abort();};},[serialized,visible,contextEpoch,thumbnail3d,interactive]);
  useEffect(()=>{
   if(!interactive||!canvas.current||!visible||contextLost)return;let cancelled=false,cleanup=()=>{};
   import('../../shared/avatar3d').then(m=>{if(cancelled||!canvas.current)return;try{
