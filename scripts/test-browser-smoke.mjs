@@ -286,13 +286,44 @@ async function realRoom(browser, browserName) {
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
-    const [sent] = await Promise.all([
-      // WebKit may need more than the default 15 seconds to dispatch a click
-      // while its canvas renderer is busy. Preserve a real user click; do not
-      // bypass the form with DOM submission or synthetic fetch.
-      player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join', { timeout: 40_000 }),
-      player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click({ timeout: 35_000 }),
-    ]);
+    // Diagnose Safari form submission separately from server/API errors.
+    // Collect events but never submit via evaluate() or bypass a real click.
+    const joinRequests = [];
+    const onJoinRequest = req => {
+      if (new URL(req.url()).pathname === '/api/game' && req.method() === 'POST') {
+        try { joinRequests.push({ action: req.postDataJSON()?.action || 'unknown' }); }
+        catch { joinRequests.push({ action: 'unreadable' }); }
+      }
+    };
+    player.on('request', onJoinRequest);
+    await player.evaluate(() => {
+      window.__coopJoinProbe = { submits: 0, clicks: 0 };
+      const form = document.querySelector('form.wardrobe');
+      form?.addEventListener('submit', () => window.__coopJoinProbe.submits++, { capture: true });
+      form?.querySelector('button[type="submit"]')?.addEventListener('click', () => window.__coopJoinProbe.clicks++, { capture: true });
+    });
+    let sent;
+    try {
+      [sent] = await Promise.all([
+        player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join', { timeout: 18_000 }),
+        player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click({ timeout: 16_000 }),
+      ]);
+    } catch (error) {
+      row.joinDiagnostics = {
+        requests: joinRequests,
+        ui: await player.evaluate(() => ({
+          probe: window.__coopJoinProbe || null,
+          room: document.querySelector('.join-fields input')?.value,
+          nameLength: document.querySelectorAll('.join-fields input')[1]?.value?.length,
+          buttonDisabled: document.querySelector('form.wardrobe button[type="submit"]')?.disabled,
+          formValid: document.querySelector('form.wardrobe')?.checkValidity(),
+          alert: document.querySelector('[role="alert"]')?.textContent?.slice(0, 200),
+        })).catch(e => ({ inspectError: e.message })),
+      };
+      throw error;
+    } finally {
+      player.off('request', onJoinRequest);
+    }
     const submittedAvatar = sent.postDataJSON().avatar;
     assert.equal(Object.keys(submittedAvatar).length, 12); assert.equal(submittedAvatar.presetId, 'F03');
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
