@@ -105,6 +105,15 @@ def acquire(entry, source_root):
         "git_blob_sha1": blob_hash.hexdigest(), "sha256": sha256.hexdigest(),
     }
 
+def bounded_child_text(value):
+    # Child reads public original assets only. Strip URLs and terminal controls.
+    value = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", value or "")
+    value = re.sub(r"(?:https?|ftp|file)://[^\s\"'<>]+", "<URL_REMOVED>", value)
+    value = re.sub(r"[\x00-\x08\x0b-\x1f\x7f]", "", value)
+    lines = value.splitlines()
+    text = "\n".join(lines[-30:])
+    return text[-8000:]
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--out", required=True)
@@ -164,6 +173,16 @@ def main():
                     result.stderr, encoding="utf-8")
                 if result.returncode != 0 or not destination.is_file():
                     report["child_exit_code"] = result.returncode
+                    report["child_diagnostic"] = {
+                        "stdout_tail": bounded_child_text(result.stdout),
+                        "stderr_tail": bounded_child_text(result.stderr),
+                    }
+                    write_json(report_path, report)
+                    print(json.dumps({"CHILD_INSPECTION_FAILED": {
+                        "stage": report["stage"],
+                        "child_returncode": result.returncode,
+                        **report["child_diagnostic"],
+                    }}, ensure_ascii=True), flush=True)
                     raise RuntimeError("raw_inventory_process_failed")
                 inventory = json.loads(destination.read_text(encoding="utf-8"))
                 summary = {
@@ -202,6 +221,8 @@ def main():
         write_json(report_path, report)
         print(json.dumps({"SOURCE_ACQUISITION_FAILED": {
             "stage": report["stage"], "declared_file": report.get("declared_file"),
+            "child_returncode": report.get("child_exit_code"),
+            "download_complete": report.get("download_complete", False),
             **failure,
         }}), flush=True)
         return 1
