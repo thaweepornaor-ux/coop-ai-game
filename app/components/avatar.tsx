@@ -12,11 +12,11 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
  useEffect(()=>{
   if(!interactive||!canvas.current||!visible||contextLost)return;let cancelled=false,cleanup=()=>{};
   import('../../shared/avatar3d').then(m=>{if(cancelled||!canvas.current)return;try{
-   const{renderer,scene,camera}=m.createStudio(canvas.current),model=m.createCharacter(JSON.parse(serialized));scene.add(model);setFailed(renderer.isSoftware);let frame=0,angle=-.12,dragging=false,lastX=0,lastDraw=0;const element=canvas.current;
+   const{renderer,scene,camera}=m.createStudio(canvas.current),model=m.createCharacter(JSON.parse(serialized));scene.add(model);setFailed(renderer.isSoftware);let frame=0,angle=-.12,dragging=false,activePointer=-1,lastX=0,lastDraw=0;const element=canvas.current;
    const draw=()=>{if(renderer.isContextLost)return;model.rotation.y=angle;renderer.render(scene,camera);};
    const resize=()=>{const bounds=element.getBoundingClientRect();if(bounds.width>0&&bounds.height>0){renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.setSize(bounds.width,bounds.height,false);draw();}};const observer=new ResizeObserver(resize);observer.observe(element);resize();
-   const down=(e:PointerEvent)=>{if(e.pointerType==='mouse'&&e.button!==0)return;dragging=true;lastX=e.clientX;element.setPointerCapture(e.pointerId);};
-   const move=(e:PointerEvent)=>{if(dragging){angle+=(e.clientX-lastX)*.012;lastX=e.clientX;draw();}};const up=()=>{dragging=false;};
+   const down=(e:PointerEvent)=>{if(activePointer!==-1||(e.pointerType==='mouse'&&e.button!==0))return;activePointer=e.pointerId;dragging=true;lastX=e.clientX;element.setPointerCapture(e.pointerId);};
+   const move=(e:PointerEvent)=>{if(dragging&&e.pointerId===activePointer){angle+=(e.clientX-lastX)*.012;lastX=e.clientX;draw();}};const up=(e:PointerEvent)=>{if(e.pointerId===activePointer){dragging=false;activePointer=-1;}};
    element.addEventListener('pointerdown',down);element.addEventListener('pointermove',move);element.addEventListener('pointerup',up);element.addEventListener('pointercancel',up);element.addEventListener('lostpointercapture',up);
    const enabled=!renderer.isSoftware&&motion&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
    const animate=(t:number)=>{if(document.hidden){frame=0;return;}if(t-lastDraw>=80){lastDraw=t;if(!dragging)model.poseTime=t*.001;draw();}frame=requestAnimationFrame(animate);};
