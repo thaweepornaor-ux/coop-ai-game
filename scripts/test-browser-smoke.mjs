@@ -34,6 +34,40 @@ const roomLabel = 'รหัสห้อง';
 const nameLabel = 'ชื่อผู้เล่น';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true }); }
+
+function safeCaseText(message) {
+  return String(message)
+    .replace(/Bearer\s+[^\s"'<>]+/gi, 'Bearer [redacted]')
+    .replace(/((?:authorization|token|hostToken|playerToken)\s*["']?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,}\n]+)/gi, '$1[redacted]')
+    .replace(/[a-f0-9]{48,}/gi, '[redacted identifier]')
+    .replace(/https?:\/\/[^\s"'<>]+/gi, '[preview address]')
+    .replace(/[\u0000-\u001f]/g, ' ')
+    .slice(0, 500);
+}
+function emitCase(row) {
+  console.log('COOP_BROWSER_CASE ' + JSON.stringify({
+    label: row.label, status: row.status, score: row.score,
+    error: row.error ? safeCaseText(row.error) : undefined,
+    raster: row.avatarRaster, motion: row.motion, runtimeErrors: row.runtimeErrors,
+  }));
+}
+async function screenshotPreview(page, label) {
+  // These are actual Playwright page screenshots. Compression alone bounds the
+  // native log payload; the full PNG artifact remains unchanged.
+  for (const options of [
+    { fullPage: true, quality: 55 }, { fullPage: true, quality: 35 },
+    { fullPage: false, quality: 45 }, { fullPage: false, quality: 20 },
+  ]) {
+    const bytes = await page.screenshot({ type: 'jpeg', ...options });
+    const proof = {
+      label, mimeType: 'image/jpeg', base64: bytes.toString('base64'),
+      viewport: page.viewportSize(), fullPage: options.fullPage, quality: options.quality,
+    };
+    if (Buffer.byteLength(JSON.stringify(proof), 'utf8') <= 300_000) return proof;
+  }
+  throw new Error('Actual screenshot exceeds the bounded visual evidence payload');
+}
+
 async function noOverflow(page, label) {
   const result = await page.evaluate(() => ({
     viewport: document.documentElement.clientWidth,
@@ -99,9 +133,10 @@ async function wardrobe(page) {
 
 async function surfaces(browser, browserName, size, reducedMotion = 'no-preference') {
   const label = browserName + '-' + size.label + (reducedMotion === 'reduce' ? '-reduced' : '');
-  const row = { label, status: 'running', checks: [] }; report.cases.push(row); await saveReport();
+  const row = { label, status: 'running', checks: [] }; report.cases.push(row); emitCase(row); await saveReport();
   const context = await browser.newContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
   const page = await context.newPage(); page.setDefaultTimeout(15_000); const errors = pageErrors(page);
+  let previewImage = null;
   try {
     await page.goto(preview.origin + '/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).waitFor();
@@ -128,6 +163,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     await wardrobe(page);
     row.avatarRaster = await avatarPainted(page, '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
+    if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
     const toggle = page.getByRole('button', { name: 'เปิดหรือปิดการเคลื่อนไหว', exact: true });
     await page.waitForFunction(expected => document.querySelector('[aria-label="เปิดหรือปิดการเคลื่อนไหว"]')?.getAttribute('aria-pressed') === expected, reducedMotion === 'reduce' ? 'false' : 'true');
     row.motion = await page.evaluate(() => ({ reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, runningCssAnimations: document.getAnimations().filter(x => x.playState === 'running').length }));
@@ -138,12 +174,13 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       assert.equal(await page.evaluate(() => document.getAnimations().filter(x => x.playState === 'running').length), 0, 'Effects-off should stop CSS effects');
     }
     assert.deepEqual(errors, [], 'Browser runtime exceptions'); row.status = 'passed';
-  } catch (error) { row.status = 'failed'; row.error = error.message.slice(0, 700); await shot(page, label + '-failure').catch(() => {}); throw error; }
-  finally { await saveReport(); await context.close(); }
+    if (previewImage) console.log('COOP_BROWSER_IMAGE ' + JSON.stringify(previewImage));
+  } catch (error) { row.status = 'failed'; row.error = safeCaseText(error.message); row.runtimeErrors = errors.slice(0, 4).map(safeCaseText); await shot(page, label + '-failure').catch(() => {}); throw error; }
+  finally { emitCase(row); await saveReport(); await context.close(); }
 }
 
 async function realRoom(browser, browserName) {
-  const row = { label: browserName + '-real-room', status: 'running', checks: [] }; report.cases.push(row); await saveReport();
+  const row = { label: browserName + '-real-room', status: 'running', checks: [] }; report.cases.push(row); emitCase(row); await saveReport();
   const hostContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
   const playerContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
   const host = await hostContext.newPage(); const player = await playerContext.newPage();
@@ -223,8 +260,8 @@ async function realRoom(browser, browserName) {
     assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')), submittedAvatar);
     row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
     assert.deepEqual(hostErrors, [], 'Host runtime exceptions'); assert.deepEqual(playerErrors, [], 'Learner runtime exceptions'); row.status = 'passed';
-  } catch (error) { row.status = 'failed'; row.error = error.message.slice(0, 700); await shot(host, browserName + '-room-host-failure').catch(() => {}); await shot(player, browserName + '-room-player-failure').catch(() => {}); throw error; }
-  finally { await saveReport(); await playerContext.close(); await hostContext.close(); }
+  } catch (error) { row.status = 'failed'; row.error = safeCaseText(error.message); row.runtimeErrors = [...hostErrors, ...playerErrors].slice(0, 4).map(safeCaseText); await shot(host, browserName + '-room-host-failure').catch(() => {}); await shot(player, browserName + '-room-player-failure').catch(() => {}); throw error; }
+  finally { emitCase(row); await saveReport(); await playerContext.close(); await hostContext.close(); }
 }
 
 let failures = 0;
@@ -235,7 +272,7 @@ for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
     for (const size of sizes) { try { await surfaces(browser, name, size); } catch { failures++; } }
     try { await surfaces(browser, name, sizes[1], 'reduce'); } catch { failures++; }
     try { await realRoom(browser, name); } catch { failures++; }
-  } catch (error) { failures++; report.cases.push({ label: name + '-launch', status: 'failed', error: error.message.slice(0, 700) }); }
+  } catch (error) { failures++; const row = { label: name + '-launch', status: 'failed', error: safeCaseText(error.message) }; report.cases.push(row); emitCase(row); }
   finally { await browser?.close(); await saveReport(); }
 }
 clearTimeout(deadline);
