@@ -1,0 +1,61 @@
+name: Staging config safety
+on:
+  push:
+    branches: [codex/preview-staging-20261011]
+    paths:
+      - 'scripts/configure-staging.sh'
+      - '.github/workflows/staging-config-safety.yml'
+      - 'wrangler.ci.jsonc'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-staging-config:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Reject placeholder/invalid staging database IDs
+        run: |
+          if STAGING_D1_DATABASE_ID=00000000-0000-4000-8000-000000000000 bash scripts/configure-staging.sh; then
+            echo 'Placeholder ID was incorrectly accepted' >&2
+            exit 1
+          fi
+          if STAGING_D1_DATABASE_ID=invalid bash scripts/configure-staging.sh; then
+            echo 'Invalid ID was incorrectly accepted' >&2
+            exit 1
+          fi
+      - name: Validate isolated generated config
+        env:
+          STAGING_D1_DATABASE_ID: 12345678-1234-4234-8234-123456789abc
+          STAGING_WORKER_NAME: coop-ai-game-test-staging
+        run: |
+          bash scripts/configure-staging.sh
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const ci=JSON.parse(readFileSync('wrangler.ci.jsonc','utf8'));
+          const config=JSON.parse(readFileSync('.staging-local/wrangler.staging.json','utf8'));
+          assert.equal(config.name,'coop-ai-game-test-staging');
+          assert.notEqual(config.name,ci.name);
+          assert.equal(config.d1_databases.length,1);
+          assert.equal(config.d1_databases[0].binding,'DB');
+          assert.equal(config.d1_databases[0].database_id,process.env.STAGING_D1_DATABASE_ID);
+          assert.equal(config.d1_databases[0].remote,true);
+          assert.notEqual(config.d1_databases[0].database_id,ci.d1_databases[0].database_id);
+          assert.equal(config.routes,undefined);
+          assert.equal(config.route,undefined);
+          console.log('Staging-only config passes isolation guard.');
+          NODE
+      - name: Ensure staging configuration stays untracked
+        run: |
+          git check-ignore .staging-local/wrangler.staging.json
+          if git ls-files --error-unmatch .staging-local/wrangler.staging.json >/dev/null 2>&1; then
+            echo 'Generated configuration must never be tracked' >&2
+            exit 1
+          fi
