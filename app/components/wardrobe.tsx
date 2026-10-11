@@ -52,7 +52,7 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
         <p className="character-catalogue-hint">เลือกใบหน้าและทรงผมที่ชอบ ชุดที่แต่งไว้ยังอยู่เหมือนเดิม</p>
         <div className="character-card-grid" aria-label={`เลือกตัวละคร${gender === 'male' ? 'ชาย' : 'หญิง'}`}>
           {CHARACTERS.filter(preset => preset.gender === gender).map(preset => <button type="button" key={preset.id} className={`character-card${selectedPreset === preset.id ? ' selected' : ''}`} aria-label={`${preset.id} ${preset.label}${selectedPreset === preset.id ? ' เลือกแล้ว' : ''}`} aria-pressed={selectedPreset === preset.id} onClick={() => applyPreset(preset)}>
-            <span className="character-card-portrait"><Avatar className="character-card-avatar" options={{ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, hatStyle: 'none' }} motion={false} /></span>
+            <span className="character-card-portrait">{selectedPreset === preset.id ? <Avatar className="character-card-avatar" options={{ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, hatStyle: 'none' }} motion={false} /> : <span className="character-card-icon"><ItemIcon kind="body" value={preset.gender} color={preset.skinTone === 'light' ? '#edc6ab' : '#c69c7d'} /></span>}</span>
             <span className="character-card-id">{preset.id}</span><span className="character-card-label">{preset.label}</span><span className="character-card-check" aria-hidden="true">{selectedPreset === preset.id ? '✓' : ''}</span>
           </button>)}
         </div>
