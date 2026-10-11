@@ -1,5 +1,14 @@
 name: Deploy staging game
 on:
+  push:
+    branches: [codex/preview-staging-20261011]
+    paths:
+      - 'vite.staging.config.ts'
+      - 'scripts/configure-staging.sh'
+      - '.github/workflows/deploy-staging-game.yml'
+      - 'app/**'
+      - 'server/**'
+      - 'shared/**'
   workflow_dispatch:
     inputs:
       publish:
