@@ -5,10 +5,10 @@ export { AVATAR_OPTIONS } from '../../shared/avatar.js';
 export type { AvatarChoices, AvatarOption, AvatarOptionKey } from '../../shared/avatar.js';
 export interface AvatarProps {options?:AvatarChoices|Record<string,unknown>;className?:string;interactive?:boolean;motion?:boolean;}
 export function Avatar({options={},className,interactive=false,motion=true}:AvatarProps){
- const container=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);const[thumbnail,setThumbnail]=useState(''),[failed,setFailed]=useState(false),[visible,setVisible]=useState(interactive),[contextLost,setContextLost]=useState(false),[contextEpoch,setContextEpoch]=useState(0);const serialized=JSON.stringify(options);
+ const container=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);const[thumbnail,setThumbnail]=useState<{key:string;url:string}|null>(null),[failed,setFailed]=useState(false),[visible,setVisible]=useState(interactive),[contextLost,setContextLost]=useState(false),[contextEpoch,setContextEpoch]=useState(0);const serialized=JSON.stringify(options);
  useEffect(()=>{if(interactive)setContextLost(false);const element=canvas.current;if(!element)return;const lost=(e:Event)=>{e.preventDefault();setContextLost(true);};const restored=()=>{setContextLost(false);setFailed(false);setContextEpoch(v=>v+1);};element.addEventListener('webglcontextlost',lost);element.addEventListener('webglcontextrestored',restored);return()=>{element.removeEventListener('webglcontextlost',lost);element.removeEventListener('webglcontextrestored',restored);};},[interactive]);
  useEffect(()=>{if(!container.current)return;const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'120px'});observer.observe(container.current);return()=>observer.disconnect();},[]);
- useEffect(()=>{if(!visible)return;let cancelled=false;import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized))).then(url=>{if(!cancelled)setThumbnail(url);}).catch(()=>{});return()=>{cancelled=true;};},[serialized,visible,contextEpoch]);
+ useEffect(()=>{if(!visible)return;let cancelled=false;import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized))).then(url=>{if(!cancelled)setThumbnail({key:serialized,url});}).catch(()=>{});return()=>{cancelled=true;};},[serialized,visible,contextEpoch]);
  useEffect(()=>{
   if(!interactive||!canvas.current||!visible||contextLost)return;let cancelled=false,cleanup=()=>{};
   import('../../shared/avatar3d').then(m=>{if(cancelled||!canvas.current)return;try{
@@ -26,7 +26,7 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
   }catch{setFailed(true);}});return()=>{cancelled=true;cleanup();};
  },[serialized,interactive,motion,visible,contextLost,contextEpoch]);
  return <div ref={container} className={className} style={{position:'relative',aspectRatio:'3 / 4'}}>
-  {thumbnail&&<img src={thumbnail} alt="ตัวละครสามมิติผู้เล่น" decoding="async" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>}
+  {thumbnail?.key===serialized&&<img src={thumbnail.url} alt="ตัวละครสามมิติผู้เล่น" decoding="async" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>}
   {interactive&&<canvas ref={canvas} aria-label="ตัวละครสามมิติ ลากเพื่อหมุนดูชุด" style={{position:'absolute',inset:0,width:'100%',height:'100%',touchAction:'pan-y',cursor:'grab',opacity:failed||contextLost?0:1}}/>}
  </div>;
 }
