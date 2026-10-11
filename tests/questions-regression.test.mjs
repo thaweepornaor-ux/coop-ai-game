@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
 const source = readFileSync(new URL('../server/questions.ts', import.meta.url), 'utf8');
-const expression = source.replace(/^export const QUESTIONS\\s*=\\s*/, '').replace(/\\s+as const;?\\s*$/, '');
+const expression = source.replace(/^export const QUESTIONS\s*=\s*/, '').replace(/\s+as const;?\s*$/, '');
 const questions = runInNewContext('(' + expression + ')', Object.create(null), { timeout: 1000 });
 
 test('quiz contains exactly 15 numbered questions in order', () => {
