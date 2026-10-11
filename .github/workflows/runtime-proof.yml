@@ -2,6 +2,8 @@ name: Runtime proof
 on:
   push:
     branches: [main, codex/game-recovery, codex/avatar-preview-refresh-20261011]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
