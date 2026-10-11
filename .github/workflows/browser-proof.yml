@@ -1,7 +1,7 @@
 name: Browser proof
 on:
   push:
-    branches: [main, codex/game-recovery]
+    branches: [main, codex/game-recovery, codex/avatar-preview-refresh-20261011]
     paths:
       - 'app/**'
       - 'shared/**'
