@@ -25,7 +25,7 @@ jobs:
       - name: Prove Node execution
         run: node --version
       - name: Validate isolated staging config on staging branch
-        if: github.ref == 'refs/heads/codex/preview-staging-20261011'
+        if: github.ref == 'refs/heads/codex/preview-staging-20261011' || github.head_ref == 'codex/preview-staging-20261011'
         env:
           STAGING_D1_DATABASE_ID: 12345678-1234-4234-8234-123456789abc
           STAGING_WORKER_NAME: coop-ai-game-test-staging
