@@ -21,7 +21,7 @@ jobs:
       CLOUDFLARE_CF_FETCH_ENABLED: 'false'
       COOP_EPHEMERAL_D1: '1'
       COOP_PREVIEW_URL: 'http://127.0.0.1:4173'
-      COOP_BROWSER_DIAGNOSTIC_CASE: 'webkit-desktop-1280'
+      COOP_BROWSER_DIAGNOSTIC_CASE: 'webkit-wardrobe-only-1280'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

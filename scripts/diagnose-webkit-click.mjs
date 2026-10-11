@@ -6,7 +6,8 @@ import { pathToFileURL } from 'node:url';
 // Diagnostic copy of the full browser smoke; the acceptance script is unchanged.
 // This check may create synthetic rooms only in the disposable CI preview.
 const diagnosticCase = process.env.COOP_BROWSER_DIAGNOSTIC_CASE || '';
-assert(['', 'webkit-desktop-1280'].includes(diagnosticCase), 'Unsupported browser diagnostic case');
+assert(['', 'webkit-desktop-1280', 'webkit-wardrobe-only-1280'].includes(diagnosticCase), 'Unsupported browser diagnostic case');
+const wardrobeOnlyDiagnostic = diagnosticCase === 'webkit-wardrobe-only-1280';
 const preview = new URL(process.env.COOP_PREVIEW_URL || 'http://127.0.0.1:4173');
 assert(['127.0.0.1', 'localhost', '[::1]'].includes(preview.hostname), 'Browser smoke requires a loopback preview');
 assert.equal(preview.protocol, 'http:', 'Use the local HTTP preview, never the published game');
@@ -24,6 +25,8 @@ const report = {
   limits: ['Linux Chromium/WebKit emulation is not a physical iPhone or Android test', 'Nonblank raster and screenshots do not certify professional avatar art'],
   mode: diagnosticCase ? 'diagnostic-only' : 'full-suite',
   acceptanceEligible: !diagnosticCase,
+  caseKind: wardrobeOnlyDiagnostic ? 'wardrobe-only-diagnostic' : diagnosticCase ? 'surface-diagnostic' : 'full-suite',
+  omittedCoverage: wardrobeOnlyDiagnostic ? ['Landing and host navigation', 'Hero and avatar checks', 'Motion and overflow checks', 'Real-room journey', 'Previous cross-page startup and cache sequence'] : [],
   diagnosticCase: diagnosticCase || null,
   fullSuiteRequiredCases: 12,
   plannedCases: diagnosticCase ? 1 : 12,
@@ -55,7 +58,7 @@ function safeCaseText(message) {
 }
 function emitCase(row) {
   console.log('COOP_BROWSER_CASE ' + JSON.stringify({
-    label: row.label, status: row.status, stage: row.stage, elapsedMs: row.elapsedMs, score: row.score,
+    label: row.label, caseKind: row.caseKind, status: row.status, stage: row.stage, elapsedMs: row.elapsedMs, score: row.score,
     error: row.error ? safeCaseText(row.error) : undefined,
     raster: row.avatarRaster, motion: row.motion, runtimeErrors: row.runtimeErrors,
   }));
@@ -406,6 +409,29 @@ async function wardrobe(page, browserName, mark = () => {}, remainingMs = () => 
   } finally { audit?.stop(); }
 }
 
+async function wardrobeOnly(browser) {
+  return boundedCase(browser, 'webkit-wardrobe-only-1280', 75_000, async ({ createContext, createPage, stage, remainingMs }, row) => {
+    row.caseKind = 'wardrobe-only-diagnostic';
+    row.acceptanceEligible = false; row.fullSuitePassed = false;
+    const context = await createContext({
+      viewport: { width: 1280, height: 900 }, isMobile: false, hasTouch: false,
+      deviceScaleFactor: 1, reducedMotion: 'no-preference', locale: 'th-TH',
+    });
+    await installWebKitInputAudit(context);
+    const page = await createPage(context);
+    observeWebKitInput(page);
+    // Direct entry deliberately omits the full surface's navigation and render checks.
+    await stage('player-entry-hydration');
+    await page.goto(preview.origin + '/play?room=ABC234', { waitUntil: 'domcontentloaded' });
+    await page.getByLabel(roomLabel, { exact: true }).waitFor();
+    await page.waitForFunction(() => document.querySelector('.join-fields input')?.value === 'ABC234');
+    await page.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
+    await stage('wardrobe-controls');
+    await wardrobe(page, 'webkit', wardrobeOperationMarker(row), remainingMs);
+    row.checks.push('Original player hydration, name setup and wardrobe controls only; not full-surface acceptance');
+  });
+}
+
 async function surfaces(browser, browserName, size, reducedMotion = 'no-preference') {
   const label = browserName + '-' + size.label + (reducedMotion === 'reduce' ? '-reduced' : '');
   return boundedCase(browser, label, 75_000, async ({ createContext, createPage, stage, remainingMs }, row) => {
@@ -558,9 +584,12 @@ for (const [name, type] of browserPlan) {
   let browser, prerequisite = true;
   try {
     browser = await type.launch({ headless: true, timeout: 20_000 });
-    for (const size of surfaceOrder) {
-      if (!prerequisite) { await notRun(name + '-' + size.label, 'Earlier browser surface failed; fix that prerequisite before dependent scenarios'); continue; }
-      prerequisite = await surfaces(browser, name, size);
+    if (wardrobeOnlyDiagnostic) prerequisite = await wardrobeOnly(browser);
+    else {
+      for (const size of surfaceOrder) {
+        if (!prerequisite) { await notRun(name + '-' + size.label, 'Earlier browser surface failed; fix that prerequisite before dependent scenarios'); continue; }
+        prerequisite = await surfaces(browser, name, size);
+      }
     }
     if (!diagnosticCase) {
       if (prerequisite) prerequisite = await surfaces(browser, name, sizes[1], 'reduce');
@@ -571,7 +600,7 @@ for (const [name, type] of browserPlan) {
   } catch (error) {
     const row = { label: name + '-launch', status: 'failed', stage: 'browser-lifecycle', error: safeCaseText(error.message) };
     report.cases.push(row); emitCase(row); await saveReport();
-    const expectedLabels = [...surfaceOrder.map(size => name + '-' + size.label), ...(diagnosticCase ? [] : [name + '-mobile-390-reduced', name + '-real-room'])];
+    const expectedLabels = wardrobeOnlyDiagnostic ? ['webkit-wardrobe-only-1280'] : [...surfaceOrder.map(size => name + '-' + size.label), ...(diagnosticCase ? [] : [name + '-mobile-390-reduced', name + '-real-room'])];
     for (const label of expectedLabels) {
       if (!report.cases.some(row => row.label === label)) await notRun(label, 'Browser initialization or lifecycle failed');
     }
@@ -592,7 +621,7 @@ const notExecuted = report.cases.filter(row => row.status === 'not-run').length;
 const passed = report.cases.filter(row => row.status === 'passed').length;
 report.fullSuitePassed = !diagnosticCase && passed === 12 && failed === 0 && notExecuted === 0;
 await saveReport();
-console.log(JSON.stringify({ check: diagnosticCase ? 'webkit-click-diagnostic' : 'real-browser-smoke', mode: report.mode, acceptanceEligible: report.acceptanceEligible, fullSuiteRequired: 12, fullSuitePassed: report.fullSuitePassed, selectedCase: diagnosticCase || null, planned: report.plannedCases, cases: report.cases.length, passed, failed, notExecuted, evidence: 'browser-proof screenshots and report.json' }));
+console.log(JSON.stringify({ check: diagnosticCase ? 'webkit-click-diagnostic' : 'real-browser-smoke', mode: report.mode, caseKind: report.caseKind, acceptanceEligible: report.acceptanceEligible, fullSuiteRequired: 12, fullSuitePassed: report.fullSuitePassed, selectedCase: diagnosticCase || null, planned: report.plannedCases, cases: report.cases.length, passed, failed, notExecuted, evidence: 'browser-proof screenshots and report.json' }));
 // All evidence is saved before exit. A broken browser process must not retain
 // the Node runner indefinitely after its bounded cleanup has already failed.
 process.exit(failed || notExecuted ? 1 : 0);
