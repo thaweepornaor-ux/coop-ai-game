@@ -19,6 +19,7 @@ const report = {
   scope: 'Disposable local preview; synthetic users; no production database',
   playwright: installed.version,
   limits: ['Linux Chromium/WebKit emulation is not a physical iPhone or Android test', 'Nonblank raster and screenshots do not certify professional avatar art'],
+  plannedCases: 12,
   cases: [],
 };
 const deadline = setTimeout(() => { console.error('Browser smoke exceeded its ten minute bound'); process.exit(1); }, 600_000);
@@ -33,7 +34,7 @@ const syntheticName = 'ผู้เล่นทดสอบ';
 const roomLabel = 'รหัสห้อง';
 const nameLabel = 'ชื่อผู้เล่น';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
-async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true }); }
+async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
 
 function safeCaseText(message) {
   return String(message)
@@ -46,7 +47,7 @@ function safeCaseText(message) {
 }
 function emitCase(row) {
   console.log('COOP_BROWSER_CASE ' + JSON.stringify({
-    label: row.label, status: row.status, score: row.score,
+    label: row.label, status: row.status, stage: row.stage, elapsedMs: row.elapsedMs, score: row.score,
     error: row.error ? safeCaseText(row.error) : undefined,
     raster: row.avatarRaster, motion: row.motion, runtimeErrors: row.runtimeErrors,
   }));
@@ -58,7 +59,7 @@ async function screenshotPreview(page, label) {
     { fullPage: true, quality: 55 }, { fullPage: true, quality: 35 },
     { fullPage: false, quality: 45 }, { fullPage: false, quality: 20 },
   ]) {
-    const bytes = await page.screenshot({ type: 'jpeg', ...options });
+    const bytes = await page.screenshot({ type: 'jpeg', ...options, timeout: 15_000 });
     const proof = {
       label, mimeType: 'image/jpeg', base64: bytes.toString('base64'),
       viewport: page.viewportSize(), fullPage: options.fullPage, quality: options.quality,
@@ -66,6 +67,87 @@ async function screenshotPreview(page, label) {
     if (Buffer.byteLength(JSON.stringify(proof), 'utf8') <= 300_000) return proof;
   }
   throw new Error('Actual screenshot exceeds the bounded visual evidence payload');
+}
+
+function within(promise, milliseconds, description) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(description + ' exceeded ' + milliseconds + ' ms')), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+const contextClosures = new WeakMap();
+function closeContext(context) {
+  if (!contextClosures.has(context)) {
+    contextClosures.set(context, within(context.close(), 5_000, 'Context cleanup'));
+  }
+  return contextClosures.get(context);
+}
+async function boundedCase(browser, label, budgetMs, body) {
+  const started = Date.now();
+  const row = { label, status: 'running', stage: 'context-setup', budgetMs, checks: [] };
+  report.cases.push(row); emitCase(row); await saveReport();
+  const contexts = new Set(), pages = [], errors = [];
+  let active = true, timedOut = false, timer, previewImage;
+  const stage = async name => {
+    if (!active || timedOut) throw new Error('Case was aborted');
+    row.stage = name; row.elapsedMs = Date.now() - started;
+    emitCase(row); await saveReport();
+  };
+  const createContext = async options => {
+    const pending = browser.newContext(options);
+    // A context created after its owning case ends must also be closed.
+    pending.then(context => {
+      if (active && !timedOut) contexts.add(context);
+      else void closeContext(context).catch(() => {});
+    }, () => {});
+    return within(pending, 10_000, 'Context initialization');
+  };
+  const createPage = async context => {
+    const page = await within(context.newPage(), 10_000, 'Page initialization');
+    if (!active || timedOut) throw new Error('Case was aborted');
+    page.setDefaultTimeout(15_000); page.setDefaultNavigationTimeout(10_000);
+    pages.push(page);
+    page.on('pageerror', error => errors.push(safeCaseText(error.message)));
+    return page;
+  };
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      reject(new Error('Case deadline exceeded at ' + row.stage + ' after ' + budgetMs + ' ms'));
+      // Closing only this case's contexts rejects blocked browser operations,
+      // including evaluate calls which have no Playwright operation timeout.
+      for (const context of contexts) void closeContext(context).catch(() => {});
+    }, budgetMs);
+  });
+  try {
+    const result = await Promise.race([body({ createContext, createPage, stage }, row), timeout]);
+    assert.deepEqual(errors, [], 'Browser runtime exceptions');
+    previewImage = result?.previewImage;
+    row.status = 'passed';
+  } catch (error) {
+    row.status = 'failed'; row.error = safeCaseText(error.message);
+    row.runtimeErrors = errors.slice(0, 4);
+    // A timed out context is already being closed. Other failures retain a
+    // bounded actual screenshot before cleanup; no synthetic evidence is used.
+    if (!timedOut) await Promise.allSettled(pages.slice(0, 2).map((page, index) =>
+      page.screenshot({ path: path.join(out, label + '-failure-' + index + '.png'), fullPage: true, timeout: 5_000 })));
+  } finally {
+    active = false; clearTimeout(timer);
+    const cleanup = await Promise.allSettled([...contexts].map(closeContext));
+    const cleanupError = cleanup.find(result => result.status === 'rejected');
+    if (cleanupError) {
+      row.status = 'failed';
+      row.error = safeCaseText((row.error ? row.error + '; ' : '') + cleanupError.reason.message);
+    }
+    row.elapsedMs = Date.now() - started; emitCase(row); await saveReport();
+  }
+  if (row.status === 'passed' && previewImage) console.log('COOP_BROWSER_IMAGE ' + JSON.stringify(previewImage));
+  return row.status === 'passed';
+}
+async function notRun(label, reason) {
+  const row = { label, status: 'not-run', stage: 'prerequisite', error: reason };
+  report.cases.push(row); emitCase(row); await saveReport();
 }
 
 async function noOverflow(page, label) {
@@ -133,20 +215,23 @@ async function wardrobe(page) {
 
 async function surfaces(browser, browserName, size, reducedMotion = 'no-preference') {
   const label = browserName + '-' + size.label + (reducedMotion === 'reduce' ? '-reduced' : '');
-  const row = { label, status: 'running', checks: [] }; report.cases.push(row); emitCase(row); await saveReport();
-  const context = await browser.newContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
-  const page = await context.newPage(); page.setDefaultTimeout(15_000); const errors = pageErrors(page);
-  let previewImage = null;
-  try {
+  return boundedCase(browser, label, 75_000, async ({ createContext, createPage, stage }, row) => {
+    const context = await createContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
+    const page = await createPage(context);
+    let previewImage = null;
+    await stage('landing-document');
     await page.goto(preview.origin + '/', { waitUntil: 'domcontentloaded' });
     await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).waitFor();
     assert.equal(await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).getAttribute('href'), '/play');
     assert.equal(await page.getByRole('link', { name: /เปิดเวทีผู้สอน/ }).getAttribute('href'), '/host');
+    await stage('landing-avatar');
     row.heroRaster = await avatarPainted(page, '.hero-avatar');
     row.checks.push({ landing: await noOverflow(page, label + ' landing') }); await shot(page, label + '-landing');
+    await stage('host-entry');
     await page.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: /สร้างห้องเกม/ }).waitFor();
     row.checks.push({ hostEntry: await noOverflow(page, label + ' host entry') }); await shot(page, label + '-host-entry');
+    await stage('player-entry-hydration');
     await page.goto(preview.origin + '/play?room=ABC234', { waitUntil: 'domcontentloaded' });
     await page.getByLabel(roomLabel, { exact: true }).waitFor();
     await page.waitForFunction(() => document.querySelector('.join-fields input')?.value === 'ABC234');
@@ -160,10 +245,13 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       await page.reload({ waitUntil: 'domcontentloaded' });
     }
     await page.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
+    await stage('wardrobe-controls');
     await wardrobe(page);
+    await stage('wardrobe-avatar');
     row.avatarRaster = await avatarPainted(page, '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
     if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
+    await stage('motion-controls');
     const toggle = page.getByRole('button', { name: 'เปิดหรือปิดการเคลื่อนไหว', exact: true });
     await page.waitForFunction(expected => document.querySelector('[aria-label="เปิดหรือปิดการเคลื่อนไหว"]')?.getAttribute('aria-pressed') === expected, reducedMotion === 'reduce' ? 'false' : 'true');
     row.motion = await page.evaluate(() => ({ reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, runningCssAnimations: document.getAnimations().filter(x => x.playState === 'running').length }));
@@ -173,20 +261,16 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
       assert.equal(await page.evaluate(() => document.getAnimations().filter(x => x.playState === 'running').length), 0, 'Effects-off should stop CSS effects');
     }
-    assert.deepEqual(errors, [], 'Browser runtime exceptions'); row.status = 'passed';
-    if (previewImage) console.log('COOP_BROWSER_IMAGE ' + JSON.stringify(previewImage));
-  } catch (error) { row.status = 'failed'; row.error = safeCaseText(error.message); row.runtimeErrors = errors.slice(0, 4).map(safeCaseText); await shot(page, label + '-failure').catch(() => {}); throw error; }
-  finally { emitCase(row); await saveReport(); await context.close(); }
+    return { previewImage };
+  });
 }
 
 async function realRoom(browser, browserName) {
-  const row = { label: browserName + '-real-room', status: 'running', checks: [] }; report.cases.push(row); emitCase(row); await saveReport();
-  const hostContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
-  const playerContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
-  const host = await hostContext.newPage(); const player = await playerContext.newPage();
-  host.setDefaultTimeout(15_000); player.setDefaultTimeout(15_000);
-  const hostErrors = pageErrors(host); const playerErrors = pageErrors(player);
-  try {
+  return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage }, row) => {
+    const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
+    const playerContext = await createContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
+    const host = await createPage(hostContext); const player = await createPage(playerContext);
+    await stage('host-create-real-room');
     await host.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
     await host.getByRole('button', { name: /สร้างห้องเกม/ }).click(); await online(host);
     const room = (await host.locator('.room-code').textContent()).trim(); assert.match(room, /^[A-Z0-9]{6}$/);
@@ -196,15 +280,19 @@ async function realRoom(browser, browserName) {
     const joinUrl = new URL(await urlInput.inputValue());
     assert.equal(joinUrl.origin, preview.origin); assert.equal(joinUrl.pathname, '/play');
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
+    await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
-    const sent = player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join');
-    await player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click();
-    const submittedAvatar = (await sent).postDataJSON().avatar;
+    const [sent] = await Promise.all([
+      player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
+      player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
+    ]);
+    const submittedAvatar = sent.postDataJSON().avatar;
     assert.equal(Object.keys(submittedAvatar).length, 12); assert.equal(submittedAvatar.presetId, 'F03');
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
+    await stage('session-reload');
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
@@ -213,6 +301,7 @@ async function realRoom(browser, browserName) {
     await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
     let expectedScore = 0;
     for (let number = 1; number <= 15; number++) {
+      await stage('question-' + number);
       await question(host, number); await question(player, number);
       assert.equal(await host.locator('.answer-grid button:disabled').count(), 3, 'Instructor cannot submit learner answers');
       assert.equal(await player.locator('.host-controls').count(), 0, 'Learner must not have instructor progression controls');
@@ -228,6 +317,7 @@ async function realRoom(browser, browserName) {
         await question(host, 2); row.checks.push('Real fifteen-second deadline locks answers without revealing or advancing');
       }
       if (number === 1) { await noOverflow(player, 'mobile active question'); await shot(player, browserName + '-question-player'); await shot(host, browserName + '-question-host'); }
+      await stage('reveal-' + number);
       await host.locator('.host-controls button').click();
       await host.locator('.explanation').waitFor(); await player.locator('.explanation').waitFor();
       const correctChoice = await player.locator('.answer-grid button').evaluateAll(buttons => buttons.findIndex(button => button.classList.contains('correct')));
@@ -239,6 +329,7 @@ async function realRoom(browser, browserName) {
       if (number === 1) { await noOverflow(host, 'desktop reveal'); await shot(host, browserName + '-reveal-host'); await shot(player, browserName + '-reveal-player'); }
       await host.locator('.host-controls button').click();
     }
+    await stage('final-scoreboard');
     await host.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
     await player.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
     assert.equal((await player.locator('.personal-finish .big-score').innerText()).replace(/\s/g, ''), expectedScore + '/15');
@@ -248,6 +339,7 @@ async function realRoom(browser, browserName) {
       await noOverflow(player, size.label + ' final scoreboard'); await shot(player, browserName + '-' + size.label + '-final');
     }
     row.checks.push('All fifteen questions, instructor reveals and final score rendered through real API');
+    await stage('instructor-reset');
     assert.equal(await player.getByRole('button', { name: /เริ่มรอบใหม่/ }).count(), 0);
     await host.getByRole('button', { name: /เริ่มรอบใหม่/ }).click();
     await host.getByRole('dialog').waitFor(); await host.getByRole('button', { name: 'ยังไม่เริ่มใหม่', exact: true }).click();
@@ -259,22 +351,44 @@ async function realRoom(browser, browserName) {
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')), submittedAvatar);
     row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
-    assert.deepEqual(hostErrors, [], 'Host runtime exceptions'); assert.deepEqual(playerErrors, [], 'Learner runtime exceptions'); row.status = 'passed';
-  } catch (error) { row.status = 'failed'; row.error = safeCaseText(error.message); row.runtimeErrors = [...hostErrors, ...playerErrors].slice(0, 4).map(safeCaseText); await shot(host, browserName + '-room-host-failure').catch(() => {}); await shot(player, browserName + '-room-player-failure').catch(() => {}); throw error; }
-  finally { emitCase(row); await saveReport(); await playerContext.close(); await hostContext.close(); }
+  });
 }
 
-let failures = 0;
+
+const surfaceOrder = [sizes[3], sizes[1], sizes[0], sizes[2]];
 for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
-  let browser;
+  let browser, prerequisite = true;
   try {
-    browser = await type.launch({ headless: true });
-    for (const size of sizes) { try { await surfaces(browser, name, size); } catch { failures++; } }
-    try { await surfaces(browser, name, sizes[1], 'reduce'); } catch { failures++; }
-    try { await realRoom(browser, name); } catch { failures++; }
-  } catch (error) { failures++; const row = { label: name + '-launch', status: 'failed', error: safeCaseText(error.message) }; report.cases.push(row); emitCase(row); }
-  finally { await browser?.close(); await saveReport(); }
+    browser = await type.launch({ headless: true, timeout: 20_000 });
+    for (const size of surfaceOrder) {
+      if (!prerequisite) { await notRun(name + '-' + size.label, 'Earlier browser surface failed; fix that prerequisite before dependent scenarios'); continue; }
+      prerequisite = await surfaces(browser, name, size);
+    }
+    if (prerequisite) prerequisite = await surfaces(browser, name, sizes[1], 'reduce');
+    else await notRun(name + '-mobile-390-reduced', 'Earlier browser surface failed');
+    if (prerequisite) await realRoom(browser, name);
+    else await notRun(name + '-real-room', 'Browser entry or wardrobe prerequisites failed; room journey remains unverified');
+  } catch (error) {
+    const row = { label: name + '-launch', status: 'failed', stage: 'browser-lifecycle', error: safeCaseText(error.message) };
+    report.cases.push(row); emitCase(row); await saveReport();
+    for (const label of [...surfaceOrder.map(size => name + '-' + size.label), name + '-mobile-390-reduced', name + '-real-room']) {
+      if (!report.cases.some(row => row.label === label)) await notRun(label, 'Browser initialization or lifecycle failed');
+    }
+  } finally {
+    if (browser) {
+      try { await within(browser.close(), 5_000, name + ' browser cleanup'); }
+      catch (error) {
+        const row = { label: name + '-cleanup', status: 'failed', stage: 'browser-cleanup', error: safeCaseText(error.message) };
+        report.cases.push(row); emitCase(row);
+      }
+    }
+    await saveReport();
+  }
 }
 clearTimeout(deadline);
-console.log(JSON.stringify({ check: 'real-browser-smoke', cases: report.cases.length, passed: report.cases.filter(x => x.status === 'passed').length, failed: failures, evidence: 'browser-proof screenshots and report.json' }));
-if (failures) process.exitCode = 1;
+const failed = report.cases.filter(row => row.status === 'failed').length;
+const notExecuted = report.cases.filter(row => row.status === 'not-run').length;
+console.log(JSON.stringify({ check: 'real-browser-smoke', planned: report.plannedCases, cases: report.cases.length, passed: report.cases.filter(row => row.status === 'passed').length, failed, notExecuted, evidence: 'browser-proof screenshots and report.json' }));
+// All evidence is saved before exit. A broken browser process must not retain
+// the Node runner indefinitely after its bounded cleanup has already failed.
+process.exit(failed || notExecuted ? 1 : 0);
