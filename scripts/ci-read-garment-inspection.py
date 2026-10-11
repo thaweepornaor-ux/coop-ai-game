@@ -12,7 +12,7 @@ SAFE_CODES = frozenset(("invalid_arguments", "missing_token", "unsafe_output", "
     "redirect_limit", "metadata_size", "frozen_artifact_mismatch", "download_header",
     "download_size", "download_checksum", "unsafe_zip_path", "zip_limits", "duplicate_zip_path",
     "zip_collision", "missing_unique_report", "entry_crc_size", "invalid_json", "report_schema",
-    "source_hash_mismatch", "output_budget"))
+    "source_hash_mismatch", "output_budget", "driver_identity_mismatch"))
 class SafeParser(argparse.ArgumentParser):
     def error(self, message):
         raise ValueError("invalid_arguments")
@@ -163,11 +163,48 @@ def summarize(model, topology, proof):
         "source_hash_rechecked": flag(proof["source_hash_rechecked"]),
         "automatic_python_execution": flag(proof["policy"]["automatic_python_execution"]),
         "embedded_text_executed": flag(proof["policy"]["embedded_text_executed"])}
+def identity_text(value):
+    if value is None:
+        return None
+    require(isinstance(value, str))
+    value = re.sub(r"[\x00-\x1f\x7f]", " ", value)
+    value = re.sub(r"(?:https?://|www\.)[^\s\"'<>]+", "[redacted URL]", value, flags=re.I)
+    value = re.sub(r"\b(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]+", "[redacted credential]", value)
+    value = re.sub(r"\bsk-[A-Za-z0-9_-]{20,}", "[redacted credential]", value)
+    value = re.sub(r"\bBearer\s+[^\s\"'<>]+", "Bearer [redacted]", value, flags=re.I)
+    value = re.sub(
+        r"((?:authorization|cookie|password|secret|(?:host|player)?token|api[_-]?key)\s*[:=]\s*)"
+        r"(?:\"[^\"]*\"|'[^']*'|[^\s,;}]+)", r"\1[redacted]", value, flags=re.I)
+    return value[:256]
+
+def rain_driver_identity(proof):
+    drivers = proof["driver_evaluation_status_after_render"]
+    if (proof["model"] != "rain" or not isinstance(drivers, list) or len(drivers) != 774):
+        raise ValueError("driver_identity_mismatch")
+    driver = drivers[121]
+    if (driver["id_type"] != "objects" or driver["type"] != "SCRIPTED"
+        or type(driver["index"]) is not int or driver["index"] != 0
+        or driver["muted"] is not False or driver["is_valid"] is not False
+        or driver["native_without_python"] is not True):
+        raise ValueError("driver_identity_mismatch")
+    targets = driver["targets"]
+    require(isinstance(targets, list) and len(targets) <= 32)
+    return {"model": "rain", "driver_count": 774, "record_index": 121,
+        "source_sha256": digest(proof["source_sha256"]), "id_type": "objects",
+        "name": identity_text(driver["name"]), "path": identity_text(driver["path"]),
+        "index": 0, "type": "SCRIPTED", "muted": False, "is_valid": False,
+        "native_without_python": True, "target_count": len(targets),
+        "targets": [{key: identity_text(target[key]) for key in
+                     ("variable", "variable_type", "id", "data_path", "bone_target")}
+                    for target in targets],
+        "cause_established": False}
+
 def main():
     root, stage = None, "setup"
     try:
         parser = SafeParser(add_help=False)
         parser.add_argument("--out", required=True)
+        parser.add_argument("--rain-driver-identity", action="store_true")
         args = parser.parse_args()
         token = os.environ.get("GH_TOKEN", "")
         if not token:
@@ -214,8 +251,9 @@ def main():
             raise ValueError("download_checksum")
         archive.chmod(0o444)
         stage = "zip_inventory"
-        wanted = {m + "/" + f: None for m in ("rain", "snow")
-                  for f in ("garment-topology.json", "render-proof.json")}
+        wanted = ({"rain/render-proof.json": None} if args.rain_driver_identity else
+                  {m + "/" + f: None for m in ("rain", "snow")
+                   for f in ("garment-topology.json", "render-proof.json")})
         loaded, entry_hashes = {}, {}
         with zipfile.ZipFile(archive) as source:
             infos = source.infolist()
@@ -284,16 +322,25 @@ def main():
                           "uncompressed_bytes": sum(i.file_size for i in infos),
                           "all_entries_crc_verified": True, "unique_suffix_selection": True,
                           "selected_json": entry_hashes},
-            "models": [summarize(m, loaded[m + "/garment-topology.json"],
-                                loaded[m + "/render-proof.json"]) for m in ("rain", "snow")],
+            "models": ([summarize(m, loaded[m + "/garment-topology.json"],
+                                 loaded[m + "/render-proof.json"]) for m in ("rain", "snow")]
+                       if not args.rain_driver_identity else []),
             "bpy_imported": False, "blend_loaded": False, "renders_performed": False,
             "geometry_edited": False, "production_glb_approved": False,
             "raw_boundaries_are_anatomical_edit_selections": False}
+        if args.rain_driver_identity:
+            report["purpose"] = "Read frozen Rain driver identity only"
+            del report["models"]
+            report["rain_driver_identity"] = rain_driver_identity(loaded["rain/render-proof.json"])
         payload = json.dumps(report, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()
-        marker = b"AVATAR_GARMENT_INSPECTION_READ "
-        if len(marker) + len(payload) + 1 > OUTPUT_MAX:
+        marker = (b"AVATAR_RAIN_DRIVER_IDENTITY " if args.rain_driver_identity
+                  else b"AVATAR_GARMENT_INSPECTION_READ ")
+        limit = 8192 if args.rain_driver_identity else OUTPUT_MAX
+        if len(marker) + len(payload) + 1 > limit:
             raise ValueError("output_budget")
-        (root / "garment-inspection-read.json").write_bytes(payload + b"\n")
+        filename = ("rain-driver-identity-report.json" if args.rain_driver_identity
+                    else "garment-inspection-read.json")
+        (root / filename).write_bytes(payload + b"\n")
         print(marker.decode() + payload.decode(), flush=True)
         return 0
     except Exception as error:
