@@ -360,19 +360,17 @@ async function realRoom(browser, browserName) {
 
 const surfaceOrder = [sizes[3], sizes[1], sizes[0], sizes[2]];
 for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
-  let browser, prerequisite = true;
+  let browser;
   try {
     browser = await type.launch({ headless: true, timeout: 20_000 });
     // Run the complete host/player game first: it is the release blocker.
     // Surface and avatar presentation checks must not prevent an independent
     // end-to-end game result from being recorded.
     await realRoom(browser, name);
-    for (const size of surfaceOrder) {
-      if (!prerequisite) { await notRun(name + '-' + size.label, 'Earlier browser surface failed; fix that prerequisite before dependent scenarios'); continue; }
-      prerequisite = await surfaces(browser, name, size);
-    }
-    if (prerequisite) await surfaces(browser, name, sizes[1], 'reduce');
-    else await notRun(name + '-mobile-390-reduced', 'Earlier browser surface failed');
+    // Each viewport has its own browser context and can produce useful evidence
+    // even when a different viewport fails. Do not hide later failures.
+    for (const size of surfaceOrder) await surfaces(browser, name, size);
+    await surfaces(browser, name, sizes[1], 'reduce');
   } catch (error) {
     const row = { label: name + '-launch', status: 'failed', stage: 'browser-lifecycle', error: safeCaseText(error.message) };
     report.cases.push(row); emitCase(row); await saveReport();
