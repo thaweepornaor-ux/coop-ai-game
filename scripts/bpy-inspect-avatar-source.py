@@ -34,8 +34,8 @@ def main():
         for category in id_categories:
             if hasattr(data_from, category) and hasattr(data_to, category):
                 names = list(getattr(data_from, category))
-                source_table[category] = names
-                setattr(data_to, category, names)
+                source_table[category] = list(names)
+                setattr(data_to, category, list(names))
         source_table["scenes"] = list(data_from.scenes)
         source_table["embedded_text_names"] = list(data_from.texts)
         # Do not request source scenes, worlds, workspace/UI data or Text blocks.
