@@ -1,0 +1,31 @@
+name: Blender tooling proof
+on:
+  push:
+    branches: [main, codex/game-recovery]
+    paths:
+      - 'scripts/ci-prove-blender.py'
+      - '.github/workflows/blender-tooling-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: blender-tooling-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  prove-blender-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Acquire and verify official Blender binary
+        run: python3 scripts/ci-prove-blender.py --out "$RUNNER_TEMP/blender-tool-proof-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+      - name: Preserve Blender runtime evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: blender-runtime-proof
+          path: ${{ runner.temp }}/blender-tool-proof-${{ github.run_id }}-${{ github.run_attempt }}/reports/
+          if-no-files-found: ignore
+          retention-days: 14
