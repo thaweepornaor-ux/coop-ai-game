@@ -1,0 +1,35 @@
+name: Read frozen avatar garment topology
+on:
+  push:
+    branches: [codex/game-recovery]
+    paths:
+      - 'scripts/ci-read-garment-inspection.py'
+      - '.github/workflows/avatar-topology-read.yml'
+permissions:
+  actions: read
+  contents: read
+jobs:
+  read-frozen-inspection:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Read only the frozen inspection reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m py_compile scripts/ci-read-garment-inspection.py
+          python3 scripts/ci-read-garment-inspection.py --out "$RUNNER_TEMP/avatar-topology-read"
+      - name: Preserve the bounded read report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: avatar-topology-read-report
+          path: |
+            ${{ runner.temp }}/avatar-topology-read/garment-inspection-read.json
+            ${{ runner.temp }}/avatar-topology-read/probe-failure.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 14
