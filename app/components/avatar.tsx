@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import { renderAvatar } from '../../shared/avatar.js';
 import type { AvatarChoices } from '../../shared/avatar.js';
 export { AVATAR_OPTIONS } from '../../shared/avatar.js';
 export type { AvatarChoices, AvatarOption, AvatarOptionKey } from '../../shared/avatar.js';
@@ -8,7 +9,7 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
  const container=useRef<HTMLDivElement>(null),canvas=useRef<HTMLCanvasElement>(null);const[thumbnail,setThumbnail]=useState<{key:string;url:string}|null>(null),[failed,setFailed]=useState(false),[visible,setVisible]=useState(interactive),[contextLost,setContextLost]=useState(false),[contextEpoch,setContextEpoch]=useState(0);const serialized=JSON.stringify(options);
  useEffect(()=>{if(interactive)setContextLost(false);const element=canvas.current;if(!element)return;const lost=(e:Event)=>{e.preventDefault();setContextLost(true);};const restored=()=>{setContextLost(false);setFailed(false);setContextEpoch(v=>v+1);};element.addEventListener('webglcontextlost',lost);element.addEventListener('webglcontextrestored',restored);return()=>{element.removeEventListener('webglcontextlost',lost);element.removeEventListener('webglcontextrestored',restored);};},[interactive]);
  useEffect(()=>{if(!container.current)return;const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting),{rootMargin:'120px'});observer.observe(container.current);return()=>observer.disconnect();},[]);
- useEffect(()=>{if(!visible)return;let cancelled=false;const controller=new AbortController();import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized),controller.signal)).then(url=>{if(!cancelled)setThumbnail({key:serialized,url});}).catch(()=>{});return()=>{cancelled=true;controller.abort();};},[serialized,visible,contextEpoch]);
+ useEffect(()=>{if(!visible)return;let cancelled=false;const controller=new AbortController();import('../../shared/avatar3d').then(m=>m.renderThumbnail(JSON.parse(serialized),controller.signal)).then(url=>{if(!cancelled)setThumbnail({key:serialized,url});}).catch(()=>{if(!cancelled){const svg=renderAvatar(JSON.parse(serialized));setThumbnail({key:serialized,url:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});}});return()=>{cancelled=true;controller.abort();};},[serialized,visible,contextEpoch]);
  useEffect(()=>{
   if(!interactive||!canvas.current||!visible||contextLost)return;let cancelled=false,cleanup=()=>{};
   import('../../shared/avatar3d').then(m=>{if(cancelled||!canvas.current)return;try{
