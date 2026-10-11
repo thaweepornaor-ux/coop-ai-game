@@ -21,7 +21,9 @@ concurrency:
 jobs:
   build-and-browser:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # Dependency installation and browser provisioning precede the 20-minute
+    # smoke-test watchdog; give setup its own headroom.
+    timeout-minutes: 40
     env:
       CI: 'true'
       WRANGLER_SEND_METRICS: 'false'
