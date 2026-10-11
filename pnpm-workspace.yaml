@@ -1,2 +1,9 @@
 overrides:
   'miniflare>sharp': '0.35.4'
+
+# Reviewed native build scripts required by the locked toolchain.
+# Exact versions keep new package versions unapproved until reviewed.
+allowBuilds:
+  'esbuild@0.18.20 || 0.25.12 || 0.27.3 || 0.28.0': true
+  'unrs-resolver@1.11.1': true
+  'workerd@1.20260515.1': true
