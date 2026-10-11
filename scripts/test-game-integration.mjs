@@ -79,7 +79,16 @@ let catalogue=await state(catalogueHost.data.token,catalogueRoom);const ids=cata
 assert.equal((await post({action:'reset',room:catalogueRoom,roundId:catalogue.room.roundId,questionIndex:catalogue.room.questionIndex},catalogueHost.data.token)).status,200);
 for(const {c,avatar,joined} of entries){const r=await state(joined.data.token,catalogueRoom);const self=r.players.find(p=>p.id===r.caller.playerId);assert.deepEqual(self.avatar,avatar);assert.equal(self.name,'ชื่อเอง '+c.id);assert.equal(self.score,0);assert.deepEqual(r.players.map(p=>p.id),ids);}
 console.log('Catalogue integration passed:20 preset IDs,12 flat fields, gender,enum,key validation, independent names/tokens,refresh/reset persistence.');
-for(let i=0;i<6;i++)assert.equal((await post({action:'create'})).status,201);
-assert.equal((await post({action:'create'})).status,429);
+// Isolate the fixed-minute quota from earlier room creation and minute rollover.
+// Only the rate-limit key's Worker clock is pinned; D1 execution-time clocks stay real.
+await db.prepare('DELETE FROM rate_limits').run();
+const originalNow = Date.now, quotaNow = originalNow();
+Date.now = () => quotaNow;
+try {
+ for(let i=0;i<8;i++)assert.equal((await post({action:'create'})).status,201);
+ const limited = await post({action:'create'});
+ assert.equal(limited.status,429);
+ assert.equal(limited.data.code,'RATE_LIMIT');
+} finally { Date.now = originalNow; }
 console.log('D1 integration passed: migration, independent tokens, permissions, hidden keys, timeout, all 15 questions, final counts, reset, reconnect, stale action, expiry, rate limit.');
 } finally {await mf.dispose();delete globalThis.testEnv;}
