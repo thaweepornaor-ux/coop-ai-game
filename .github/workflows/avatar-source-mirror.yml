@@ -1,0 +1,72 @@
+name: Inspect licensed original avatar sources
+on:
+  push:
+    branches: [main, codex/game-recovery]
+    paths:
+      - 'scripts/avatar-source-mirror-manifest.json'
+      - 'scripts/ci-acquire-mirrored-avatar-sources.py'
+      - 'scripts/bpy-inspect-avatar-source.py'
+      - '.github/workflows/avatar-source-mirror.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: avatar-mirror-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  acquire-and-inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Prepare reviewed Blender module
+        run: |
+          python -m venv "$RUNNER_TEMP/bpy-runtime"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
+          "$RUNNER_TEMP/bpy-runtime/bin/python" -m py_compile scripts/ci-acquire-mirrored-avatar-sources.py scripts/bpy-inspect-avatar-source.py scripts/blender-inspect-avatar.py
+      - name: Acquire and inspect exact original source data
+        run: |
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-acquire-mirrored-avatar-sources.py --out "$RUNNER_TEMP/avatar-mirror-originals"
+      - name: Emit bounded raw inventory evidence
+        if: success()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          reports = Path(os.environ["RUNNER_TEMP"]) / "avatar-mirror-originals/reports"
+          for name in ("rain", "snow"):
+              report = json.loads((reports / (name + "-raw-inventory.json")).read_text())
+              print("AVATAR_RAW_POLICY " + json.dumps({"model": name, "loading": report["source_loading"]["mode"], "version": report["blender_version"], "actions": report["actions"], "source_text_names": report["embedded_text_names"], "loaded_text_names": report["loaded_text_names"], "images": report["images"]}))
+              for obj in report["objects"]:
+                  if obj["type"] in ("MESH", "ARMATURE"):
+                      obj = {k: v for k, v in obj.items() if k != "bones"}
+                      print("AVATAR_RAW_OBJECT " + json.dumps({"model": name, "object": obj}))
+              for mat in report["materials"]:
+                  print("AVATAR_RAW_MATERIAL " + json.dumps({"model": name, "material": mat}))
+          PY
+      - name: Preserve raw source inventory and provenance
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: avatar-mirror-inspection
+          path: |
+            ${{ runner.temp }}/avatar-mirror-originals/reports/
+            ${{ runner.temp }}/avatar-mirror-originals/pinned-source-manifest.json
+            bpy-proof/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Preserve immutable originals for subsequent rendering
+        if: success()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: avatar-mirror-originals
+          path: ${{ runner.temp }}/avatar-mirror-originals/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
