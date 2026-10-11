@@ -255,7 +255,19 @@ async function readCatalogueState(page) {
     };
   }), 2_000, 'WebKit catalogue state read');
 }
-async function clickFemaleCatalogue(page, browserName) {
+function wardrobeOperationMarker(row) {
+  return (operation, status, value) => {
+    assert(['female-click', 'female-card-count', 'f03-click', 'f03-selection-read'].includes(operation));
+    assert(['begin', 'returned', 'rejected'].includes(status));
+    assert(value === undefined || value === null || typeof value === 'boolean' ||
+      (Number.isSafeInteger(value) && value >= 0));
+    // Keep a timed-out case's pending operation intact during late cleanup.
+    if (row.status === 'running') row.stage = 'wardrobe-' + operation + '-' + status;
+    console.log('COOP_WARDROBE_OPERATION ' + JSON.stringify({ operation, status, value }));
+  };
+}
+
+async function clickFemaleCatalogue(page, browserName, mark = () => {}) {
   const female = page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true });
   if (browserName !== 'webkit') { await female.click(); return; }
   const audit = webKitInputAudits.get(page);
@@ -269,9 +281,12 @@ async function clickFemaleCatalogue(page, browserName) {
   } catch (controlError) { control.error = safeCaseText(controlError.message); }
   control.events = audit.events.filter(event => event.target === 'name-input');
   console.log('COOP_WARDROBE_POSITIVE_CONTROL ' + JSON.stringify({ browser: 'webkit', ...control }));
+  mark('female-click', 'begin');
   try {
     await female.click(); // Original ordinary click, with its existing 15-second timeout.
+    mark('female-click', 'returned');
   } catch (error) {
+    mark('female-click', 'rejected'); // Synchronous evidence before any state read.
     let state, stateReadError;
     try { state = await readCatalogueState(page); }
     catch (readError) { stateReadError = safeCaseText(readError.message); }
@@ -293,14 +308,22 @@ async function clickFemaleCatalogue(page, browserName) {
   } finally { audit.stop(); }
 }
 
-async function wardrobe(page, browserName) {
+async function wardrobe(page, browserName, mark = () => {}) {
   const panel = page.getByRole('tabpanel');
   assert.equal(await page.getByRole('tab').count(), 6);
   assert.equal(await panel.locator('.character-card').count(), 10);
-  await clickFemaleCatalogue(page, browserName);
-  assert.equal(await panel.locator('.character-card').count(), 10);
+  await clickFemaleCatalogue(page, browserName, mark);
+  mark('female-card-count', 'begin');
+  const femaleCardCount = await panel.locator('.character-card').count();
+  mark('female-card-count', 'returned', femaleCardCount);
+  assert.equal(femaleCardCount, 10);
+  mark('f03-click', 'begin');
   await panel.getByRole('button', { name: /^F03 / }).click();
-  assert.equal(await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed'), 'true');
+  mark('f03-click', 'returned');
+  mark('f03-selection-read', 'begin');
+  const femaleSelected = await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed');
+  mark('f03-selection-read', 'returned', femaleSelected === 'true' ? true : femaleSelected === 'false' ? false : null);
+  assert.equal(femaleSelected, 'true');
   await page.getByRole('tab', { name: 'เสื้อ', exact: true }).click();
   assert.equal(await panel.locator('.wardrobe-tile').count(), 4);
   await panel.locator('.wardrobe-tile').nth(2).click();
@@ -349,7 +372,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     }
     await page.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
     await stage('wardrobe-controls');
-    await wardrobe(page, browserName);
+    await wardrobe(page, browserName, wardrobeOperationMarker(row));
     await stage('wardrobe-avatar');
     row.avatarRaster = await avatarPainted(page, '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
@@ -387,7 +410,7 @@ async function realRoom(browser, browserName) {
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
-    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player, browserName);
+    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player, browserName, wardrobeOperationMarker(row));
     const [sent] = await Promise.all([
       player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
       player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
