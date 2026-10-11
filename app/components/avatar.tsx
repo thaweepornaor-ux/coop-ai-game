@@ -23,7 +23,7 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
    const visibility=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else if(enabled&&!frame)frame=requestAnimationFrame(animate);};document.addEventListener('visibilitychange',visibility);
    void renderer.ready.then(()=>{if(!cancelled)draw();});if(enabled&&!document.hidden)frame=requestAnimationFrame(animate);else draw();
    cleanup=()=>{observer.disconnect();cancelAnimationFrame(frame);document.removeEventListener('visibilitychange',visibility);element.removeEventListener('pointerdown',down);element.removeEventListener('pointermove',move);element.removeEventListener('pointerup',up);element.removeEventListener('pointercancel',up);element.removeEventListener('lostpointercapture',up);m.disposeCharacter(model);renderer.dispose();};
-  }catch{setFailed(true);}});return()=>{cancelled=true;cleanup();};
+  }catch{setFailed(true);}}).catch(()=>{if(!cancelled)setFailed(true);});return()=>{cancelled=true;cleanup();};
  },[serialized,interactive,motion,visible,contextLost,contextEpoch]);
  return <div ref={container} className={className} style={{position:'relative',aspectRatio:'3 / 4'}}>
   {thumbnail.key===serialized&&thumbnail.url&&<img src={thumbnail.url} alt="ตัวละครสามมิติผู้เล่น" decoding="async" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>}
