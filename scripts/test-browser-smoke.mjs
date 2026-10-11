@@ -287,8 +287,11 @@ async function realRoom(browser, browserName) {
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
     const [sent] = await Promise.all([
-      player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
-      player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
+      // WebKit may need more than the default 15 seconds to dispatch a click
+      // while its canvas renderer is busy. Preserve a real user click; do not
+      // bypass the form with DOM submission or synthetic fetch.
+      player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join', { timeout: 40_000 }),
+      player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click({ timeout: 35_000 }),
     ]);
     const submittedAvatar = sent.postDataJSON().avatar;
     assert.equal(Object.keys(submittedAvatar).length, 12); assert.equal(submittedAvatar.presetId, 'F03');
