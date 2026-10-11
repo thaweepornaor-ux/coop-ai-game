@@ -113,9 +113,42 @@ export function createCharacter(input:Record<string,unknown>){
 }
 export function createStudio(canvas?:HTMLCanvasElement){const renderer=new G.WebGLRenderer({canvas,alpha:true,antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.setSize(360,480,false);const scene=new G.Scene(),camera=new G.PerspectiveCamera();return{renderer,scene,camera};}
 export function disposeCharacter(model:G.Group){const gs=new Set<G.BufferGeometry>(),ms=new Set<G.Material>();model.traverse(o=>{if(o instanceof G.Mesh){gs.add(o.geometry);ms.add(o.material);}});gs.forEach(g=>g.dispose());ms.forEach(m=>m.dispose());}
-let studio:ReturnType<typeof createStudio>|undefined;const cache=new Map<string,string>();let queue=Promise.resolve();
-const pending=new Map<string,Promise<string>>();
-export function renderThumbnail(options:Record<string,unknown>):Promise<string>{
- const key=JSON.stringify(options);if(cache.has(key))return Promise.resolve(cache.get(key)!);if(pending.has(key))return pending.get(key)!;
- const task=queue.then(async()=>{await new Promise(resolve=>setTimeout(resolve,0));if(studio?.renderer.isContextLost){studio.renderer.dispose();studio=undefined;}studio ||=createStudio();const{renderer,scene,camera}=studio;await renderer.ready;if(renderer.isContextLost){renderer.dispose();studio=undefined;throw Error('Thumbnail context lost');}const model=createCharacter(options);scene.add(model);renderer.render(scene,camera);if(renderer.isContextLost){scene.remove(model);disposeCharacter(model);renderer.dispose();studio=undefined;throw Error('Thumbnail context lost');}const url=renderer.domElement.toDataURL('image/webp',.88);scene.remove(model);disposeCharacter(model);cache.set(key,url);if(cache.size>300)cache.delete(cache.keys().next().value!);return url;});pending.set(key,task);queue=task.then(()=>{pending.delete(key);},()=>{pending.delete(key);});return task;
+let studio:ReturnType<typeof createStudio>|undefined;
+const cache=new Map<string,string>();
+let queue:Promise<void>=Promise.resolve();
+/** Thumbnail jobs are deliberately serialized to avoid simultaneous WebGL readbacks.
+ * Callers can abort obsolete wardrobe selections before they enter the queue.
+ */
+export function renderThumbnail(options:Record<string,unknown>,signal?:AbortSignal):Promise<string>{
+ const key=JSON.stringify(options);
+ const cancelled=()=>{if(signal?.aborted)throw new DOMException('Thumbnail request cancelled','AbortError');};
+ cancelled();
+ if(cache.has(key))return Promise.resolve(cache.get(key)!);
+ const task=queue.then(async()=>{
+  cancelled();
+  // Yield between expensive character builds so pointer/click events stay responsive.
+  await new Promise<void>(resolve=>setTimeout(resolve,16));
+  cancelled();
+  if(cache.has(key))return cache.get(key)!;
+  if(studio?.renderer.isContextLost){studio.renderer.dispose();studio=undefined;}
+  studio ||=createStudio();
+  const{renderer,scene,camera}=studio;
+  await renderer.ready;
+  cancelled();
+  if(renderer.isContextLost){renderer.dispose();studio=undefined;throw Error('Thumbnail context lost');}
+  const model=createCharacter(options);
+  scene.add(model);
+  try{
+   renderer.render(scene,camera);
+   if(renderer.isContextLost){renderer.dispose();studio=undefined;throw Error('Thumbnail context lost');}
+   const url=renderer.domElement.toDataURL('image/webp',.88);
+   cancelled();
+   cache.set(key,url);
+   // Data URLs can be large; keep the thumbnail cache bounded on mobile.
+   if(cache.size>80)cache.delete(cache.keys().next().value!);
+   return url;
+  }finally{scene.remove(model);disposeCharacter(model);}
+ });
+ queue=task.then(()=>{},()=>{});
+ return task;
 }
