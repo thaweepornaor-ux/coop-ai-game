@@ -1,0 +1,26 @@
+{
+  "model": "rain",
+  "rig_name": "RIG-rain",
+  "mesh_names": [
+    "GEO-rain-body",
+    "GEO-rain-eye_cornea",
+    "GEO-rain-eye_dots",
+    "GEO-rain-eyebrows",
+    "GEO-rain-eyelashes",
+    "GEO-rain-eyes",
+    "GEO-rain-gums_lower",
+    "GEO-rain-gums_upper",
+    "GEO-rain-hair_main",
+    "GEO-rain-hair_ponytail",
+    "GEO-rain-hair_strand",
+    "GEO-rain-hairband",
+    "GEO-rain-head",
+    "GEO-rain-jeans",
+    "GEO-rain-shoes",
+    "GEO-rain-tongue",
+    "GEO-rain-top"
+  ],
+  "poses": {
+    "neutral": []
+  }
+}

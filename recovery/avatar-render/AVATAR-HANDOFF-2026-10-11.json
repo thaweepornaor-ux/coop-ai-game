@@ -1,0 +1,218 @@
+{
+  "status": "Actual original neutral render succeeded; production 3D game avatar remains incomplete.",
+  "source_repo": "mnanimat/software_mnanimat3d",
+  "source_commit": "d95dff4711bab14cd93aac7f2cb4368d872d1c33",
+  "original_files": 60,
+  "original_bytes": 179992532,
+  "source_license": "CC-BY-4.0",
+  "game_repository": "thaweepornaor-ux/coop-ai-game",
+  "game_branch": "codex/game-recovery",
+  "proof_commit": "2ab008ad76d7dbfe798f49318b00ae8faf989e48",
+  "proof_run": 38103066739,
+  "proof_job": 114362831106,
+  "proof_images": [
+    {
+      "file": "rain-neutral.png",
+      "bytes": 556398,
+      "sha256": "93504fabae040fc5c9a6d1c011a7b392dbf937fa7fdd3855d225f0dc8be95a3d"
+    },
+    {
+      "file": "snow-neutral.png",
+      "bytes": 566858,
+      "sha256": "c091b1db2de4d20a0f41706163065978aeaae9a2d19f0f0a8a9f8d148b75e682"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11688975951,
+      "name": "avatar-render-source-inspection",
+      "bytes": 53873,
+      "sha256": "66983e81fc6d48ebe958bc6eaf43d40bf33ecfa91b66a3e082fd6afff4bbb753",
+      "expires_at": "2026-10-25T01:50:15Z",
+      "url": "https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38103066739/artifacts/11688975951"
+    },
+    {
+      "id": 11688851271,
+      "name": "avatar-render-originals",
+      "bytes": 180865809,
+      "sha256": "1d6054aad6deccaff326f750ec82bba75bee83c4253e4dcb75da6ce842d503d8",
+      "expires_at": "2026-10-25T01:50:16Z",
+      "url": "https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38103066739/artifacts/11688851271"
+    },
+    {
+      "id": 11688521912,
+      "name": "avatar-source-render-proof",
+      "bytes": 24245762,
+      "sha256": "96f9767a7cb66e61aa187e3d61455c5f3b7ece6662dd58c08e883569cc8d0686",
+      "expires_at": "2026-10-25T01:50:12Z",
+      "url": "https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38103066739/artifacts/11688521912"
+    }
+  ],
+  "pending_proposal": {
+    "full_renderer_blob": "0beec351ef5405dafd92b7a9b177b7abd5ded6be",
+    "driver_delta_json_blob": "136110c8701d4275595b465b73980c01a55839b9",
+    "committed": false,
+    "base_commit": "2ab008ad76d7dbfe798f49318b00ae8faf989e48",
+    "preserves_root_dependency_linking": true,
+    "change": "Retain native simple-expression/nonSCRIPTED drivers, mute full-Python expressions, detach Actions/NLA; source autoexec stays false."
+  },
+  "verified_rigs": {
+    "rain": {
+      "rig": "RIG-rain",
+      "bones": 2166,
+      "deform": 392,
+      "lattices": 1,
+      "meshes_raw_including_helpers_and_widgets": 58,
+      "materials": 22,
+      "images": 17,
+      "actions_raw": 19
+    },
+    "snow": {
+      "rig": "RIG-Snow",
+      "bones": 1494,
+      "deform": 290,
+      "meta_rig": "META-Snow",
+      "meta_bones": 396,
+      "meta_deform": 368,
+      "lattices": 3,
+      "meshes_raw_including_helpers_and_widgets": 51,
+      "materials": 18,
+      "images": 25,
+      "actions_raw": 56
+    }
+  },
+  "verified_controls": [
+    {
+      "model": "rain",
+      "name": "FK-Upperarm.L",
+      "parent": "FK-Upperarm_Parent.L",
+      "constraints": [
+        {
+          "name": "ik_arm_left",
+          "type": "COPY_TRANSFORMS",
+          "influence": 1,
+          "target": "RIG-rain",
+          "subtarget": "IK-Upperarm.L",
+          "mute": false
+        }
+      ]
+    },
+    {
+      "model": "rain",
+      "name": "FK-Forearm.L",
+      "parent": "FK-Upperarm.L",
+      "constraints": [
+        {
+          "name": "ik_arm_left",
+          "type": "COPY_TRANSFORMS",
+          "influence": 1,
+          "target": "RIG-rain",
+          "subtarget": "IK-Forearm.L",
+          "mute": false
+        }
+      ]
+    },
+    {
+      "model": "rain",
+      "name": "FK-Upperarm.R",
+      "parent": "FK-Upperarm_Parent.R",
+      "constraints": [
+        {
+          "name": "ik_arm_right",
+          "type": "COPY_TRANSFORMS",
+          "influence": 1,
+          "target": "RIG-rain",
+          "subtarget": "IK-Upperarm.R",
+          "mute": false
+        }
+      ]
+    },
+    {
+      "model": "rain",
+      "name": "FK-Forearm.R",
+      "parent": "FK-Upperarm.R",
+      "constraints": [
+        {
+          "name": "ik_arm_right",
+          "type": "COPY_TRANSFORMS",
+          "influence": 1,
+          "target": "RIG-rain",
+          "subtarget": "IK-Forearm.R",
+          "mute": false
+        }
+      ]
+    },
+    {
+      "model": "snow",
+      "name": "FK-UpperArm.L",
+      "parent": "FK-HNG-UpperArm.L",
+      "constraints": []
+    },
+    {
+      "model": "snow",
+      "name": "FK-Forearm.L",
+      "parent": "FK-UpperArm.L",
+      "constraints": []
+    },
+    {
+      "model": "snow",
+      "name": "FK-UpperArm.R",
+      "parent": "FK-HNG-UpperArm.R",
+      "constraints": []
+    },
+    {
+      "model": "snow",
+      "name": "FK-Forearm.R",
+      "parent": "FK-UpperArm.R",
+      "constraints": []
+    }
+  ],
+  "wardrobe_fields": [
+    "bodyStyle",
+    "skinTone",
+    "hairStyle",
+    "hairColor",
+    "shirtStyle",
+    "shirtColor",
+    "bottomStyle",
+    "bottomColor",
+    "shoeColor",
+    "hatStyle",
+    "hatColor"
+  ],
+  "current_hair_enum": [
+    "short",
+    "sidepart",
+    "bob",
+    "long",
+    "ponytail",
+    "curly",
+    "wavy",
+    "swept",
+    "shoulder",
+    "pixie",
+    "bun",
+    "buzz",
+    "bald"
+  ],
+  "preserve_presets": "M01..M10 and F01..F10; no enum or selection may silently be reduced.",
+  "remaining": [
+    "Current proof is neutral T-pose only; no raised-arm or professional idle/wave/celebrate clip is accepted.",
+    "Apply and test native-driver preservation; identify actual IK/FK switch property/constraint dependency. Rain FK-Upperarm/Forearm have active IK copy transforms in current proof.",
+    "Rain original white sleeveless top and Snow original gray V-neck need approved crewneck/other four independent shirt variants, fitted sleeves/hem and raised-arm cloth QA.",
+    "Original hair bases/ponytail are not thirteen completed selectable styles; skirts and three hat meshes are unbuilt.",
+    "Head morphs are actual expression/corrective keys; twenty distinct adult-cute faces/proportions are not demonstrated.",
+    "Bake/convert original UDIM plus Cycles skin/hair/eye-cornea shaders to glTF-compatible maps/materials, preserving skin seams and eye appearance.",
+    "Export real skinned meshes and baked joint clips, validate actual GLB, then prove actual browser GLTFLoader/Skeleton clone dressing and lightweight true-rendered thumbnails.",
+    "Current professional Blender images do not prove the interactive WebGL game or all eleven independent controls.",
+    "Retain CC-BY4 attribution/license links and record derivatives; keep immutable originals and old pending cloud/R2 checkpoints separate."
+  ],
+  "texture_contract": {
+    "originals_verified": true,
+    "preserve_udim_tiles": true,
+    "skin_notes": "Rain body/hands diffuse+roughness UDIM; Snow skin diffuse/roughness/SSS UDIM1001/1002/1003.",
+    "shader_notes": "Rain vertex-color/image mixes; Snow skin lip/darker node groups; hair multi-Principled/tangents; cornea refraction/aniso/add-shader requires deliberate glTF conversion.",
+    "original_source_hash_rechecked_after_render": true
+  },
+  "no_new_art_work_started_after_backup_request": true
+}

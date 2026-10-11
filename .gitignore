@@ -1,0 +1,12 @@
+# Staging-only generated configuration and local credentials
+.staging-local/
+.env
+.env.*
+!.env.example
+# Local build, test and browser outputs
+node_modules/
+dist/
+.next/
+.wrangler/
+.sites-runtime/
+browser-proof/

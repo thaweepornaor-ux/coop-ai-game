@@ -1,0 +1,27 @@
+name: Question Bank Regression
+
+on:
+  push:
+    branches:
+      - codex/avatar-preview-refresh-20261011
+    paths:
+      - server/questions.ts
+      - tests/questions-regression.test.mjs
+      - .github/workflows/questions-regression.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  question-bank:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out candidate branch
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify 15-question bank
+        run: node --test tests/questions-regression.test.mjs

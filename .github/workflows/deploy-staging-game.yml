@@ -1,0 +1,82 @@
+name: Deploy staging game
+on:
+  push:
+    branches: [codex/preview-staging-20261011]
+    paths:
+      - 'vite.staging.config.ts'
+      - 'scripts/configure-staging.sh'
+      - '.github/workflows/deploy-staging-game.yml'
+      - 'app/**'
+      - 'server/**'
+      - 'shared/**'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to existing coop-ai-game-staging Worker (leave unchecked for build-only)'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: coop-ai-game-staging-deploy
+  cancel-in-progress: false
+jobs:
+  staging:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+      CLOUDFLARE_ACCOUNT_ID: 739e324fb9d96b4daa7ac93d86e60962
+      STAGING_D1_DATABASE_ID: c1a0f8df-371b-4765-966e-08d1b3522d9f
+      STAGING_WORKER_NAME: coop-ai-game-staging
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: codex/preview-staging-20261011
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.23.3'
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+      - name: Generate isolated staging configuration
+        run: bash scripts/configure-staging.sh
+      - name: Build full game for staging
+        run: corepack pnpm exec vite build --config vite.staging.config.ts
+      - name: Verify generated worker is staging-only
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {existsSync} from 'node:fs';
+          const file='dist/server/wrangler.json';
+          assert.ok(existsSync(file),'Expected staging Worker bundle missing: '+file);
+          const cfg=JSON.parse(readFileSync(file,'utf8'));
+          assert.equal(cfg.name,'coop-ai-game-staging');
+          assert.ok(cfg.d1_databases?.some(db=>db.binding==='DB'&&db.database_id==='c1a0f8df-371b-4765-966e-08d1b3522d9f'),'Wrong staging DB binding');
+          assert.ok(!cfg.routes&&!cfg.route,'No custom production routes permitted');
+          console.log('Staging build safety checks passed.');
+          NODE
+      - name: Require deploy credentials only for publishing
+        if: inputs.publish
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [[ -z "$CLOUDFLARE_API_TOKEN" ]]; then
+            echo 'CLOUDFLARE_API_TOKEN GitHub secret is not configured. Nothing has been deployed.' >&2
+            exit 1
+          fi
+      - name: Verify existing D1 schema before publishing
+        if: inputs.publish
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          corepack pnpm exec wrangler d1 execute DB --remote --config .staging-local/wrangler.staging.json --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('rooms','players','answers','rate_limits');"
+      - name: Publish to existing staging Worker only
+        if: inputs.publish
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: corepack pnpm exec wrangler deploy --config dist/server/wrangler.json
