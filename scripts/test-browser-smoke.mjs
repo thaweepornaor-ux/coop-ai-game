@@ -285,7 +285,11 @@ async function realRoom(browser, browserName) {
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
-    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
+    // Interaction with wardrobe proves React has hydrated before typing a controlled name.
+    // On WebKit, filling the SSR input before hydration can be lost when React attaches.
+    await wardrobe(player);
+    await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
+    assert.equal(await player.getByLabel(nameLabel, { exact: true }).inputValue(), syntheticName);
     // Diagnose Safari form submission separately from server/API errors.
     // Collect events but never submit via evaluate() or bypass a real click.
     const joinRequests = [];
