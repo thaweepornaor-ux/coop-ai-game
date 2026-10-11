@@ -135,6 +135,10 @@ export function renderThumbnail(options:Record<string,unknown>,signal?:AbortSign
   const{renderer,scene,camera}=studio;
   await renderer.ready;
   cancelled();
+  // The 2D software renderer walks and paints every 3D triangle on the main thread.
+  // On Safari/WebKit without WebGL this can freeze wardrobe selection; let the
+  // caller show its inexpensive SVG fallback instead.
+  if(renderer.isSoftware){renderer.dispose();studio=undefined;throw Error('WebGL unavailable for thumbnail');}
   if(renderer.isContextLost){renderer.dispose();studio=undefined;throw Error('Thumbnail context lost');}
   const model=createCharacter(options);
   scene.add(model);
