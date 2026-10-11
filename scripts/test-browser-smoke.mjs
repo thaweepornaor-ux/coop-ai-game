@@ -360,14 +360,16 @@ for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
   let browser, prerequisite = true;
   try {
     browser = await type.launch({ headless: true, timeout: 20_000 });
+    // Run the complete host/player game first: it is the release blocker.
+    // Surface and avatar presentation checks must not prevent an independent
+    // end-to-end game result from being recorded.
+    await realRoom(browser, name);
     for (const size of surfaceOrder) {
       if (!prerequisite) { await notRun(name + '-' + size.label, 'Earlier browser surface failed; fix that prerequisite before dependent scenarios'); continue; }
       prerequisite = await surfaces(browser, name, size);
     }
-    if (prerequisite) prerequisite = await surfaces(browser, name, sizes[1], 'reduce');
+    if (prerequisite) await surfaces(browser, name, sizes[1], 'reduce');
     else await notRun(name + '-mobile-390-reduced', 'Earlier browser surface failed');
-    if (prerequisite) await realRoom(browser, name);
-    else await notRun(name + '-real-room', 'Browser entry or wardrobe prerequisites failed; room journey remains unverified');
   } catch (error) {
     const row = { label: name + '-launch', status: 'failed', stage: 'browser-lifecycle', error: safeCaseText(error.message) };
     report.cases.push(row); emitCase(row); await saveReport();
