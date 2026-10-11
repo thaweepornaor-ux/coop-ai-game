@@ -11,6 +11,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -29,8 +30,15 @@ MODELS = {
 }
 BLENDER_NAME = "blender-4.5.9-linux-x64.tar.xz"
 BLENDER_BASE = "https://download.blender.org/release/Blender4.5/"
+STAGE_CONTEXT = {"asset": "none", "stage": "startup"}
+REPORTS_DIR = None
 
-def download(url, target, limit):
+def set_stage(asset, stage):
+    STAGE_CONTEXT.update(asset=asset, stage=stage)
+    print("ASSET_STAGE " + json.dumps(STAGE_CONTEXT), flush=True)
+
+def download(url, target, limit, asset):
+    set_stage(asset, "download")
     digest, size = hashlib.sha256(), 0
     with urllib.request.urlopen(url, timeout=120) as response, target.open("xb") as output:
         while True:
@@ -86,7 +94,8 @@ def safe_zip(archive, destination):
 
 def install_blender(archives, tools):
     checksum_file = archives / "blender-4.5.9.sha256"
-    download(BLENDER_BASE + checksum_file.name, checksum_file, 64 * 1024)
+    download(BLENDER_BASE + checksum_file.name, checksum_file, 64 * 1024, "Blender.checksum")
+    set_stage("Blender.checksum", "parse-official-checksum")
     expected = []
     for line in checksum_file.read_text(encoding="utf-8").splitlines():
         fields = line.split()
@@ -96,10 +105,12 @@ def install_blender(archives, tools):
     if len(expected) != 1:
         raise ValueError("OFFICIAL_SHA256_ENTRY")
     archive = archives / BLENDER_NAME
-    actual = download(BLENDER_BASE + BLENDER_NAME, archive, 512 * MIB)
+    actual = download(BLENDER_BASE + BLENDER_NAME, archive, 512 * MIB, "Blender.binary")
+    set_stage("Blender.binary", "verify-sha256")
     if actual["sha256"] != expected[0]:
         raise ValueError("BLENDER_SHA256")
     tools.mkdir()
+    set_stage("Blender.binary", "validate-extract-tar")
     with tarfile.open(archive, "r:xz") as package:
         members = package.getmembers()
         if len(members) > 20000 or sum(m.size for m in members) > 3072 * MIB:
@@ -111,6 +122,7 @@ def install_blender(archives, tools):
     return binaries[0], {**actual, "official_sha256": expected[0], "verified": True}
 
 def main():
+    global REPORTS_DIR
     if sys.version_info < (3, 12):
         raise ValueError("PYTHON_3_12_REQUIRED")
     parser = argparse.ArgumentParser()
@@ -127,10 +139,12 @@ def main():
     reports = root / "reports"
     for path in (archives, sources, reports):
         path.mkdir()
+    REPORTS_DIR = reports
     manifest = {"stage": "original-source-inspection", "models": {}}
     for name, metadata in MODELS.items():
         archive = archives / (name.lower() + ".zip")
-        package = download(metadata["url"], archive, 200 * MIB)
+        package = download(metadata["url"], archive, 200 * MIB, name + ".archive")
+        set_stage(name + ".archive", "validate-crc-extract-zip")
         inventory = safe_zip(archive, sources / name)
         if not inventory["blend_files"] or len(inventory["blend_files"]) > 8:
             raise ValueError("BLEND_COUNT")
@@ -145,6 +159,7 @@ def main():
     (reports / "source-inventory.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     for name, model in manifest["models"].items():
         for number, relative in enumerate(model["blend_files"]):
+            set_stage(name + ".blend-" + str(number), "inspect-raw-datablocks")
             blend = sources / name / relative
             output = reports / (name.lower() + "-" + str(number) + ".json")
             command = [
@@ -176,6 +191,18 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as error:
-        print(json.dumps({"ok": False, "error_type": type(error).__name__,
-                          "code": str(error) if isinstance(error, ValueError) else "ACQUISITION_OR_INSPECTION_FAILED"}))
+        failure = {"ok": False, **STAGE_CONTEXT, "error_type": type(error).__name__,
+                   "code": "ACQUISITION_OR_INSPECTION_FAILED"}
+        if isinstance(error, urllib.error.HTTPError):
+            failure.update(code="HTTP_REQUEST_REJECTED", http_status=int(error.code))
+            error.close()
+        elif isinstance(error, ValueError) and re.fullmatch(r"[A-Za-z0-9_]{1,80}", str(error)):
+            failure["code"] = str(error)
+        print(json.dumps(failure), flush=True)
+        if REPORTS_DIR is not None:
+            try:
+                (REPORTS_DIR / "acquisition-failure.json").write_text(
+                    json.dumps(failure, indent=2), encoding="utf-8")
+            except OSError:
+                pass
         raise SystemExit(1)
