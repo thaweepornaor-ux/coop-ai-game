@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -47,14 +48,53 @@ const nameLabel = 'ชื่อผู้เล่น';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
 
-function safeCaseText(message) {
+function redactCaseText(message) {
   return String(message)
+    .replace(/<[^\r\n]*>/g, '[DOM detail omitted]')
     .replace(/Bearer\s+[^\s"'<>]+/gi, 'Bearer [redacted]')
     .replace(/((?:authorization|token|hostToken|playerToken)\s*["']?\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,}\n]+)/gi, '$1[redacted]')
     .replace(/[a-f0-9]{48,}/gi, '[redacted identifier]')
     .replace(/https?:\/\/[^\s"'<>]+/gi, '[preview address]')
-    .replace(/[\u0000-\u001f]/g, ' ')
-    .slice(0, 500);
+    .replace(/[\u0000-\u001f]/g, ' ');
+}
+function safeCaseText(message) { return redactCaseText(message).slice(0, 500); }
+function diagnosticCallLog(message) {
+  const clean = redactCaseText(message);
+  const reportedSteps = {
+    resolved: clean.includes('locator resolved to'),
+    performingClick: clean.includes('performing click action'),
+    clickDone: clean.includes('click action done'),
+    waitingNavigation: clean.includes('waiting for scheduled navigations to finish'),
+  };
+  const chars = [];
+  let bytes = 0;
+  for (const char of clean) {
+    const length = Buffer.byteLength(char, 'utf8');
+    if (bytes + length > 4096) break;
+    chars.push(char); bytes += length;
+  }
+  const payload = {
+    operation: 'female-click', maxBytes: 4096, reportedSteps,
+    truncated: chars.join('').length < clean.length, callLog: chars.join(''),
+  };
+  let json = JSON.stringify(payload);
+  // The entire artifact, including JSON escaping and metadata, stays within 4 KiB.
+  while (Buffer.byteLength(json, 'utf8') > 4096) {
+    chars.pop(); payload.callLog = chars.join(''); payload.truncated = true;
+    json = JSON.stringify(payload);
+  }
+  return { json, truncated: payload.truncated, reportedSteps };
+}
+function preserveFemaleCallLog(message) {
+  let saved = false, truncated = false, reportedSteps;
+  try {
+    const artifact = diagnosticCallLog(message);
+    truncated = artifact.truncated; reportedSteps = artifact.reportedSteps;
+    // Persist before browser awaits can reach the unchanged case deadline.
+    writeFileSync(path.join(out, 'webkit-female-click-calllog.json'), artifact.json, 'utf8');
+    saved = true;
+  } catch {} // Artifact capture failure must not replace the original click error.
+  console.log('COOP_WARDROBE_CALLLOG_ARTIFACT ' + JSON.stringify({ saved, truncated, reportedSteps }));
 }
 function emitCase(row) {
   console.log('COOP_BROWSER_CASE ' + JSON.stringify({
@@ -256,7 +296,19 @@ async function readCatalogueState(page) {
     const button = [...document.querySelectorAll('.character-gender-tabs button')]
       .find(node => node.textContent?.trim() === 'หญิง · 10 แบบ');
     const pressed = button?.getAttribute('aria-pressed');
+    const rect = button?.getBoundingClientRect();
+    const numeric = value => Number.isFinite(value) ? Math.round(value * 100) / 100 : null;
+    const bounds = rect ? {
+      x: numeric(rect.x), y: numeric(rect.y), width: numeric(rect.width), height: numeric(rect.height),
+    } : null;
+    const centerX = rect ? rect.x + rect.width / 2 : NaN;
+    const centerY = rect ? rect.y + rect.height / 2 : NaN;
+    const hit = Number.isFinite(centerX) && Number.isFinite(centerY) ? document.elementFromPoint(centerX, centerY) : null;
+    const centerHit = hit === button && hit ? 'button' : hit && button?.contains(hit) ? 'descendant' : hit ? 'other' : 'none';
+    const pointerValue = button ? getComputedStyle(button).pointerEvents : undefined;
+    const pointerEvents = pointerValue === 'auto' || pointerValue === 'none' ? pointerValue : pointerValue ? 'other' : 'unknown';
     return {
+      bounds, centerHit, pointerEvents,
       femalePressed: pressed === 'true' || pressed === 'false' ? pressed : null,
       femaleCards: document.querySelectorAll('.character-card[aria-label^="F"]').length,
       maleCards: document.querySelectorAll('.character-card[aria-label^="M"]').length,
@@ -316,6 +368,7 @@ async function clickFemaleCatalogue(page, browserName, mark = () => {}) {
     mark('female-click', 'returned');
   } catch (error) {
     mark('female-click', 'rejected'); // Synchronous evidence before any state read.
+    preserveFemaleCallLog(error.message);
     let state, stateReadError;
     try { state = await readCatalogueState(page); }
     catch (readError) { stateReadError = safeCaseText(readError.message); }
