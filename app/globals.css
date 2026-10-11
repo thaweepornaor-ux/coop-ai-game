@@ -6,3 +6,43 @@
 @media(max-height:500px) and (orientation:landscape){.entry-stage{min-height:0}.hero-stage{min-height:320px}.hero-avatar{height:320px;width:auto}.character-stage{height:300px}.customizer-preview{position:relative;top:0}.customizer{grid-template-columns:.7fr 1fr}.customizer-preview{display:block;text-align:center}.customizer-preview .eyebrow{justify-content:center}.character-cards{grid-template-columns:repeat(3,1fr)}.character-card-portrait{height:125px}.question-card h1{font-size:1.5rem}.topbar{margin-bottom:15px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}.motion-off *{animation:none!important;transition:none!important}
 .wardrobe section.wardrobe{padding:0}.wardrobe-tabs .wardrobe-tab svg{width:23px;height:23px;display:block;margin:0 auto 3px}.wardrobe-tile>svg{display:block;margin:0 auto 8px;width:50px;height:44px}.wardrobe-tile-check:empty{display:none}.wardrobe-color-heading{display:flex;justify-content:space-between;gap:10px}.wardrobe-color-heading h4{margin:0;font-size:.8rem}.wardrobe-color-heading>span{font-size:.7rem}.character-card-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-height:420px;overflow:auto;padding:3px}.character-catalogue-hint{font-size:.7rem;color:var(--muted);margin:0 0 12px}.character-card-portrait{display:block}.character-card-portrait>div{width:200%;transform:translate(-25%,-12%)}.character-card-id{font-size:.57rem;color:var(--gold)}.character-card-check{position:absolute;top:7px;right:7px;background:var(--green);color:#15392d;border-radius:50%;width:20px;height:20px;font-size:.75rem;font-weight:800}.character-card-check:empty{display:none}.character-gender-tabs button.selected{border-color:var(--green);color:var(--green);background:#23423e}@media(max-width:1100px) and (min-width:801px){.character-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:540px){.character-card-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.character-card-portrait>div{width:175%;transform:translate(-22%,-9%)}.wardrobe-tabs .wardrobe-tab svg{width:20px;height:20px}.wardrobe-tabs{gap:0}.wardrobe-tab{flex:1;padding:8px 6px;font-size:.64rem}.wardrobe-color-heading{font-size:.7rem}}
 .brand{min-width:0}.brand span{min-width:0}.brand strong{overflow-wrap:anywhere}.wardrobe-navigation button{min-width:92px}.wardrobe-item-preview:has(span){width:auto;height:auto;text-align:center;margin:15px 0;color:var(--muted);font-size:.75rem}.wardrobe-item-preview:has(span) svg{width:74px;height:60px;display:block;margin:auto}.wardrobe-tabs .wardrobe-tab{flex-shrink:0}@media(max-width:540px){.join-fields input{font-size:16px}.brand small{font-size:.53rem}.icon-button{font-size:.53rem}.wardrobe-navigation button{font-size:.7rem}}
+
+/* Studio motion uses transforms/opacity; scene effects stay behind content. */
+.studio-sparkles{position:absolute;inset:0;pointer-events:none}
+.studio-sparkle{position:absolute;display:block;border-radius:50%;background:#cbf6dd;opacity:.22;box-shadow:0 0 14px #83e2b077}
+.studio-sparkle::before,.studio-sparkle::after{content:"";position:absolute;left:-60%;top:42%;width:220%;height:16%;background:linear-gradient(90deg,transparent,#cbf6dd,transparent);border-radius:50%}
+.studio-sparkle::after{transform:rotate(90deg)}
+.motion-on .studio-sparkle{animation:studio-sparkle-drift 6s ease-in-out infinite alternate}
+.motion-on .spotlight-left{animation:studio-light-left 18s ease-in-out infinite alternate}
+.motion-on .spotlight-right{animation:studio-light-right 21s ease-in-out infinite alternate}
+.motion-on .orbit-ring{animation:studio-orbit-glow 8s ease-in-out infinite}
+.motion-on .stage-platform{animation:studio-platform-glow 6s ease-in-out infinite}
+.motion-on .button.primary{position:relative;overflow:hidden;isolation:isolate}
+.motion-on .button.primary::after{content:"";position:absolute;inset:-70% auto -70% -45%;width:24%;background:linear-gradient(90deg,transparent,#ffffff66,transparent);transform:rotate(24deg);animation:studio-button-shine 7s ease-in-out infinite;pointer-events:none}
+.motion-on .button.primary:disabled::after{animation:none;opacity:0}
+.motion-on .character-card.selected,.motion-on .wardrobe-tile.selected,.motion-on .swatch-button.selected{animation:studio-selection .45s ease-out}
+.motion-on .wardrobe-panel{animation:studio-panel-in .4s ease-out}
+.motion-on .answer{transition:transform .18s ease-out,border-color .22s,background .22s}
+.motion-on .answer:not(:disabled):active,.motion-on .button:not(:disabled):active{transform:scale(.985)}
+.motion-on .answer.correct{animation:studio-correct .7s ease-out}
+.motion-on .explanation{animation:studio-panel-in .55s ease-out both}
+.motion-on .countdown.urgent{animation:studio-countdown 1.25s ease-in-out infinite}
+.motion-on .podium-person{animation:studio-podium .75s cubic-bezier(.2,.7,.2,1) both}
+.motion-on .podium-person.rank-2{animation-delay:.16s}
+.motion-on .podium-person.rank-3{animation-delay:.28s}
+.motion-on .own-result{animation:studio-panel-in .5s ease-out both}
+.motion-off .studio-sparkle{opacity:.18}
+.motion-off .button.primary::after{display:none}
+@keyframes studio-sparkle-drift{0%{opacity:.12;transform:translate3d(0,10px,0) scale(.6)}60%{opacity:.58}100%{opacity:.22;transform:translate3d(12px,-15px,0) scale(1.15)}}
+@keyframes studio-light-left{from{transform:rotate(-27deg)}to{transform:rotate(-12deg)}}
+@keyframes studio-light-right{from{transform:rotate(25deg)}to{transform:rotate(13deg)}}
+@keyframes studio-orbit-glow{0%,100%{opacity:.48}50%{opacity:.95}}
+@keyframes studio-platform-glow{0%,100%{opacity:.72}50%{opacity:1}}
+@keyframes studio-button-shine{0%,72%{left:-45%;opacity:0}77%{opacity:.6}92%,100%{left:145%;opacity:0}}
+@keyframes studio-selection{0%{transform:scale(.98)}55%{transform:scale(1.025)}100%{transform:scale(1)}}
+@keyframes studio-panel-in{from{opacity:0;transform:translate3d(0,12px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes studio-correct{0%{transform:scale(.985)}45%{transform:scale(1.018)}100%{transform:scale(1)}}
+@keyframes studio-countdown{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes studio-podium{from{opacity:0;transform:translate3d(0,30px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@media(max-width:540px){.studio-sparkle:nth-child(n+9){display:none}.motion-on .spotlight-left,.motion-on .spotlight-right{animation-duration:24s}}
+@media(prefers-reduced-motion:reduce){.studio-sparkle{opacity:.18}.button.primary::after{display:none}}

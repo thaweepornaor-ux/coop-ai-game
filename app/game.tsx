@@ -24,7 +24,7 @@ const safeWrite=(key:string,value:string)=>{try{localStorage.setItem(key,value)}
 const sessionKey=(role:Role)=>'coop-ai-game-session-'+role;
 
 function ArenaLights({celebrate=false}:{celebrate?:boolean}) {
- return <div className="arena-lighting" aria-hidden="true"><div className="spotlight spotlight-left"/><div className="spotlight spotlight-right"/><div className="arena-grid"/>{celebrate&&<div className="confetti-burst">{Array.from({length:16},(_,i)=><i key={i} style={{left:(8+i*6)+'%',animationDelay:(i%4)*.15+'s',background:i%3===0?'#cbe997':i%3===1?'#46dbb5':'#e7c46a'}}/>)}</div>}</div>;
+ return <div className="arena-lighting" aria-hidden="true"><div className="spotlight spotlight-left"/><div className="spotlight spotlight-right"/><div className="arena-grid"/><div className="studio-sparkles">{Array.from({length:14},(_,i)=><i className="studio-sparkle" key={i} style={{left:((i*37+7)%94+3)+'%',top:((i*53+11)%88+6)+'%',width:(4+i%3*2)+'px',height:(4+i%3*2)+'px',animationDelay:-(i*.7)+'s',animationDuration:(4.8+i%5*1.2)+'s'}}/>)}</div>{celebrate&&<div className="confetti-burst">{Array.from({length:16},(_,i)=><i key={i} style={{left:(8+i*6)+'%',animationDelay:(i%4)*.15+'s',background:i%3===0?'#cbe997':i%3===1?'#46dbb5':'#e7c46a'}}/>)}</div>}</div>;
 }
 function RulesStrip(){return <div className="rules-strip"><div><b>15</b><span>คำถาม AI</span></div><div><b>15<small> วิ</small></b><span>ต่อหนึ่งคำถาม</span></div><div><b>1<small> แต้ม</small></b><span>เมื่อตอบถูก</span></div></div>}
 export default function Game({initialRole='choose'}:{initialRole?:Role}){

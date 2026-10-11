@@ -1,24 +1,19 @@
 # ภารกิจ AI ในสหกรณ์
 
-เกมตอบคำถาม AI สำหรับผู้สอนและผู้เรียน: 15 ข้อ ข้อละ 15 วินาที ผู้สอนเป็นผู้ควบคุมการเริ่มข้อ เปิดเฉลย ไปต่อ และรีเซ็ต ผู้เรียนตั้งชื่อ เลือกตัวละคร และตอบผ่านมือถือได้
+Recovery source for the existing cooperative AI training game.
 
-## สถานะการกู้โค้ด
+## Verified execution
 
-นำ source จาก checkpoint เดิมมาประกอบกับ avatar patch ใน branch `codex/game-recovery` เพื่อทดสอบและพัฒนาต่อ คลังนี้ยังไม่ใช่เกมฉบับพร้อมส่งมอบ และยังไม่มี deployment จาก GitHub
+The recovery branch has run successfully on GitHub Actions with Node 22.23.3 and the frozen pnpm lockfile. The GLB validator self-test passed 46 cases. Eight game-rule unit tests, local D1 integration, the recovered renderer geometry checks, and character reload/reset persistence checks passed.
 
-มี frontend, API, กติกาเกม, คำถาม, SQL migration, ตัวเลือกชาย 10 แบบ/หญิง 10 แบบ และข้อมูลแต่งตัว 11 fields ตัว renderer ในชุดกู้ยังเป็นฐานเก่าที่ต้องเปลี่ยนเป็นโมเดลสามมิติคุณภาพดีพร้อมข้อต่อและ animation จริง
+These results cover the recovered source. They do **not** approve the new character art, prove physical iPhone/Android compatibility, or constitute a new deployed game.
 
-ไฟล์ build integration สำหรับ Sites บางส่วนและ schema/config ประกอบยังขาดอยู่ route โลโก้ยังอ้างถึงไฟล์ภาพต้นฉบับที่ไม่ได้รวมในชุด public นี้ จึงยังไม่ถือว่า build ผ่าน
+## Work in progress
 
-## การตรวจสอบ
+- Build a real independent preview from the recovered source while preserving the original Sites configuration.
+- Inspect the official Snow and Rain Blender source models with automatic script execution disabled. Verify the Blender binary against its official SHA-256 manifest.
+- Replace the rejected puppet-like renderer with detailed adult characters, actual rig animation and compatible clothing. Inspect actual renders and exported GLBs before acceptance.
+- Preserve 10 male and 10 female characters, 11 independent dress fields, server-controlled 15-second questions, host permissions, score and reset behavior.
+- Verify responsive browser layouts, reduced-motion behavior, and subtle studio lighting, sparkles and celebrations.
 
-GitHub Actions จะตรวจการรัน Node และ CLI ตัวตรวจ GLB ก่อน จากนั้นจึงเพิ่มการทดสอบกติกาและตัวละครจาก source ที่กู้ได้ ผลสำเร็จของ helper ไม่ใช่การยืนยันคุณภาพโมเดลหรือภาพในเกม
-
-ตัวตรวจ GLB แบบอ่านอย่างเดียวอยู่ที่ `scripts/validate-avatar-production-glb.mjs`:
-
-```text
-node scripts/validate-avatar-production-glb.mjs --self-test
-node scripts/validate-avatar-production-glb.mjs path/to/avatar.glb
-```
-
-ไม่รวม credentials, runtime tokens, ข้อมูลผู้เรียนจริง หรือ config ผูกกับ Site เดิมในคลังนี้
+The main branch and existing published game are unchanged. The recovery work is on `codex/game-recovery`. No credentials, learner data, signed download links, or original private model checkpoints are stored here.
