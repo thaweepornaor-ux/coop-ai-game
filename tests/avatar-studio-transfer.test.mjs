@@ -28,7 +28,7 @@ test('Studio and game use same transfer token with explicit player-only handoff'
  const studio=readFileSync(new URL('../app/avatar-studio/page.tsx',import.meta.url),'utf8');
  const game=readFileSync(new URL('../app/game.tsx',import.meta.url),'utf8');
  assert.match(studio,/localStorage\.setItem\(STUDIO_TRANSFER_KEY,JSON\.stringify\(handoff\)\)/);
- assert.match(studio,/window\.location\.assign\('\/play\?studio=1'\)/);
+ assert.ok(studio.includes("window.location.assign('/play?studio=1'+"));
  assert.match(game,/initialRole==='player'&&query\.get\('studio'\)==='1'&&!sessionRef\.current/);
  assert.match(game,/setName\(transfer\.name\)/);
  assert.match(game,/setAvatar\(normalizeWardrobe\(transfer\.avatar,true\)\)/);
