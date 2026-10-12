@@ -84,5 +84,32 @@ class AvatarPngOptimizerTests(unittest.TestCase):
                 self.assertEqual(alpha.getextrema()[0], 0)
                 self.assertGreater(alpha.getextrema()[1], 0)
 
+    def test_real_image_retains_sem_transparency_and_png_signature(self):
+        with tempfile.TemporaryDirectory() as d:
+            source, target = Path(d) / "source.png", Path(d) / "avatar.png"
+            image = Image.new("RGBA", (512, 640), (0, 0, 0, 0))
+            for y in range(90, 550):
+                for x in range(110, 400):
+                    alpha = 255 if 120 < x < 390 else 100
+                    image.putpixel((x, y), ((x * 7) % 255, (y * 3) % 255, 155, alpha))
+            image.save(source)
+            dims, count, mode = module.optimize(source, target)
+            self.assertLessEqual(count, 150 * 1024)
+            self.assertTrue(target.read_bytes().startswith(bytes((137, 80, 78, 71, 13, 10, 26, 10))))
+            with Image.open(target) as output:
+                self.assertEqual(output.size, dims)
+                alpha = output.convert("RGBA").getchannel("A")
+                self.assertEqual(alpha.getextrema(), (0, 255))
+            self.assertTrue(mode == "RGBA" or mode.startswith("indexed-"))
+
+    def test_rejects_non_png_and_preserves_existing_destination(self):
+        with tempfile.TemporaryDirectory() as d:
+            source, target = Path(d) / "image.jpg", Path(d) / "result.png"
+            Image.new("RGB", (96, 96), (20, 30, 40)).save(source)
+            target.write_bytes(b"keep-me")
+            with self.assertRaises(ValueError):
+                module.optimize(source, target)
+            self.assertEqual(target.read_bytes(), b"keep-me")
+
 if __name__ == "__main__":
     unittest.main()
