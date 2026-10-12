@@ -25,9 +25,9 @@ export const PNG_PARTS=Object.freeze({
   {value:'aviator',label:'แว่นนักบิน',src:'/avatar-parts/glasses_aviator.png',ready:false,aligned:false}
  ],
  shoes: [
-  {value:'white',label:'รองเท้าครีม',src:'/avatar-parts/shoes_female_beige_maryjanes.png',ready:false,aligned:false},
-  {value:'brown',label:'รองเท้าบูต',src:'/avatar-parts/shoes_female_brown_ankle_boots.png',ready:false,aligned:false},
-  {value:'black',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png',ready:false,aligned:false}
+  {value:'beige',label:'รองเท้าครีม',src:'/avatar-parts/shoes_female_beige_maryjanes.png',ready:false,aligned:false},
+  {value:'boots',label:'รองเท้าบูต',src:'/avatar-parts/shoes_female_brown_ankle_boots.png',ready:false,aligned:false},
+  {value:'sneakers',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png',ready:false,aligned:false}
  ]
 });
 /** Files may not be present in a branch until the audited binary assets are committed. */
