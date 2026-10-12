@@ -241,7 +241,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
         <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span><div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/15)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':'เหลือ '+timer+' วินาที'}>{reveal?'✓':timer}<small>{reveal?'เฉลย':'วินาที'}</small></div></div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
-        <p className="topic"><span>MISSION {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
+        <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
         <div className="answer-grid">{snapshot.question?.options.map((option,i)=>{
           const picked=snapshot.ownAnswer?.choice===i||pendingChoice===i;
           const correct=reveal&&snapshot.correctAnswer===i;
@@ -255,12 +255,12 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       </div>
       {isHost&&<aside className="card question-roster"><h2>{reveal?'ใครตอบเป็นอย่างไรบ้าง?':'ร่วมลุ้นไปด้วยกัน'}</h2>
         {reveal?<div className="reveal-groups">{(['correct','incorrect','unanswered'] as const).map(status=><div className={'result-group '+status} key={status}><h3>{status==='correct'?'✓ ตอบถูก':status==='incorrect'?'↻ ตอบผิด':'— ไม่ได้ตอบ'} <span>{snapshot.results?.filter(r=>r.status===status).length||0} คน</span></h3>{snapshot.results?.filter(r=>r.status===status).map(r=><div className="result-person" key={r.playerId}><Avatar options={r.avatar}/><span>{r.name}<small>{r.choice==null?'ไม่ได้เลือก':('เลือก '+letters[r.choice])}</small></span><strong>{r.score} คะแนน</strong></div>)}</div>)}</div>
-        :<div className="roster">{snapshot.players.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small>{p.answered?'ส่งแล้ว ✓':'กำลังคิด…'}</small></div>)}</div>}
+        :<div className="roster">{snapshot.players.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small>{p.score} คะแนน · {p.answered?'ส่งแล้ว ✓':'กำลังคิด…'}</small></div>)}</div>}
       </aside>}
     </section>}
 
     {session&&snapshot&&finished&&<section className="results-page">
-      <div className="card finish-heading enter"><div className="eyebrow">MISSION COMPLETE</div><h1>ทุกไอเดียมีพลัง<br/><em>นี่คือทีมของเรา</em></h1><p>ผลสะท้อนความเข้าใจพื้นฐาน AI จากคำถามชุดนี้<br/>ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
+      <div className="card finish-heading enter"><div className="eyebrow">สรุปผลการประเมิน</div><h1>ทุกไอเดียมีพลัง<br/><em>นี่คือทีมของเรา</em></h1><p>ผลสะท้อนความเข้าใจพื้นฐาน AI จากคำถามชุดนี้<br/>ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
         {!isHost&&own&&<div className="personal-finish"><Avatar options={own.avatar}/><div><h2>{own.name}</h2><strong className="big-score">{own.score}<small> / 15</small></strong><div className="level-badge">{level(own.score)}</div><p className="level-feedback">{levelFeedback(own.score)}</p></div></div>}
         {<div className="podium">{snapshot.leaderboard?.filter(p=>p.rank<=3).slice(0,3).map(p=><div className={'podium-person rank-'+p.rank} key={p.id}><span>{String(p.rank).padStart(2,'0')}</span><Avatar options={p.avatar}/><h2>{p.name}</h2><strong>{p.score} / 15</strong></div>)}</div>}
       </div>
