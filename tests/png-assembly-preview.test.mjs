@@ -76,3 +76,12 @@ test('alignment lab exports only validated PNG snapshot JSON for approval',()=>{
  assert.match(lab,/anchor\.download='coop-avatar-layout-'\+gender\+'\.json'/);
  assert.match(lab,/onClick=\{exportSettings\}/);
 });
+
+test('validated PNG JSON import rejects incorrect gender and unverified assets',()=>{
+ assert.match(lab,/const snapshot=validateAssemblySnapshot\(JSON\.parse\(raw\)\)/);
+ assert.match(lab,/if\(snapshot\.gender!==gender\)throw/);
+ assert.match(lab,/setPositions\(snapshot\.positions\)/);
+ assert.match(lab,/setPicked\(\{\.\.\.snapshot\.selected,face:undefined\}\)/);
+ assert.match(lab,/file\.size>64\*1024/);
+ assert.match(lab,/accept="\.json,application\/json"/);
+});
