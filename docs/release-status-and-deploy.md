@@ -29,3 +29,7 @@
 - D1 binding:
 - Smoke check:
 - Verified at (timezone):
+
+## One-time verified staging refresh — 13 October 2026
+
+The QR-first simplified AI understanding assessment passed 12/12 browser scenarios on commit `cfb4df0f`. Additional source changes only extend bounded Cloudflare release verification with observed-commit diagnostics. A staging-only one-shot publish is requested to verify the latest `main` revision. The workflow will be restored to manual-only publishing immediately after verification.
