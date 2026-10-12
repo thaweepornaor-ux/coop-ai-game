@@ -9,7 +9,7 @@ test('real PNG experiment is embedded in character selection, not game Avatar re
  assert.match(lab,/Never replaces the playable avatar/);
 });
 test('workbench only offers uploaded parts and has x/y/scale controls',()=>{
- assert.match(lab,/filter\(p=>p\.ready&&\(!p\.gender\|\|p\.gender===gender\)\)/);
+ assert.match(lab,/filter\(p=>p\.ready&&p\.playable!==false&&\(!p\.gender\|\|p\.gender===gender\)\)/);
  assert.match(lab,/\['bottom','shoes','top','face','hair'\]/);
  for(const key of ['x','y','scale'])assert.ok(lab.includes(key));
  assert.match(lab,/type="range"/);
@@ -26,7 +26,7 @@ test('alignment settings can be saved and restored with bounded values',()=>{
 test('saved selected PNG part names are restored from verified uploaded assets only',()=>{
  assert.match(lab,/localStorage\.getItem\(selectionKey\)/);
  assert.match(lab,/localStorage\.setItem\(selectionKey,JSON\.stringify\(\{\.\.\.picked,face:undefined\}\)\)/);
- assert.match(lab,/PNG_PARTS\[category\]\.some\(part=>part\.ready&&part\.src===src&&\(!part\.gender\|\|part\.gender===gender\)\)/);
+ assert.match(lab,/PNG_PARTS\[category\]\.some\(part=>part\.ready&&part\.playable!==false&&part\.src===src&&\(!part\.gender\|\|part\.gender===gender\)\)/);
  assert.match(lab,/setPicked\(valid\)/);
 });
 
@@ -87,12 +87,12 @@ test('validated PNG JSON import rejects incorrect gender and unverified assets',
 });
 
 test('alignment editor excludes cross-gender CGI clothing and warns if no compatible pieces',()=>{
- assert.match(lab,/PNG_PARTS\[category\]\.filter\(p=>p\.ready&&\(!p\.gender\|\|p\.gender===gender\)\)/);
+ assert.match(lab,/PNG_PARTS\[category\]\.filter\(p=>p\.ready&&p\.playable!==false&&\(!p\.gender\|\|p\.gender===gender\)\)/);
  assert.match(lab,/บางเพศยังไม่มีเสื้อหรือรองเท้า PNG/);
 });
 
 test('PNG alignment preview excludes incompatible gender and warns about missing pieces',()=>{
- assert.match(lab,/p\.ready&&\(!p\.gender\|\|p\.gender===gender\)/);
+ assert.match(lab,/p\.ready&&p\.playable!==false&&\(!p\.gender\|\|p\.gender===gender\)/);
  assert.match(lab,/const missing=order\.filter\(category=>lists\[category\]\.length===0\)/);
  assert.match(lab,/ยังไม่มีชิ้นส่วน PNG ที่ตรงกับตัวละครนี้/);
 });
