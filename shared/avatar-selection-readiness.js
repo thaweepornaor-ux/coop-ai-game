@@ -3,7 +3,7 @@ import {PNG_PARTS} from './avatar-png-catalog.js';
 /** Check the exact player's PNG outfit, not whether the catalog has a random sample for each group. */
 export function avatarSelectionReadiness(choices,catalog=PNG_PARTS){
  const reasons=[];
- const isSafePart=p=>p&&typeof p.src==='string'&&/^\\/avatar-parts\\/[a-zA-Z0-9_-]+\\.png$/.test(p.src);
+ const isSafePart=p=>p&&typeof p.src==='string'&&/^\/avatar-parts\/[a-zA-Z0-9_-]+\.png$/.test(p.src);
  const body=catalog.body?.find(p=>p.value===choices?.bodyStyle&&p.ready&&p.aligned&&p.playable!==false&&isSafePart(p));
  if(!body)reasons.push('body-base');
  const required=[
