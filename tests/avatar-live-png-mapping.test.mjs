@@ -5,6 +5,7 @@ import {AVATAR_OPTIONS} from '../shared/avatar.js';
 import {PNG_PARTS} from '../shared/avatar-png-catalog.js';
 import {avatarSelectionReadiness} from '../shared/avatar-selection-readiness.js';
 const source=readFileSync(new URL('../app/components/avatar.tsx',import.meta.url),'utf8');
+const wardrobe=readFileSync(new URL('../app/components/wardrobe.tsx',import.meta.url),'utf8');
 
 const choices={bodyStyle:'male',hairStyle:'shoulder',shirtStyle:'jacket',bottomStyle:'pants',shoeColor:'white',glassesStyle:'none'};
 test('uploaded PNG shirt and shoe aliases resolve to actual wardrobe selections',()=>{
@@ -42,4 +43,15 @@ test('playable PNG layers require approved geometry and use part coordinates, no
  assert.match(source,/width:part\.position!\.scale\+'%'/);
  assert.match(source,/maxHeight:'65%'/);
  assert.match(source,/Number\.isFinite\(pos\[k as keyof typeof pos\]\)/);
+});
+
+test('wardrobe cannot write the nonplayable shorts-preview into player outfit',()=>{
+ assert.doesNotMatch(wardrobe,/change\('bottomStyle',part\.value\)/);
+ assert.match(wardrobe,/ยังไม่เปิดใช้/);
+ assert.match(wardrobe,/PNG_PARTS\.bottom\.filter\(part=>part\.ready\)\.map\(part=><figure/);
+});
+test('wardrobe shows CGI apparel previews only to compatible gender and lazy-decodes thumbnails',()=>{
+ assert.match(wardrobe,/PNG_PARTS\.top\.filter\(part=>part\.ready&&\(!part\.gender\|\|part\.gender===avatar\.bodyStyle\)\)/);
+ assert.match(wardrobe,/PNG_PARTS\.shoes\.filter\(part=>part\.ready&&\(!part\.gender\|\|part\.gender===avatar\.bodyStyle\)\)/);
+ assert.match(wardrobe,/loading="lazy" decoding="async"/);
 });
