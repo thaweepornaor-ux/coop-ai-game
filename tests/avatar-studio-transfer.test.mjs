@@ -55,7 +55,7 @@ test('portrait gallery renders actual selected facial presets rather than unlabe
 
 test('first Studio visit reuses a saved player wardrobe, but saved Studio draft wins',()=>{
  const studio=readFileSync(new URL('../app/avatar-studio/page.tsx',import.meta.url),'utf8');
- assert.match(studio,/localStorage\.getItem\(storageKey\)\|\|localStorage\.getItem\('coop-ai-game-avatar'\)/);
+ assert.match(studio,/for\(const key of \[storageKey,'coop-ai-game-avatar'\]\)/);
  assert.match(studio,/setAvatar\(clean\(normalizeWardrobe\(JSON\.parse\(raw\)\)\)\)/);
  assert.match(studio,/localStorage\.getItem\(nameKey\)\|\|localStorage\.getItem\('coop-ai-game-name'\)/);
 });
