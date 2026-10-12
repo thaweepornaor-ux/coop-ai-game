@@ -26,7 +26,7 @@ export function Avatar({options={},className,interactive=false,motion=true}:Avat
   }catch{setFailed(true);}}).catch(()=>{if(!cancelled)setFailed(true);});return()=>{cancelled=true;cleanup();};
  },[serialized,interactive,motion,visible,contextLost,contextEpoch]);
  return <div ref={container} className={className} style={{position:'relative',aspectRatio:'3 / 4'}}>
-  {thumbnail.key===serialized&&thumbnail.url&&<img src={thumbnail.url} alt="ตัวละครสามมิติผู้เล่น" decoding="async" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>}
+  {thumbnail.key===serialized&&thumbnail.url&&(!interactive||failed||contextLost)&&<img src={thumbnail.url} alt="ตัวละครสามมิติผู้เล่น" decoding="async" loading="lazy" style={{width:'100%',height:'100%',objectFit:'contain',display:'block'}}/>}
   {interactive&&<canvas ref={canvas} aria-label="ตัวละครสามมิติ ลากเพื่อหมุนดูชุด" style={{position:'absolute',inset:0,width:'100%',height:'100%',touchAction:'pan-y',cursor:'grab',opacity:failed||contextLost?0:1}}/>}
  </div>;
 }

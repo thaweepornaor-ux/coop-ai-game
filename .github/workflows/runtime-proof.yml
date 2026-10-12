@@ -1,7 +1,7 @@
 name: Runtime proof
 on:
   push:
-    branches: [main, codex/game-recovery, codex/avatar-preview-refresh-20261011, codex/preview-staging-20261011]
+    branches: [main, codex/game-recovery, codex/avatar-preview-refresh-20261011, codex/preview-staging-20261011, codex/avatar-wardrobe-fixes-20261012]
   pull_request:
     branches: [main]
   workflow_dispatch:
