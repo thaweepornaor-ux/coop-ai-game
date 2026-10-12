@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import {Avatar,AVATAR_OPTIONS,type AvatarOptionKey} from '../components/avatar';
 import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
+import {renderAvatar} from '../../shared/avatar.js';
 
 const storageKey='coop-ai-avatar-studio-draft-v1';
 const fields:AvatarOptionKey[]=['skinTone','hairStyle','hairColor','shirtStyle','shirtColor','bottomStyle','bottomColor','shoeColor','glassesStyle','hatStyle','hatColor'];
@@ -26,6 +27,18 @@ export default function AvatarStudio(){
  const preset=(person:CharacterPreset)=>setAvatar(before=>clean({...before,bodyStyle:person.gender,presetId:person.id,skinTone:person.skinTone,hairStyle:person.hairStyle,hairColor:person.hairColor,glassesStyle:person.glasses?'round':'none',bottomStyle:person.bottomStyle,bottomColor:person.bottomColor,shirtColor:person.shirtColor}));
  const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(clean(avatar)));setStatus('บันทึกชุดทดลองไว้ในเบราว์เซอร์นี้แล้ว (ยังไม่เปลี่ยนตัวละครในห้องเกม)');}catch{setStatus('บันทึกไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล');}};
  const reset=()=>{setAvatar({...defaults});setStatus('คืนค่าชุดเริ่มต้นแล้ว ยังไม่ได้บันทึก');};
+ const exportSvg=()=>{
+  try{
+   const svg=renderAvatar(avatar);
+   const blob=new Blob([svg],{type:'image/svg+xml;charset=utf-8'});
+   const url=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=url;link.download='coop-ai-'+avatar.presetId+'-front.svg';document.body.appendChild(link);link.click();link.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+   setStatus('ส่งออกภาพ SVG หน้าตรงแล้ว (ภาพตัวอย่าง ไม่ใช่ PNG ต้นฉบับ)');
+  }catch{setStatus('ส่งออก SVG ไม่สำเร็จ');}
+ };
+
  const picked=CHARACTERS.find(c=>c.id===avatar.presetId);
  return <main style={{minHeight:'100vh',background:'#f0f4f7',color:'#21313c',padding:'24px 16px',fontFamily:'system-ui,sans-serif'}}>
   <div style={{maxWidth:1080,margin:'0 auto'}}>
@@ -35,7 +48,7 @@ export default function AvatarStudio(){
      <h2 style={{fontSize:18}}>ตัวละครหน้าตรง · {picked?.id||avatar.presetId}</h2>
      <div style={{maxWidth:330,margin:'0 auto',height:440,background:'linear-gradient(180deg,#f4faf9,#e0e9f0)',borderRadius:18,overflow:'hidden'}}><Avatar options={avatar} motion={false}/></div>
      <p style={{fontSize:13}}>ภาพตัวอย่าง SVG สำหรับทดสอบการเปลี่ยนชิ้นส่วน ไม่ใช่ภาพ CGI หรือภาพ PNG ที่ตรวจรับแล้ว</p>
-     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" onClick={save} style={{padding:'12px 18px',borderRadius:10,background:'#18594b',color:'white',border:0,cursor:'pointer'}}>บันทึกชุดทดลอง</button><button type="button" onClick={reset} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>เริ่มใหม่</button></div>
+     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" onClick={save} style={{padding:'12px 18px',borderRadius:10,background:'#18594b',color:'white',border:0,cursor:'pointer'}}>บันทึกชุดทดลอง</button><button type="button" onClick={exportSvg} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>ส่งออก SVG</button><button type="button" onClick={reset} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>เริ่มใหม่</button></div>
      <p role="status" style={{fontSize:13}}>{status}</p>
     </section>
     <section aria-label="เครื่องมือแต่งตัว" style={{background:'white',borderRadius:20,padding:20,boxShadow:'0 6px 24px #21313c12'}}>
