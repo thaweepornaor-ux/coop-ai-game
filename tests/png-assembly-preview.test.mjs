@@ -69,3 +69,10 @@ test('preview and export share one tested geometry calculation',()=>{
  assert.match(lab,/avatarLayerRect\(d\.width,d\.height,a\)/);
  assert.match(lab,/onLoad=\{e=>\{const width=e\.currentTarget\.naturalWidth,height=e\.currentTarget\.naturalHeight/);
 });
+
+test('alignment lab exports only validated PNG snapshot JSON for approval',()=>{
+ assert.match(lab,/validateAssemblySnapshot\(\{version:PNG_ASSEMBLY_VERSION,gender,positions,selected\}\)/);
+ assert.match(lab,/JSON\.stringify\(snapshot,null,2\)/);
+ assert.match(lab,/anchor\.download='coop-avatar-layout-'\+gender\+'\.json'/);
+ assert.match(lab,/onClick=\{exportSettings\}/);
+});
