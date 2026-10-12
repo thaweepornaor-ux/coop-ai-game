@@ -71,23 +71,22 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
         </button>)}
       </div>}
       {category.style === 'shirtStyle' && PNG_PARTS.top.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างเสื้อ PNG จริง">
-        {PNG_PARTS.top.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shirtStyle === 'jacket' ? ' selected' : ''}`} aria-label={`เลือกสไตล์เสื้อคลุม จากภาพ ${part.label}`} aria-pressed={avatar.shirtStyle === 'jacket'} onClick={() => change('shirtStyle','jacket')}>
+        {PNG_PARTS.top.filter(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shirtStyle === 'jacket' ? ' selected' : ''}`} aria-label={`เลือกสไตล์เสื้อคลุม จากภาพ ${part.label}`} aria-pressed={avatar.shirtStyle === 'jacket'} onClick={() => change('shirtStyle','jacket')}>
           <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}}/>
           <span>{part.label} · ตัวอย่างสไตล์เสื้อคลุม</span>
         </button>)}
       </div>}
       {category.color === 'shoeColor' && PNG_PARTS.shoes.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างรองเท้า PNG จริง">
-        {PNG_PARTS.shoes.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shoeColor === 'white' ? ' selected' : ''}`} aria-label={`เลือกสีรองเท้าขาว จากภาพ ${part.label}`} aria-pressed={avatar.shoeColor === 'white'} onClick={() => change('shoeColor','white')}>
+        {PNG_PARTS.shoes.filter(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shoeColor === 'white' ? ' selected' : ''}`} aria-label={`เลือกสีรองเท้าขาว จากภาพ ${part.label}`} aria-pressed={avatar.shoeColor === 'white'} onClick={() => change('shoeColor','white')}>
           <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}}/>
           <span>{part.label} · ตัวอย่างสีขาว</span>
         </button>)}
       </div>}
-      {category.style === 'shirtStyle' && PNG_PARTS.bottom.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างกางเกง PNG ที่นำเข้าแล้ว">
-        {PNG_PARTS.bottom.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.bottomStyle === part.value ? ' selected' : ''}`} aria-pressed={avatar.bottomStyle === part.value} onClick={() => change('bottomStyle',part.value)}>
-          <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}} />
-          <span>{part.label} · ภาพต้นฉบับ</span>
-          <span className="wardrobe-tile-check" aria-hidden="true">{avatar.bottomStyle === part.value ? '✓' : ''}</span>
-        </button>)}
+      {category.style === 'shirtStyle' && PNG_PARTS.bottom.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างกางเกง PNG ที่นำเข้าแล้ว (ยังเลือกใช้ไม่ได้)">
+        {PNG_PARTS.bottom.filter(part=>part.ready).map(part=><figure key={part.src} className="wardrobe-tile" style={{margin:0}}>
+          <img src={part.src} alt={part.label} loading="lazy" decoding="async" width={72} height={72} style={{objectFit:'contain'}} />
+          <figcaption>{part.label} · ภาพอ้างอิง ยังไม่เปิดใช้</figcaption>
+        </figure>)}
       </div>}
       {category.style && category.style !== 'bodyStyle' && <div className="wardrobe-tiles" aria-label={`เลือก${category.label}`}>
         {AVATAR_OPTIONS[category.style].map(option => <button type="button" key={option.value} className={`wardrobe-tile${avatar[category.style!] === option.value ? ' selected' : ''}`} aria-pressed={avatar[category.style!] === option.value} onClick={() => change(category.style!, option.value)}><ItemIcon kind={category.icon} value={option.value} color={color} /><span>{option.label}</span><span className="wardrobe-tile-check" aria-hidden="true">{avatar[category.style!] === option.value ? '✓' : ''}</span></button>)}
