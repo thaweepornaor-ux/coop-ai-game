@@ -15,7 +15,7 @@ export const PNG_PARTS=Object.freeze({
   {value:'tshirt',label:'แจ็กเก็ตยีนส์',src:'/avatar-parts/clothing_male_blue_denim_jacket.png',ready:false,aligned:false}
  ],
  bottom: [
-  {value:'pants',label:'กางเกงชิโน',src:'/avatar-parts/clothing_male_beige_chinos.png',ready:false,aligned:false},
+  {value:'pants',label:'กางเกงชิโน',src:'/avatar-parts/clothing_male_beige_chinos.png',ready:true,aligned:false},
   {value:'pants-jeans',label:'กางเกงยีนส์',src:'/avatar-parts/clothing_male_blue_jeans.png',ready:false,aligned:false},
   {value:'skirt',label:'กระโปรงพลีตดำ',src:'/avatar-parts/clothing_female_black_pleated_skirt.png',ready:false,aligned:false}
  ],
