@@ -23,7 +23,7 @@ export function validateAssemblySnapshot(input){
    if(!face)throw new TypeError('Gender face is not uploaded');
    selected.face=face.src;
   }else{
-   if(typeof source!=='string'||!PNG_PARTS[category].some(part=>part.ready&&part.src===source))throw new TypeError('Unverified PNG layer: '+category);
+   if(typeof source!=='string'||!PNG_PARTS[category].some(part=>part.ready&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
    selected[category]=source;
   }
  }
