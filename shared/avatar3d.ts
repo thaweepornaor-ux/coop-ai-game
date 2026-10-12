@@ -69,7 +69,7 @@ export function createCharacter(input:Record<string,unknown>){
   const hand=mesh(sculptHand(),skin);hand.name="hand";hand.position.set(side*.49,1.40,.235);hand.scale.set(side*.92,1,.95);hand.rotation.z=side*.08;
   rigPart=side<0?5:6;
   const legPath=[[side*.172,1.50,-.018],[side*.182,1.34,-.018],[side*.185,1.09,.006],[side*.178,.84,.068],[side*.18,.67,.048],[side*.20,.49,-.014],[side*.207,.29,-.002]];
-  tube(legPath,values.bottomStyle.value==='skirt'?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],values.bottomStyle.value==='skirt'?skin:bottom,.91);
+  tube(legPath,(female&&values.bottomStyle.value==='skirt')?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],values.bottomStyle.value==='skirt'?skin:bottom,.91);
   ell(shoes,side*.21,.183,.08,.135,.092,.224);ell(white,side*.21,.115,.093,.139,.031,.23);ell(shoes,side*.21,.23,-.02,.104,.079,.112);
   for(let l=0;l<3;l++)ell(white,side*.21,.267,.08+l*.04,.049,.006,.008);
  }
@@ -99,7 +99,7 @@ export function createCharacter(input:Record<string,unknown>){
   if(originalHair==='bun')ell(hair,0,2.67,-.38,.135,.13,.12);
   else if(h==='ponytail')tube([[0,2.99,-.35],[.03,2.72,-.43],[.07,2.4,-.38]],[.105,.105,.06],hair);
  }
- if(preset.glasses)for(const s of [-1,1]){const curve=surface((u,v)=>{const a=u*Math.PI*2,b=v*Math.PI*2;return[s*.15*fw+Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**(preset.glassesStyle==='square'?.38:1)*(.098+Math.cos(b)*.008),2.88+Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**(preset.glassesStyle==='square'?.38:1)*((preset.glassesStyle==='oval'?.088:.105)+Math.cos(b)*.008),.355+Math.sin(b)*.008];},24,6);mesh(curve,mat(({charcoal:'#303943',black:'#202b32',brown:'#654532',silver:'#b9bfc4',gold:'#b99a5a'} as Record<string,string>)[preset.glassesColor]||'#5a493d',.3));}if(preset.glasses)ell(mat('#5a493d'),0,2.9,.357,.055,.008,.009);
+ if((input.glasses === 'off' ? false : input.glasses === 'on' ? true : preset.glasses))for(const s of [-1,1]){const curve=surface((u,v)=>{const a=u*Math.PI*2,b=v*Math.PI*2;return[s*.15*fw+Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**(preset.glassesStyle==='square'?.38:1)*(.098+Math.cos(b)*.008),2.88+Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**(preset.glassesStyle==='square'?.38:1)*((preset.glassesStyle==='oval'?.088:.105)+Math.cos(b)*.008),.355+Math.sin(b)*.008];},24,6);mesh(curve,mat(({charcoal:'#303943',black:'#202b32',brown:'#654532',silver:'#b9bfc4',gold:'#b99a5a'} as Record<string,string>)[preset.glassesColor]||'#5a493d',.3));}if((input.glasses === 'off' ? false : input.glasses === 'on' ? true : preset.glasses))ell(mat('#5a493d'),0,2.9,.357,.055,.008,.009);
  if(values.hairColor.value==='saltpepper'||preset.age>=55)for(const side of [-1,1])tube([[side*.37,3.09,.01],[side*.39,2.96,.09]],[.023,.01],mat('#b8b8b2',.34));
  if(preset.facialHair)for(const s of [-1,1])ell(hair,s*.05,2.695,.324,.063,.013,.018);
  if(preset.age>=50)for(const s of [-1,1])face(ell(lip,s*.265,2.82,.263,.027,.005,.006));
