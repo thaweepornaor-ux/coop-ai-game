@@ -7,6 +7,7 @@ type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
 const order:Category[]=['bottom','shoes','top','face','hair'];
 const labels:Record<Category,string>={face:'ใบหน้า',hair:'ทรงผม',top:'เสื้อ',bottom:'กางเกง',shoes:'รองเท้า'};
 const storageKey='coop-ai-game-png-alignment-v1';
+const selectionKey='coop-ai-game-png-selections-v1';
 const defaults:Record<Category,{x:number;y:number;scale:number}>={
  face:{x:50,y:22,scale:40},hair:{x:50,y:14,scale:46},
  top:{x:50,y:51,scale:60},bottom:{x:50,y:73,scale:52},shoes:{x:50,y:92,scale:38}
@@ -37,8 +38,23 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    setSaved('โหลดตำแหน่งที่บันทึกไว้แล้ว');
   }catch{}
  },[]);
+ useEffect(()=>{
+  try{
+   const raw=localStorage.getItem(selectionKey);
+   if(!raw)return;
+   const value=JSON.parse(raw) as unknown;
+   if(!value||typeof value!=='object'||Array.isArray(value))return;
+   const data=value as Record<string,unknown>;
+   const valid:Partial<Record<Category,string>>={};
+   for(const category of order){
+    const src=data[category];
+    if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.src===src))valid[category]=src;
+   }
+   setPicked(valid);
+  }catch{}
+ },[]);
  const save=()=>{
-  try{localStorage.setItem(storageKey,JSON.stringify(positions));setSaved('บันทึกตำแหน่งไว้บนอุปกรณ์นี้แล้ว');}
+  try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify(picked));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
  };
  const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready)])) as Record<Category,Part[]>;
@@ -65,7 +81,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     <input type="range" min={key==='scale'?10:0} max={key==='scale'?100:100} value={current[key]} onChange={e=>update(key,Number(e.target.value))} style={{display:'block',width:'100%'}}/>
   </label>)}
   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
-   <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่ง</button>
+   <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่งและภาพ</button>
    <button type="button" onClick={()=>{setPositions(defaults);setSaved('กลับสู่ค่าเริ่มต้น (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
   </div>
   {saved&&<p role="status" style={{fontSize:12}}>{saved}</p>}
