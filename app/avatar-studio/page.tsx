@@ -28,7 +28,15 @@ export default function AvatarStudio(){
  const [characterName,setCharacterName]=useState('');
  const [returnRoom,setReturnRoom]=useState('');
  const [status,setStatus]=useState('ตัวอย่างนี้ใช้ภาพวาด SVG ที่เปลี่ยนชุดได้จริง ภาพ PNG ที่ยังจัดตำแหน่งไม่เสร็จจะไม่ถูกแสดงแทน');
- useEffect(()=>{try{const raw=localStorage.getItem(storageKey)||localStorage.getItem('coop-ai-game-avatar');if(raw)setAvatar(clean(normalizeWardrobe(JSON.parse(raw))));setCharacterName(cleanName(localStorage.getItem(nameKey)||localStorage.getItem('coop-ai-game-name')));}catch{}
+ useEffect(()=>{
+  // A broken draft must not prevent loading a previously saved playable avatar.
+  for(const key of [storageKey,'coop-ai-game-avatar']){
+   try{
+    const raw=localStorage.getItem(key);
+    if(raw){setAvatar(clean(normalizeWardrobe(JSON.parse(raw))));break;}
+   }catch{}
+  }
+  try{setCharacterName(cleanName(localStorage.getItem(nameKey)||localStorage.getItem('coop-ai-game-name')))}catch{}
   const room=new URLSearchParams(window.location.search).get('room')||'';
   if(/^[A-Z0-9]{6}$/.test(room.toUpperCase()))setReturnRoom(room.toUpperCase());
  },[]);
