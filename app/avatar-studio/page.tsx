@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {Avatar,AVATAR_OPTIONS,type AvatarOptionKey} from '../components/avatar';
 import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
 import {renderAvatar} from '../../shared/avatar.js';
+import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../../shared/avatar-studio-transfer.js';
 
 const storageKey='coop-ai-avatar-studio-draft-v1';
 const nameKey='coop-ai-avatar-studio-name-v1';
@@ -30,6 +31,14 @@ export default function AvatarStudio(){
  const preset=(person:CharacterPreset)=>setAvatar(before=>clean({...before,bodyStyle:person.gender,presetId:person.id,skinTone:person.skinTone,hairStyle:person.hairStyle,hairColor:person.hairColor,glassesStyle:person.glasses?'round':'none',bottomStyle:person.bottomStyle,bottomColor:person.bottomColor,shirtColor:person.shirtColor}));
  const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(clean(avatar)));localStorage.setItem(nameKey,cleanName(characterName));setStatus('บันทึกชื่อตัวละครและชุดทดลองในเบราว์เซอร์นี้แล้ว (ยังไม่เปลี่ยนผู้เล่นในห้องเกม)');}catch{setStatus('บันทึกไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล');}};
  const reset=()=>{setAvatar({...defaults});setCharacterName('');setStatus('คืนค่าชุดเริ่มต้นแล้ว ยังไม่ได้บันทึก');};
+ const useInGame=()=>{
+  const handoff=validateStudioTransfer({version:1,name:characterName,avatar:clean(avatar)});
+  if(!handoff){setStatus('กรุณาตั้งชื่อตัวละครก่อนนำเข้าเกม');return;}
+  try{
+   localStorage.setItem(STUDIO_TRANSFER_KEY,JSON.stringify(handoff));
+   window.location.assign('/play?studio=1');
+  }catch{setStatus('ส่งตัวละครไปหน้าเกมไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้บันทึก');}
+ };
  const exportSvg=()=>{
   try{
    const svg=renderAvatar(avatar);
@@ -51,7 +60,7 @@ export default function AvatarStudio(){
      <h2 style={{fontSize:18}}>{cleanName(characterName)||'ตัวละครของคุณ'} · {picked?.id||avatar.presetId}</h2>
      <div style={{maxWidth:330,margin:'0 auto',height:440,background:'linear-gradient(180deg,#f4faf9,#e0e9f0)',borderRadius:18,overflow:'hidden'}}><Avatar options={avatar} motion={false}/></div>
      <p style={{fontSize:13}}>ภาพตัวอย่าง SVG สำหรับทดสอบการเปลี่ยนชิ้นส่วน ไม่ใช่ภาพ CGI หรือภาพ PNG ที่ตรวจรับแล้ว</p>
-     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" onClick={save} style={{padding:'12px 18px',borderRadius:10,background:'#18594b',color:'white',border:0,cursor:'pointer'}}>บันทึกชุดทดลอง</button><button type="button" onClick={exportSvg} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>ส่งออก SVG</button><button type="button" onClick={reset} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>เริ่มใหม่</button></div>
+     <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><button type="button" onClick={useInGame} style={{padding:"12px 18px",borderRadius:10,background:"#216d92",border:0,color:"white",cursor:"pointer"}}>ใช้ตัวละครนี้เข้าเกม →</button><button type="button" onClick={save} style={{padding:'12px 18px',borderRadius:10,background:'#18594b',color:'white',border:0,cursor:'pointer'}}>บันทึกชุดทดลอง</button><button type="button" onClick={exportSvg} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>ส่งออก SVG</button><button type="button" onClick={reset} style={{padding:'12px 18px',borderRadius:10,cursor:'pointer'}}>เริ่มใหม่</button></div>
      <p role="status" style={{fontSize:13}}>{status}</p>
     </section>
     <section aria-label="เครื่องมือแต่งตัว" style={{background:'white',borderRadius:20,padding:20,boxShadow:'0 6px 24px #21313c12'}}>
