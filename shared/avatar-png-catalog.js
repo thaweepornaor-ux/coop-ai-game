@@ -2,7 +2,7 @@
 export const PNG_PARTS=Object.freeze({
  face: [
   {value:'male',label:'ใบหน้าชาย',src:'/avatar-parts/male.png',ready:true,aligned:false},
-  {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png',ready:false,aligned:false}
+  {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png',ready:true,aligned:false}
  ],
  hair: [
   {value:'shoulder',label:'ผมครึ่งหัวน้ำตาล',src:'/avatar-parts/hair2.png',ready:false,aligned:false},
