@@ -19,20 +19,26 @@ if(!/^[0-9a-f]{40}$/.test(expectedSha)){
 const manifestUrl=new URL('/coop-release.json',base);
 let releaseOk=false;
 let releaseError='';
-for(let attempt=1;attempt<=6;attempt++){
+for(let attempt=1;attempt<=20;attempt++){
  try{
-  const response=await fetch(manifestUrl,{signal:AbortSignal.timeout(12000),redirect:'error',headers:{'Cache-Control':'no-cache'}});
+  // Query variation helps avoid a stale edge response while Cloudflare deploys propagate.
+  // The origin host and path are still validated against the exact allowlist above.
+  const requestUrl=new URL(manifestUrl);
+  requestUrl.searchParams.set('release',expectedSha);
+  requestUrl.searchParams.set('check',String(attempt));
+  const response=await fetch(requestUrl,{signal:AbortSignal.timeout(12000),redirect:'error',headers:{'Cache-Control':'no-cache','Pragma':'no-cache'}});
   if(!response.ok)throw Error('Release manifest HTTP '+response.status);
   const manifest=await response.json();
   if(manifest?.schema!==1||manifest?.application!=='coop-ai-game'||manifest?.commit!==expectedSha){
-   throw Error('Published game version does not match the expected commit');
+   const observed=typeof manifest?.commit==='string'&&/^[0-9a-f]{40}$/.test(manifest.commit)?manifest.commit:'unknown';
+   throw Error('Published game version does not match the expected commit; observed='+observed+' expected='+expectedSha);
   }
   console.log('STAGING RELEASE PASS '+expectedSha);
   releaseOk=true;
   break;
  }catch(e){
   releaseError=e instanceof Error?e.message:String(e);
-  if(attempt<6)await sleep(3000);
+  if(attempt<20){console.log('STAGING RELEASE WAIT '+attempt+'/20: '+releaseError);await sleep(5000)}
  }
 }
 if(!releaseOk){
