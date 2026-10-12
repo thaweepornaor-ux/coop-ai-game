@@ -90,6 +90,12 @@ function backHair(style, color) {
   return '';
 }
 function frontHair(style, color) {
+  // All wardrobe menu values must result in visible hair, except explicitly bald.
+  const aliases = {
+    wavy: 'long', swept: 'sidepart', shoulder: 'bob',
+    pixie: 'short', bun: 'ponytail',
+  };
+  style = aliases[style] || style;
   const dark = shade(color);
   switch (style) {
     case 'short': return `<path d="M56 60L55 47Q57 27 79 31Q98 25 105 44L104 59L99 51Q94 48 93 42Q77 50 63 45L61 59Z" fill="${color}"/><path d="M65 37Q78 32 91 36" fill="none" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`;
