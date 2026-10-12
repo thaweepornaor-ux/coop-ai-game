@@ -111,6 +111,10 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   setExporting(true);
   try{
    if(missing.length>0)throw new Error('Incomplete gender-compatible PNG layer set');
+   if(hidden.length>0)throw new Error('Hidden layers cannot be exported as a complete character');
+   if(opacity!==100)throw new Error('A translucent layer cannot be exported as a complete character');
+   const selectedParts=order.map(category=>active(category));
+   if(selectedParts.some(part=>!part||broken.includes(part.src)))throw new Error('Missing or failed PNG layer');
    const canvas=document.createElement('canvas');
    canvas.width=AVATAR_CANVAS_WIDTH;canvas.height=AVATAR_CANVAS_HEIGHT;
    const ctx=canvas.getContext('2d');
@@ -118,7 +122,8 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    // Export the real sprite layers, not the SVG fallback.
    for(const category of order){
     const part=active(category);
-    if(!part||hidden.includes(category)||broken.includes(part.src))continue;
+    if(!part)throw new Error('Incomplete PNG layer');
+    if(broken.includes(part.src))throw new Error('Failed PNG layer');
     const image=new Image();
     image.src=part.src;
     await image.decode();
@@ -137,7 +142,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
    setSaved('ส่งออกภาพประกอบ PNG สำหรับตรวจสอบแล้ว (ยังไม่ใช้เป็นตัวละครหลัก)');
   }catch{
-   setSaved('ส่งออก PNG ไม่สำเร็จ กรุณาตรวจสอบไฟล์ภาพที่เลือก');
+   setSaved('ส่งออก PNG ไม่สำเร็จ: ต้องแสดงทุกชิ้นส่วน โหลดภาพได้ครบ และตั้งความโปร่งใสเป็น 100%');
   }finally{setExporting(false);}
  };
  const current=positions[editing];
