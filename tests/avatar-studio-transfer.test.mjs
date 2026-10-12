@@ -59,3 +59,19 @@ test('first Studio visit reuses a saved player wardrobe, but saved Studio draft 
  assert.match(studio,/setAvatar\(clean\(normalizeWardrobe\(JSON\.parse\(raw\)\)\)\)/);
  assert.match(studio,/localStorage\.getItem\(nameKey\)\|\|localStorage\.getItem\('coop-ai-game-name'\)/);
 });
+
+test('all twenty supported preset IDs can move from Studio to player check-in',()=>{
+ for(const [prefix,gender] of [['M','male'],['F','female']]){
+  for(let i=1;i<=10;i++){
+   const presetId=prefix+String(i).padStart(2,'0');
+   const transfer=validateStudioTransfer({version:1,name:'Player '+presetId,avatar:{...build(gender),presetId}});
+   assert.ok(transfer,presetId+' is supported');
+   assert.equal(transfer.avatar.presetId,presetId);
+  }
+ }
+});
+test('restored handoffs must not accept mismatched or incomplete wardrobes',()=>{
+ for(const value of [undefined,null,{},[],{version:2,name:'Player',avatar:build()}, {version:1,name:'Player',avatar:{...build(),bodyStyle:'male'}}]){
+  assert.equal(validateStudioTransfer(value),null);
+ }
+});
