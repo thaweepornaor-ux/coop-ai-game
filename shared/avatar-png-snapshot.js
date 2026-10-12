@@ -8,10 +8,13 @@ export const PNG_ASSEMBLY_VERSION=1;
 export function validateAssemblySnapshot(input){
  if(!input||typeof input!=='object'||Array.isArray(input)||input.version!==PNG_ASSEMBLY_VERSION)throw new TypeError('Unsupported PNG alignment snapshot');
  if(input.gender!=='male'&&input.gender!=='female')throw new TypeError('Invalid gender');
+ if(!input.positions||typeof input.positions!=='object'||Array.isArray(input.positions))throw new TypeError('Missing positions');
+ if(!input.selected||typeof input.selected!=='object'||Array.isArray(input.selected))throw new TypeError('Missing selected parts');
  const positions={},selected={};
  for(const category of PNG_ASSEMBLY_CATEGORIES){
   const position=input.positions?.[category];
   // Geometry helper is the authoritative range validator.
+  if(!position||typeof position!=='object'||Array.isArray(position))throw new TypeError('Missing PNG position: '+category);
   avatarLayerRect(1,1,position);
   positions[category]={x:position.x,y:position.y,scale:position.scale};
   const source=input.selected?.[category];
