@@ -90,3 +90,9 @@ test('alignment editor excludes cross-gender CGI clothing and warns if no compat
  assert.match(lab,/PNG_PARTS\[category\]\.filter\(p=>p\.ready&&\(!p\.gender\|\|p\.gender===gender\)\)/);
  assert.match(lab,/บางเพศยังไม่มีเสื้อหรือรองเท้า PNG/);
 });
+
+test('PNG alignment preview excludes incompatible gender and warns about missing pieces',()=>{
+ assert.match(lab,/p\.ready&&\(!p\.gender\|\|p\.gender===gender\)/);
+ assert.match(lab,/const missing=order\.filter\(category=>lists\[category\]\.length===0\)/);
+ assert.match(lab,/ยังไม่มีชิ้นส่วน PNG ที่ตรงกับตัวละครนี้/);
+});
