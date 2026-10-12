@@ -34,3 +34,12 @@ test('PNG load completion is keyed by the chosen outfit to avoid stale display w
  assert.match(source,/onLoad=\{\(\)=>setLoaded\(prev=>\(\{\.\.\.prev,\[signature\+'\|'\+part\.src\]:'ok'\}\)\)\}/);
  assert.match(source,/onError=\{\(\)=>setLoaded\(prev=>\(\{\.\.\.prev,\[signature\+'\|'\+part\.src\]:'error'\}\)\)\}/);
 });
+
+test('playable PNG layers require approved geometry and use part coordinates, not full-frame overlay',()=>{
+ assert.match(source,/parts\.every\(hasLayout\)/);
+ assert.match(source,/left:part\.position!\.x\+'%'/);
+ assert.match(source,/top:part\.position!\.y\+'%'/);
+ assert.match(source,/width:part\.position!\.scale\+'%'/);
+ assert.match(source,/maxHeight:'65%'/);
+ assert.match(source,/Number\.isFinite\(pos\[k as keyof typeof pos\]\)/);
+});
