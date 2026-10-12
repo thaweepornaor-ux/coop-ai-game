@@ -44,3 +44,11 @@ test('studio preserves an invitation room without leaking invalid codes into nav
  assert.match(game,/\/avatar-studio\?room=/);
  assert.match(game,/\^\[A-Z0-9\]\{6\}\$/);
 });
+
+test('portrait gallery renders actual selected facial presets rather than unlabeled ID buttons',()=>{
+ const studio=readFileSync(new URL('../app/avatar-studio/page.tsx',import.meta.url),'utf8');
+ assert.match(studio,/CHARACTERS\.filter\(p=>p\.gender===avatar\.bodyStyle\)\.map\(p=>/);
+ assert.match(studio,/aria-label="เลือกใบหน้าตัวละคร"/);
+ assert.match(studio,/<Avatar options=\{\{\.\.\.avatar,presetId:p\.id/);
+ assert.match(studio,/p\.glassesStyle==='round'\?'round':'rectangle'/);
+});
