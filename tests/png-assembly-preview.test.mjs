@@ -25,7 +25,7 @@ test('alignment settings can be saved and restored with bounded values',()=>{
 
 test('saved selected PNG part names are restored from verified uploaded assets only',()=>{
  assert.match(lab,/localStorage\.getItem\(selectionKey\)/);
- assert.match(lab,/localStorage\.setItem\(selectionKey,JSON\.stringify\(picked\)\)/);
+ assert.match(lab,/localStorage\.setItem\(selectionKey,JSON\.stringify\(\{\.\.\.picked,face:undefined\}\)\)/);
  assert.match(lab,/PNG_PARTS\[category\]\.some\(part=>part\.ready&&part\.src===src\)/);
  assert.match(lab,/setPicked\(valid\)/);
 });
