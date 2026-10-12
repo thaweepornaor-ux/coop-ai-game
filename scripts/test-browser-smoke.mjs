@@ -203,22 +203,26 @@ function pageErrors(page) { const errors = []; page.on('pageerror', error => err
 
 async function wardrobe(page) {
   const panel = page.getByRole('tabpanel');
-  assert.equal(await page.getByRole('tab').count(), 6);
+  assert.equal(await page.getByRole('tab').count(), 5);
   assert.equal(await panel.locator('.character-card').count(), 10);
   await page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true }).click();
   assert.equal(await panel.locator('.character-card').count(), 10);
   await panel.getByRole('button', { name: /^F03 / }).click();
   assert.equal(await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed'), 'true');
-  await page.getByRole('tab', { name: 'เสื้อ', exact: true }).click();
-  assert.equal(await panel.locator('.wardrobe-tile').count(), 4);
-  await panel.locator('.wardrobe-tile').nth(2).click();
-  assert.equal(await panel.locator('.wardrobe-tile').nth(2).getAttribute('aria-pressed'), 'true');
-  assert.equal(await panel.locator('.swatch-button').count(), 6);
-  await panel.locator('.swatch-button').nth(2).click();
-  assert.equal(await panel.locator('.swatch-button').nth(2).getAttribute('aria-pressed'), 'true');
-  await page.getByRole('tab', { name: 'หมวก', exact: true }).click();
-  await panel.locator('.wardrobe-tile').nth(1).click();
-  assert.equal(await panel.locator('.wardrobe-tile').nth(1).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('tab', { name: 'เสื้อผ้า', exact: true }).click();
+  const shirts = panel.locator('[aria-label="เลือกเสื้อผ้า"] button');
+  assert.equal(await shirts.count(), 4);
+  await shirts.nth(2).click();
+  assert.equal(await shirts.nth(2).getAttribute('aria-pressed'), 'true');
+  const shirtColors = panel.locator('.wardrobe-swatches').first().locator('button');
+  assert.equal(await shirtColors.count(), 6);
+  await shirtColors.nth(2).click();
+  assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'), 'true');
+  await page.getByRole('tab', { name: 'แว่นตา', exact: true }).click();
+  const glasses = panel.locator('[aria-label="เลือกแว่นตา"] button');
+  assert.equal(await glasses.count(), 4);
+  await glasses.nth(1).click();
+  assert.equal(await glasses.nth(1).getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('select').count(), 0, 'Wardrobe must use visible picture controls');
 }
 
