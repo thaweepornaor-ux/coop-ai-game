@@ -56,7 +56,7 @@ test('alignment preview can temporarily hide and fade individual layers',()=>{
 });
 
 test('reviewer can export an actual layered PNG at stable dimensions',()=>{
- assert.match(lab,/canvas\.width=600;canvas\.height=800/);
+ assert.match(lab,/canvas\.width=AVATAR_CANVAS_WIDTH;canvas\.height=AVATAR_CANVAS_HEIGHT/);
  assert.match(lab,/await image\.decode\(\)/);
  assert.match(lab,/ctx\.drawImage\(/);
  assert.match(lab,/canvas\.toBlob\(/);
@@ -64,8 +64,8 @@ test('reviewer can export an actual layered PNG at stable dimensions',()=>{
  assert.match(lab,/disabled=\{exporting\}/);
 });
 
-test('PNG export preserves CSS max-height scaling for portrait source images',()=>{
- assert.match(lab,/const naturalHeight=boxWidth\*image\.naturalHeight\/image\.naturalWidth/);
- assert.match(lab,/const boxHeight=Math\.min\(naturalHeight,canvas\.height\*0\.65\)/);
- assert.match(lab,/const drawWidth=naturalHeight>boxHeight\?boxHeight\*image\.naturalWidth\/image\.naturalHeight:boxWidth/);
+test('preview and export share one tested geometry calculation',()=>{
+ assert.match(lab,/avatarLayerRect\(image\.naturalWidth,image\.naturalHeight,positions\[category\],canvas\.width,canvas\.height\)/);
+ assert.match(lab,/avatarLayerRect\(d\.width,d\.height,a\)/);
+ assert.match(lab,/onLoad=\{e=>setDimensions\(/);
 });
