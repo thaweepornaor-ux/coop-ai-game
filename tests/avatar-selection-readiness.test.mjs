@@ -8,6 +8,7 @@ test('existing authentic thumbnail PNGs cannot go live without alignment and bod
  assert.equal(result.ready,false);
  assert.ok(result.reasons.includes('body-base'));
  assert.ok(result.reasons.includes('unaligned:face'));
+ assert.ok(result.reasons.includes('missing:bottom'));
  assert.ok(!result.reasons.includes('missing:shoes'));
  assert.ok(!result.reasons.includes('missing:top'));
 });
@@ -27,14 +28,14 @@ test('a fully prepared selected outfit can pass even if other catalog entries ar
  const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([k,v])=>[k,v.map(p=>({...p,aligned:p.ready}))]));
  catalog.body=[{value:'male',src:'/avatar-parts/approved-male-body.png',ready:true,aligned:true}];
  const result=avatarSelectionReadiness(choices,catalog);
- assert.equal(result.ready,true);
- assert.deepEqual(result.reasons,[]);
+ assert.equal(result.ready,false);
+ assert.ok(result.reasons.includes('missing:bottom'));
 });
 
 test('a committed and approved body PNG unlocks the readiness gate for its own gender only',()=>{
  const aligned=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
  aligned.body=[{value:'male',src:'/avatar-parts/approved-male-body.png',ready:true,aligned:true}];
- assert.equal(avatarSelectionReadiness(choices,aligned).ready,true);
+ assert.ok(avatarSelectionReadiness(choices,aligned).reasons.includes('missing:bottom'));
  assert.ok(avatarSelectionReadiness({...choices,bodyStyle:'female'},aligned).reasons.includes('body-base'));
 });
 test('an absent, unapproved, or unaligned base never unlocks the real avatar',()=>{
@@ -52,7 +53,7 @@ test('a chosen garment prefers the aligned uploaded variant over an earlier unal
  catalog.body=[{value:'male',src:'/avatar-parts/body.png',ready:true,aligned:true}];
  catalog.top.unshift({value:'overshirt',src:'/avatar-parts/unreviewed.png',ready:true,aligned:false});
  const result=avatarSelectionReadiness(choices,catalog);
- assert.equal(result.ready,true);
+ assert.ok(result.reasons.includes('missing:bottom'));
  assert.equal(result.selected.find(p=>p.value==='overshirt')?.src,'/avatar-parts/clothing_male_beige_overshirt.png');
 });
 test('arbitrary remote URLs and unsafe body file paths cannot be approved',()=>{
@@ -62,4 +63,21 @@ test('arbitrary remote URLs and unsafe body file paths cannot be approved',()=>{
  catalog.body[0].src='/avatar-parts/body.png';
  catalog.top=[{value:'overshirt',src:'javascript:bad.png',ready:true,aligned:true}];
  assert.ok(avatarSelectionReadiness(choices,catalog).reasons.includes('missing:top'));
+});
+
+test('preview shorts may not impersonate long pants, even after image alignment',()=>{
+ const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([k,v])=>[k,v.map(p=>({...p,aligned:true}))]));
+ catalog.body=[{value:'male',src:'/avatar-parts/body.png',ready:true,aligned:true}];
+ const result=avatarSelectionReadiness(choices,catalog);
+ assert.equal(result.ready,false);
+ assert.ok(result.reasons.includes('missing:bottom'));
+ assert.ok(!result.selected.some(p=>p.value==='shorts-preview'));
+});
+test('genuine reviewed long pants can unlock the bottom slot',()=>{
+ const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([k,v])=>[k,v.map(p=>({...p,aligned:true}))]));
+ catalog.body=[{value:'male',src:'/avatar-parts/body.png',ready:true,aligned:true}];
+ catalog.bottom.push({value:'pants',src:'/avatar-parts/reviewed-long-pants.png',ready:true,aligned:true,playable:true});
+ const result=avatarSelectionReadiness(choices,catalog);
+ assert.equal(result.ready,true);
+ assert.ok(result.selected.some(p=>p.src==='/avatar-parts/reviewed-long-pants.png'));
 });
