@@ -5,7 +5,7 @@ export const PNG_ASSEMBLY_CATEGORIES=Object.freeze(['bottom','shoes','top','face
 export const PNG_ASSEMBLY_VERSION=1;
 
 /** Validate a portable artwork alignment snapshot before any game integration. */
-export function validateAssemblySnapshot(input){
+export function validateAssemblySnapshot(input,catalog=PNG_PARTS){
  if(!input||typeof input!=='object'||Array.isArray(input)||input.version!==PNG_ASSEMBLY_VERSION)throw new TypeError('Unsupported PNG alignment snapshot');
  if(input.gender!=='male'&&input.gender!=='female')throw new TypeError('Invalid gender');
  if(!input.positions||typeof input.positions!=='object'||Array.isArray(input.positions))throw new TypeError('Missing positions');
@@ -19,11 +19,11 @@ export function validateAssemblySnapshot(input){
   positions[category]={x:position.x,y:position.y,scale:position.scale};
   const source=input.selected?.[category];
   if(category==='face'){
-   const face=PNG_PARTS.face.find(part=>part.ready&&part.value===input.gender);
+   const face=catalog.face.find(part=>part.ready&&part.value===input.gender);
    if(!face)throw new TypeError('Gender face is not uploaded');
    selected.face=face.src;
   }else{
-   if(typeof source!=='string'||!PNG_PARTS[category].some(part=>part.ready&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
+   if(typeof source!=='string'||!catalog[category].some(part=>part.ready&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
    selected[category]=source;
   }
  }
