@@ -41,7 +41,8 @@ test('studio preserves an invitation room without leaking invalid codes into nav
  const game=readFileSync(new URL('../app/game.tsx',import.meta.url),'utf8');
  assert.match(studio,/\/\^\[A-Z0-9\]\{6\}\$\/\.test\(room\.toUpperCase\(\)\)/);
  assert.match(studio,/returnRoom\?'&room='\+encodeURIComponent\(returnRoom\):''/);
- assert.match(game,/\/avatar-studio\?room=/);
+ assert.match(game,/\/play\?room=/);
+ assert.doesNotMatch(game,/placeholder="รหัส 6 ตัว"/);
  assert.match(game,/\^\[A-Z0-9\]\{6\}\$/);
 });
 
