@@ -82,9 +82,12 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     image.src=part.src;
     await image.decode();
     const pos=positions[category];
-    const width=canvas.width*pos.scale/100;
-    const height=Math.min(width*image.naturalHeight/image.naturalWidth,canvas.height*0.65);
-    const drawWidth=height===canvas.height*0.65?height*image.naturalWidth/image.naturalHeight:width;
+    // Match CSS img width + max-height:65% + object-fit:contain.
+    const boxWidth=canvas.width*pos.scale/100;
+    const naturalHeight=boxWidth*image.naturalHeight/image.naturalWidth;
+    const boxHeight=Math.min(naturalHeight,canvas.height*0.65);
+    const drawWidth=naturalHeight>boxHeight?boxHeight*image.naturalWidth/image.naturalHeight:boxWidth;
+    const height=boxHeight;
     ctx.globalAlpha=editing===category?opacity/100:1;
     ctx.drawImage(image,canvas.width*pos.x/100-drawWidth/2,canvas.height*pos.y/100-height/2,drawWidth,height);
    }
