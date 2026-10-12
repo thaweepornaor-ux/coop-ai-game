@@ -47,3 +47,10 @@ test('failed PNG layers can be explicitly retried after a transient load error',
  assert.match(lab,/onClick=\{\(\)=>setBroken\(\[\]\)\}/);
  assert.match(lab,/ลองโหลดภาพอีกครั้ง/);
 });
+
+test('alignment preview can temporarily hide and fade individual layers',()=>{
+ assert.match(lab,/!hidden\.includes\(category\)/);
+ assert.match(lab,/opacity:editing===category\?opacity\/100:1/);
+ assert.match(lab,/type="checkbox"/);
+ assert.match(lab,/แสดงภาพ\{labels\[editing\]\}/);
+});
