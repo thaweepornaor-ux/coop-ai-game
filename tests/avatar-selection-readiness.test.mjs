@@ -29,3 +29,14 @@ test('a fully prepared selected outfit can pass even if other catalog entries ar
  assert.equal(result.ready,true);
  assert.deepEqual(result.reasons,[]);
 });
+
+test('a committed and approved body PNG unlocks the readiness gate for its own gender only',()=>{
+ const aligned=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
+ aligned.body=[{value:'male',src:'/avatar-parts/approved-male-body.png',ready:true,aligned:true}];
+ assert.equal(avatarSelectionReadiness(choices,aligned).ready,true);
+ assert.ok(avatarSelectionReadiness({...choices,bodyStyle:'female'},aligned).reasons.includes('body-base'));
+});
+test('an absent, unapproved, or unaligned base never unlocks the real avatar',()=>{
+ const catalog={...PNG_PARTS,body:[{value:'male',src:'/avatar-parts/bad-body.png',ready:true,aligned:false}]};
+ assert.ok(avatarSelectionReadiness(choices,catalog).reasons.includes('body-base'));
+});
