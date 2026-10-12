@@ -18,7 +18,7 @@ export function avatarSelectionReadiness(choices,catalog=PNG_PARTS){
  const selected=body?[body]:[];
  for(const [group,value] of required){
   const parts=catalog[group]||[];
-  const candidates=parts.filter(p=>(aliases[group]?.[p.value]||p.value)===value&&p.ready&&p.playable!==false&&isSafePart(p));
+  const candidates=parts.filter(p=>(aliases[group]?.[p.value]||p.value)===value&&p.ready&&p.playable!==false&&(!p.gender||p.gender===choices?.bodyStyle)&&isSafePart(p));
   const part=candidates.find(p=>p.aligned)||candidates[0];
   if(!part){reasons.push('missing:'+group);continue;}
   if(!part.aligned)reasons.push('unaligned:'+group);
