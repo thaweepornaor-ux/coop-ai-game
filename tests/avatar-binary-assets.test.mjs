@@ -4,7 +4,7 @@ import {readFileSync,existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {PNG_PARTS} from '../shared/avatar-png-catalog.js';
 
-const root=new URL('../public',import.meta.url);
+const root=new URL('../public/',import.meta.url);
 const signature=Buffer.from([137,80,78,71,13,10,26,10]);
 // Guard game loading speed: keep each transparent avatar part lightweight.
 const MAX_PNG_BYTES=150*1024;
