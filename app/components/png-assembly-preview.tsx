@@ -19,6 +19,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const [positions,setPositions]=useState(defaults);
  const [editing,setEditing]=useState<Category>('face');
  const [saved,setSaved]=useState('');
+ const [broken,setBroken]=useState<string[]>([]);
  useEffect(()=>{
   try {
    const raw=localStorage.getItem(storageKey);
@@ -69,8 +70,9 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
   <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน ต้องปรับก่อนนำไปใช้จริง</p>
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
-    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part?<img key={category} src={part.src} alt={part.label} style={{position:'absolute',width:a.scale+'%',height:'auto',maxHeight:'65%',objectFit:'contain',left:a.x+'%',top:a.y+'%',transform:'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none'}}/>:null})}
+    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)?<img key={category} src={part.src} alt={part.label} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={{position:'absolute',width:a.scale+'%',height:'auto',maxHeight:'65%',objectFit:'contain',left:a.x+'%',top:a.y+'%',transform:'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none'}}/>:null})}
   </div>
+  {broken.length>0&&<p role="alert" style={{fontSize:12,color:'#a12626'}}>โหลดภาพบางชิ้นไม่สำเร็จ: {broken.length} ภาพ กรุณาตรวจสอบไฟล์ PNG ใน GitHub</p>}
   <label style={{display:'block',fontSize:13}}>ชิ้นส่วนที่ต้องการปรับ
    <select value={editing} onChange={e=>setEditing(e.target.value as Category)} style={{display:'block',width:'100%',padding:8}}>
     {order.map(key=><option key={key} value={key}>{labels[key]}</option>)}
