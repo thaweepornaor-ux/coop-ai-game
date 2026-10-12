@@ -8,9 +8,9 @@ test('all PNG paths are unique and scoped to avatar-parts',()=>{
  assert.equal(new Set(paths).size,paths.length);
  for(const path of paths)assert.match(path,/^\/avatar-parts\/[a-zA-Z0-9_-]+\.png$/);
 });
-test('only the committed male face can be flagged uploaded; alignment is still pending',()=>{
+test('only committed male and female faces are flagged uploaded; alignment pending',()=>{
  for(const part of Object.values(PNG_PARTS).flat()){
-  assert.equal(part.ready,part.src==='/avatar-parts/male.png','unexpected upload status: '+part.src);
+  assert.equal(part.ready,['/avatar-parts/male.png','/avatar-parts/female.png'].includes(part.src),'unexpected upload status: '+part.src);
   assert.equal(part.aligned,false,'cropped thumbnail must not be marked aligned: '+part.src);
  }
 });
