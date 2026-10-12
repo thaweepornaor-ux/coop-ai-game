@@ -29,3 +29,10 @@ test('saved selected PNG part names are restored from verified uploaded assets o
  assert.match(lab,/PNG_PARTS\[category\]\.some\(part=>part\.ready&&part\.src===src\)/);
  assert.match(lab,/setPicked\(valid\)/);
 });
+
+test('face image follows selected gender and reset clears old image choices',()=>{
+ assert.match(lab,/delete valid\.face/);
+ assert.match(lab,/category==='face'/);
+ assert.match(lab,/endsWith\('\/'\+gender\+'\.png'\)/);
+ assert.match(lab,/setPicked\(\{\}\)/);
+});
