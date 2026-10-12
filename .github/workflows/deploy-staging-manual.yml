@@ -60,7 +60,7 @@ jobs:
           console.log('Staging build safety checks passed.');
           NODE
       - name: Require deploy credentials only for publishing
-        if: ${{ inputs.publish || (github.event_name == 'push' && github.event.head_commit.message == 'ONE_SHOT_SIMPLE_QUIZ_UX_20261013') }}
+        if: inputs.publish
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
@@ -69,16 +69,16 @@ jobs:
             exit 1
           fi
       - name: Verify existing D1 schema before publishing
-        if: ${{ inputs.publish || (github.event_name == 'push' && github.event.head_commit.message == 'ONE_SHOT_SIMPLE_QUIZ_UX_20261013') }}
+        if: inputs.publish
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           corepack pnpm exec wrangler d1 execute DB --remote --config .staging-local/wrangler.staging.json --command "SELECT (SELECT COUNT(*) FROM rooms LIMIT 1) AS rooms, (SELECT COUNT(*) FROM players LIMIT 1) AS players, (SELECT COUNT(*) FROM answers LIMIT 1) AS answers, (SELECT COUNT(*) FROM rate_limits LIMIT 1) AS rate_limits;"
       - name: Publish to existing staging Worker only
-        if: ${{ inputs.publish || (github.event_name == 'push' && github.event.head_commit.message == 'ONE_SHOT_SIMPLE_QUIZ_UX_20261013') }}
+        if: inputs.publish
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: corepack pnpm exec wrangler deploy --config dist/server/wrangler.json
       - name: Verify published staging serves the actual game
-        if: ${{ inputs.publish || (github.event_name == 'push' && github.event.head_commit.message == 'ONE_SHOT_SIMPLE_QUIZ_UX_20261013') }}
+        if: inputs.publish
         run: node scripts/verify-staging-http.mjs https://coop-ai-game-staging.thaweeporn-aor.workers.dev/ "$GITHUB_SHA"
