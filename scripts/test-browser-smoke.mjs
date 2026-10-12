@@ -253,19 +253,26 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     await stage('wardrobe-controls');
     await wardrobe(page);
     await stage('wardrobe-avatar');
+    const overlap = await page.evaluate(() => {
+      const parent=document.querySelector('.quick-player .customizer-preview');
+      const title=parent?.querySelector('h1');
+      const portrait=parent?.querySelector('.character-stage');
+      const caption=parent?.querySelector('.character-name');
+      if(!parent||!title||!portrait||!caption)return {error:'Expected preview elements missing'};
+      const intersect=(a,b)=>{const x=a.getBoundingClientRect(),y=b.getBoundingClientRect();return Math.max(0,Math.min(x.right,y.right)-Math.max(x.left,y.left))*Math.max(0,Math.min(x.bottom,y.bottom)-Math.max(x.top,y.top))};
+      return {titlePortrait:intersect(title,portrait),captionPortrait:intersect(caption,portrait),titleCaption:intersect(title,caption)};
+    });
+    assert.deepEqual(overlap,{titlePortrait:0,captionPortrait:0,titleCaption:0},label+' preview must never cover title or player name');
+    row.checks.push({previewNoOverlap:true});
     row.avatarRaster = await avatarPainted(page, '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
     if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
     await stage('motion-controls');
+    // Learners should not face technical animation toggles on their quick-join screen.
     const toggle = page.getByRole('button', { name: 'เปิดหรือปิดการเคลื่อนไหว', exact: true });
-    await page.waitForFunction(expected => document.querySelector('[aria-label="เปิดหรือปิดการเคลื่อนไหว"]')?.getAttribute('aria-pressed') === expected, reducedMotion === 'reduce' ? 'false' : 'true');
-    row.motion = await page.evaluate(() => ({ reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, runningCssAnimations: document.getAnimations().filter(x => x.playState === 'running').length }));
-    if (reducedMotion === 'reduce') assert.equal(row.motion.runningCssAnimations, 0, 'Reduced motion should stop CSS effects');
-    else {
-      await toggle.click();
-      assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
-      assert.equal(await page.evaluate(() => document.getAnimations().filter(x => x.playState === 'running').length), 0, 'Effects-off should stop CSS effects');
-    }
+    assert.equal(await toggle.isVisible(),false,'Advanced motion settings must not clutter learner setup');
+    row.motion=await page.evaluate(()=>({reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,runningCssAnimations:document.getAnimations().filter(x=>x.playState==='running').length}));
+    if(reducedMotion==='reduce')assert.equal(row.motion.runningCssAnimations,0,'Reduced motion should stop CSS effects');
     return { previewImage };
   });
 }
