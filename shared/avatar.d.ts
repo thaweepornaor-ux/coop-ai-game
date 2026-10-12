@@ -1,7 +1,7 @@
 export type AvatarOptionKey =
   | 'bodyStyle' | 'skinTone' | 'hairStyle' | 'hairColor'
   | 'shirtStyle' | 'shirtColor' | 'bottomStyle' | 'bottomColor'
-  | 'shoeColor' | 'hatStyle' | 'hatColor';
+  | 'shoeColor' | 'glassesStyle' | 'hatStyle' | 'hatColor';
 
 export interface AvatarOption {
   readonly value: string;
