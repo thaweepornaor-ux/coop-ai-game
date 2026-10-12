@@ -2,6 +2,7 @@
 import {useMemo,useState} from 'react';
 import {renderAvatar} from '../../shared/avatar.js';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
+import {avatarSelectionReadiness} from '../../shared/avatar-selection-readiness.js';
 import type {AvatarChoices} from '../../shared/avatar.js';
 export {AVATAR_OPTIONS} from '../../shared/avatar.js';
 export type {AvatarChoices,AvatarOption,AvatarOptionKey} from '../../shared/avatar.js';
@@ -22,7 +23,7 @@ export function Avatar({options={},className}:AvatarProps){
  const eyewear=PNG_PARTS.glasses.find(p=>p.value===String(v.glassesStyle));
  const parts=[face,top,bottom,shoes,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
  // Do not compose thumbnail crops at arbitrary shared full-frame coordinates.
- const complete=parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
+ const complete=avatarSelectionReadiness(v,PNG_PARTS,{hasBodyBase:false}).ready && parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[p.src]==='ok');
