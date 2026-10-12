@@ -35,3 +35,12 @@ test('Studio and game use same transfer token with explicit player-only handoff'
  assert.match(game,/localStorage\.removeItem\(STUDIO_TRANSFER_KEY\)/);
  assert.equal(STUDIO_TRANSFER_KEY,'coop-ai-avatar-studio-transfer-v1');
 });
+
+test('studio preserves an invitation room without leaking invalid codes into navigation',()=>{
+ const studio=readFileSync(new URL('../app/avatar-studio/page.tsx',import.meta.url),'utf8');
+ const game=readFileSync(new URL('../app/game.tsx',import.meta.url),'utf8');
+ assert.match(studio,/\/\^\[A-Z0-9\]\{6\}\$\/\.test\(room\.toUpperCase\(\)\)/);
+ assert.match(studio,/returnRoom\?'&room='\+encodeURIComponent\(returnRoom\):''/);
+ assert.match(game,/\/avatar-studio\?room=/);
+ assert.match(game,/\^\[A-Z0-9\]\{6\}\$/);
+});
