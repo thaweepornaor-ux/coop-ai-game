@@ -35,6 +35,8 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: corepack pnpm install --frozen-lockfile
+      - name: Run complete game unit test suite
+        run: npm test
       - name: Verify staging release safeguards
         run: node --test tests/staging-http-guard.test.mjs tests/release-manifest-route.test.mjs
       - name: Generate isolated staging configuration
