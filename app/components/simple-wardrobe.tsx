@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {Avatar,AVATAR_OPTIONS,type AvatarOptionKey} from './avatar';
 import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
 import {normalizeWardrobe} from '../../shared/avatar-registry';
@@ -13,6 +13,7 @@ const choices: {key:AvatarOptionKey;label:string;max?:number}[]=[
 export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;onChange:(next:Record<string,string>)=>void}){
  const [gender,setGender]=useState<'male'|'female'>(avatar.bodyStyle==='female'?'female':'male');
  const [more,setMore]=useState(false);
+ useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
  const selectedId=avatar.presetId;
  const selectPreset=(person:CharacterPreset)=>{
    const next=normalizeWardrobe({...avatar,presetId:person.id,bodyStyle:person.gender,
