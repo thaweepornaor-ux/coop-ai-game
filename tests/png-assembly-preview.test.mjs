@@ -96,3 +96,8 @@ test('PNG alignment preview excludes incompatible gender and warns about missing
  assert.match(lab,/const missing=order\.filter\(category=>lists\[category\]\.length===0\)/);
  assert.match(lab,/ยังไม่มีชิ้นส่วน PNG ที่ตรงกับตัวละครนี้/);
 });
+
+test('cannot export apparently finished character if some gender-matched part is missing',()=>{
+ assert.match(lab,/if\(missing\.length>0\)throw new Error/);
+ assert.match(lab,/\},\[gender\]\);/);
+});
