@@ -30,7 +30,8 @@ test('existing cropped PNG previews are not authorized as a full playable avatar
 
 test('PNG load completion is keyed by the chosen outfit to avoid stale display when switching',()=>{
  assert.match(source,/loaded\[signature\+'\|'\+p\.src\]==='ok'/);
- assert.match(source,/onLoad=\{\(\)=>setLoaded\(prev=>\(\{\.\.\.prev,\[signature\+'\|'\+part\.src\]:'ok'\}\)\)\}/);
+ assert.match(source,/img\.decode\(\)\.then\(\(\)=>setLoaded/);
+ assert.match(source,/decoding="async"/);
  assert.match(source,/onError=\{\(\)=>setLoaded\(prev=>\(\{\.\.\.prev,\[signature\+'\|'\+part\.src\]:'error'\}\)\)\}/);
 });
 
