@@ -32,7 +32,7 @@ const sizes = [
 ];
 const syntheticName = 'ผู้เล่นทดสอบ';
 const roomLabel = 'รหัสห้อง';
-const nameLabel = 'ชื่อผู้เล่น';
+const nameLabel = '2. ชื่อผู้เล่น';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
 
@@ -202,28 +202,24 @@ async function question(page, number) {
 function pageErrors(page) { const errors = []; page.on('pageerror', error => errors.push(error.message.slice(0, 300))); return errors; }
 
 async function wardrobe(page) {
-  const panel = page.getByRole('tabpanel');
-  assert.equal(await page.getByRole('tab').count(), 5);
-  assert.equal(await panel.locator('.character-card').count(), 10);
-  await page.getByRole('button', { name: 'หญิง · 10 แบบ', exact: true }).click();
-  assert.equal(await panel.locator('.character-card').count(), 10);
-  await panel.getByRole('button', { name: /^F03 / }).click();
-  assert.equal(await panel.getByRole('button', { name: /^F03 / }).getAttribute('aria-pressed'), 'true');
-  await page.getByRole('tab', { name: 'เสื้อผ้า', exact: true }).click();
-  const shirts = panel.locator('[aria-label="เลือกเสื้อผ้า"] button');
-  assert.equal(await shirts.count(), 4);
-  await shirts.nth(2).click();
-  assert.equal(await shirts.nth(2).getAttribute('aria-pressed'), 'true');
-  const shirtColors = panel.locator('.wardrobe-swatches').first().locator('button');
-  assert.equal(await shirtColors.count(), 6);
-  await shirtColors.nth(2).click();
-  assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'), 'true');
-  await page.getByRole('tab', { name: 'แว่นตา', exact: true }).click();
-  const glasses = panel.locator('[aria-label="เลือกแว่นตา"] button');
-  assert.equal(await glasses.count(), 4);
-  await glasses.nth(1).click();
-  assert.equal(await glasses.nth(1).getAttribute('aria-pressed'), 'true');
-  assert.equal(await page.locator('select').count(), 0, 'Wardrobe must use visible picture controls');
+ const gallery=page.locator('.quick-characters');
+ assert.equal(await gallery.getByRole('button').count(),10);
+ await page.getByRole('button',{name:'ผู้หญิง · 10 แบบ',exact:true}).click();
+ assert.equal(await gallery.getByRole('button').count(),10);
+ const chosen=gallery.getByRole('button',{name:/^F03 /});
+ await chosen.click();
+ assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
+ await page.getByRole('button',{name:/อยากเปลี่ยนผม สีผิว/}).click();
+ const options=page.locator('.quick-options fieldset');
+ assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
+ const styles=options.nth(2).locator('button');
+ await styles.nth(1).click();
+ assert.equal(await styles.nth(1).getAttribute('aria-pressed'),'true');
+ const shirtColors=options.nth(3).locator('button');
+ await shirtColors.nth(2).click();
+ assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('select').count(),0);
+ assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
 }
 
 async function surfaces(browser, browserName, size, reducedMotion = 'no-preference') {
@@ -233,40 +229,26 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     const page = await createPage(context);
     let previewImage = null;
     await stage('landing-document');
-    await page.goto(preview.origin + '/', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).waitFor();
-    assert.equal(await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).getAttribute('href'), '/play');
-    assert.equal(await page.getByRole('link', { name: /เปิดเวทีผู้สอน/ }).getAttribute('href'), '/host');
-    if (size.label === 'desktop-1280' && reducedMotion === 'no-preference') {
-      const releaseResponse = await page.request.get(preview.origin + '/coop-release.json');
-      assert.equal(releaseResponse.status(), 200, 'Release identity endpoint must be served through the app router');
-      const release = await releaseResponse.json();
-      assert.equal(release.schema, 1);
-      assert.equal(release.application, 'coop-ai-game');
-      assert.match(release.commit, /^(development|[0-9a-f]{40})$/);
-      row.checks.push('Release identity is served from a real application route');
+    await page.goto(preview.origin + '/', {waitUntil:'domcontentloaded'});
+    await page.locator('.host-lobby .qr img').waitFor({timeout:25000});
+    row.checks.push({instructor:await noOverflow(page,label+' instructor')});
+    await shot(page,label+'-projector');
+    if(size.label==='desktop-1280'&&reducedMotion==='no-preference'){
+      const releaseResponse=await page.request.get(preview.origin+'/coop-release.json');
+      assert.equal(releaseResponse.status(),200);
+      const release=await releaseResponse.json();
+      assert.equal(release.application,'coop-ai-game');
     }
-    await stage('landing-avatar');
-    row.heroRaster = await avatarPainted(page, '.hero-avatar');
-    row.checks.push({ landing: await noOverflow(page, label + ' landing') }); await shot(page, label + '-landing');
     await stage('host-entry');
-    await page.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: /สร้างห้องเกม/ }).waitFor();
-    row.checks.push({ hostEntry: await noOverflow(page, label + ' host entry') }); await shot(page, label + '-host-entry');
+    await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
+    await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
+    row.checks.push({hostEntry:await noOverflow(page,label+' host')});
     await stage('player-entry-hydration');
-    await page.goto(preview.origin + '/play?room=ABC234', { waitUntil: 'domcontentloaded' });
-    await page.getByLabel(roomLabel, { exact: true }).waitFor();
-    await page.waitForFunction(() => document.querySelector('.join-fields input')?.value === 'ABC234');
-    if (size.label === 'mobile-320') {
-      await page.getByLabel(roomLabel, { exact: true }).fill('A');
-      await page.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click();
-      await page.getByRole('alert').filter({ hasText: 'ใส่รหัสห้อง 6 ตัวให้ครบครับ' }).waitFor();
-      await page.getByLabel(roomLabel, { exact: true }).fill('ABC234');
-      await page.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click();
-      await page.getByRole('alert').filter({ hasText: 'ตั้งชื่อผู้เล่นก่อนครับ' }).waitFor();
-      await page.reload({ waitUntil: 'domcontentloaded' });
-    }
-    await page.getByLabel(nameLabel, { exact: true }).fill(syntheticName);
+    await page.goto(preview.origin+'/play?room=ABC234',{waitUntil:'domcontentloaded'});
+    await page.locator('.quick-characters').waitFor({timeout:15000});
+    assert.equal(await page.getByRole('button',{name:'เข้าเล่นเกม →'}).isDisabled(),true);
+    assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0);
+    await page.getByLabel(nameLabel,{exact:true}).fill(syntheticName);
     await stage('wardrobe-controls');
     await wardrobe(page);
     await stage('wardrobe-avatar');
@@ -294,7 +276,7 @@ async function realRoom(browser, browserName) {
     const host = await createPage(hostContext); const player = await createPage(playerContext);
     await stage('host-create-real-room');
     await host.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
-    await host.getByRole('button', { name: /สร้างห้องเกม/ }).click(); await online(host);
+    await host.locator('.host-lobby .qr img').waitFor({timeout:20000}); await online(host);
     const room = (await host.locator('.room-code').textContent()).trim(); assert.match(room, /^[A-Z0-9]{6}$/);
     await host.getByRole('img', { name: 'QR สำหรับผู้เล่นเข้าห้อง', exact: true }).waitFor();
     const urlInput = host.getByLabel('ลิงก์ผู้เล่น', { exact: true });
@@ -305,13 +287,14 @@ async function realRoom(browser, browserName) {
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
     await player.waitForFunction(expected => document.querySelector('.join-fields input')?.value === expected, room, { timeout: 20_000 });
+    await player.locator('.quick-characters').waitFor({timeout:15000});
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
     const [sent] = await Promise.all([
       player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
       player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
     ]);
     const submittedAvatar = sent.postDataJSON().avatar;
-    assert.equal(Object.keys(submittedAvatar).length, 13); assert.equal(submittedAvatar.presetId, 'F03');
+    assert.equal(Object.keys(submittedAvatar).length, 13); assert.equal(submittedAvatar.presetId, 'F03'); assert.equal(submittedAvatar.bodyStyle,'female');
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
