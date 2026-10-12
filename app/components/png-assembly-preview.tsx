@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
+import {avatarLayerRect,AVATAR_CANVAS_WIDTH,AVATAR_CANVAS_HEIGHT} from '../../shared/avatar-png-layout.js';
 
 type Part = {src:string;label:string;ready:boolean;aligned:boolean};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
@@ -23,6 +24,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const [hidden,setHidden]=useState<Category[]>([]);
  const [opacity,setOpacity]=useState(100);
  const [exporting,setExporting]=useState(false);
+ const [dimensions,setDimensions]=useState<Record<string,{width:number;height:number}>>({});
  useEffect(()=>{
   try {
    const raw=localStorage.getItem(storageKey);
@@ -71,7 +73,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   setExporting(true);
   try{
    const canvas=document.createElement('canvas');
-   canvas.width=600;canvas.height=800;
+   canvas.width=AVATAR_CANVAS_WIDTH;canvas.height=AVATAR_CANVAS_HEIGHT;
    const ctx=canvas.getContext('2d');
    if(!ctx)throw new Error('Canvas unavailable');
    // Export the real sprite layers, not the SVG fallback.
@@ -81,15 +83,9 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     const image=new Image();
     image.src=part.src;
     await image.decode();
-    const pos=positions[category];
-    // Match CSS img width + max-height:65% + object-fit:contain.
-    const boxWidth=canvas.width*pos.scale/100;
-    const naturalHeight=boxWidth*image.naturalHeight/image.naturalWidth;
-    const boxHeight=Math.min(naturalHeight,canvas.height*0.65);
-    const drawWidth=naturalHeight>boxHeight?boxHeight*image.naturalWidth/image.naturalHeight:boxWidth;
-    const height=boxHeight;
+    const rect=avatarLayerRect(image.naturalWidth,image.naturalHeight,positions[category],canvas.width,canvas.height);
     ctx.globalAlpha=editing===category?opacity/100:1;
-    ctx.drawImage(image,canvas.width*pos.x/100-drawWidth/2,canvas.height*pos.y/100-height/2,drawWidth,height);
+    ctx.drawImage(image,rect.left,rect.top,rect.width,rect.height);
    }
    ctx.globalAlpha=1;
    const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG export failed')),'image/png'));
@@ -111,7 +107,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
   <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน ต้องปรับก่อนนำไปใช้จริง</p>
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
-    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)&&!hidden.includes(category)?<img key={category} src={part.src} alt={part.label} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={{position:'absolute',width:a.scale+'%',height:'auto',maxHeight:'65%',objectFit:'contain',opacity:editing===category?opacity/100:1,left:a.x+'%',top:a.y+'%',transform:'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none'}}/>:null})}
+    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)&&!hidden.includes(category)?<img key={category} src={part.src} alt={part.label} onLoad={e=>setDimensions(prev=>prev[part.src]?.width===e.currentTarget.naturalWidth&&prev[part.src]?.height===e.currentTarget.naturalHeight?prev:{...prev,[part.src]:{width:e.currentTarget.naturalWidth,height:e.currentTarget.naturalHeight}})} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={(()=>{const d=dimensions[part.src];const r=d?avatarLayerRect(d.width,d.height,a):null;return {position:'absolute' as const,width:r?100*r.width/AVATAR_CANVAS_WIDTH+'%':a.scale+'%',height:r?100*r.height/AVATAR_CANVAS_HEIGHT+'%':'auto',maxHeight:'65%',objectFit:'contain' as const,opacity:editing===category?opacity/100:1,left:r?100*r.left/AVATAR_CANVAS_WIDTH+'%':a.x+'%',top:r?100*r.top/AVATAR_CANVAS_HEIGHT+'%':a.y+'%',transform:r?'none':'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none' as const};})()}/>:null})}
   </div>
   {broken.length>0&&<div role="alert" style={{fontSize:12,color:'#a12626'}}>โหลดภาพบางชิ้นไม่สำเร็จ: {broken.length} ภาพ <button type="button" onClick={()=>setBroken([])} style={{padding:6,marginLeft:6}}>ลองโหลดภาพอีกครั้ง</button></div>}
   <label style={{display:'block',fontSize:13}}>ชิ้นส่วนที่ต้องการปรับ
