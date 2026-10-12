@@ -26,7 +26,11 @@ export function Avatar({options={},className}:AvatarProps){
   ...layers.filter(p=>PNG_PARTS.hair.includes(p)),
   ...layers.filter(p=>PNG_PARTS.glasses.includes(p))
  ];
- const complete=readiness.ready&&parts.length===layers.length;
+ const hasLayout=(p:typeof parts[number])=>{
+  const pos=p.position;
+  return !!pos&&['x','y','scale'].every(k=>Number.isFinite(pos[k as keyof typeof pos])&&pos[k as keyof typeof pos]>=0&&pos[k as keyof typeof pos]<=100)&&pos.scale>0;
+ };
+ const complete=readiness.ready&&parts.length===layers.length&&parts.every(hasLayout);
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
@@ -34,7 +38,7 @@ export function Avatar({options={},className}:AvatarProps){
  return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
   {complete&&<div key={signature} aria-hidden="true" style={{position:'absolute',inset:0,opacity:everyLoaded?1:0,pointerEvents:'none'}}>
-    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',zIndex:index+1}}/>)}
+    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} style={{position:'absolute',left:part.position!.x+'%',top:part.position!.y+'%',width:part.position!.scale+'%',height:'auto',maxHeight:'65%',transform:'translate(-50%,-50%)',objectFit:'contain',zIndex:index+1}}/>)}
   </div>}
  </div>;
 }
