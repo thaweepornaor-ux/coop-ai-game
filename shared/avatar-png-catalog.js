@@ -1,7 +1,7 @@
 /** Selected PNG parts from the reviewed candidate pack. These paths become active when uploaded into /public/avatar-parts. */
 export const PNG_PARTS=Object.freeze({
  face: [
-  {value:'male',label:'ใบหน้าชาย',src:'/avatar-parts/male.png',ready:false,aligned:false},
+  {value:'male',label:'ใบหน้าชาย',src:'/avatar-parts/male.png',ready:true,aligned:false},
   {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png',ready:false,aligned:false}
  ],
  hair: [
