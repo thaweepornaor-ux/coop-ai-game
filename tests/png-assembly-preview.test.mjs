@@ -110,3 +110,8 @@ test('complete PNG export refuses hidden, translucent, broken, or missing layers
  assert.match(lab,/if\(broken\.includes\(part\.src\)\)throw new Error/);
  assert.doesNotMatch(lab,/if\(!part\|\|hidden\.includes\(category\)\|\|broken\.includes\(part\.src\)\)continue/);
 });
+
+test('preview excludes reference-only garments before selection, restoration and PNG export',()=>{
+ assert.match(lab,/p=>p\.ready&&p\.playable!==false&&\(!p\.gender/);
+ assert.match(lab,/part=>part\.ready&&part\.playable!==false&&part\.src===src/);
+});
