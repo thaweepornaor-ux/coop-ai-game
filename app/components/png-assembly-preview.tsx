@@ -22,6 +22,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const [broken,setBroken]=useState<string[]>([]);
  const [hidden,setHidden]=useState<Category[]>([]);
  const [opacity,setOpacity]=useState(100);
+ const [exporting,setExporting]=useState(false);
  useEffect(()=>{
   try {
    const raw=localStorage.getItem(storageKey);
@@ -66,6 +67,39 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
   : lists[category].find(p=>p.src===picked[category])||lists[category][0];
+ const exportComposite=async()=>{
+  setExporting(true);
+  try{
+   const canvas=document.createElement('canvas');
+   canvas.width=600;canvas.height=800;
+   const ctx=canvas.getContext('2d');
+   if(!ctx)throw new Error('Canvas unavailable');
+   // Export the real sprite layers, not the SVG fallback.
+   for(const category of order){
+    const part=active(category);
+    if(!part||hidden.includes(category)||broken.includes(part.src))continue;
+    const image=new Image();
+    image.src=part.src;
+    await image.decode();
+    const pos=positions[category];
+    const width=canvas.width*pos.scale/100;
+    const height=Math.min(width*image.naturalHeight/image.naturalWidth,canvas.height*0.65);
+    const drawWidth=height===canvas.height*0.65?height*image.naturalWidth/image.naturalHeight:width;
+    ctx.globalAlpha=editing===category?opacity/100:1;
+    ctx.drawImage(image,canvas.width*pos.x/100-drawWidth/2,canvas.height*pos.y/100-height/2,drawWidth,height);
+   }
+   ctx.globalAlpha=1;
+   const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error('PNG export failed')),'image/png'));
+   const url=URL.createObjectURL(blob);
+   const anchor=document.createElement('a');
+   anchor.href=url;anchor.download='coop-avatar-png-preview.png';
+   anchor.click();
+   URL.revokeObjectURL(url);
+   setSaved('ส่งออกภาพประกอบ PNG สำหรับตรวจสอบแล้ว (ยังไม่ใช้เป็นตัวละครหลัก)');
+  }catch{
+   setSaved('ส่งออก PNG ไม่สำเร็จ กรุณาตรวจสอบไฟล์ภาพที่เลือก');
+  }finally{setExporting(false);}
+ };
  const current=positions[editing];
  const update=(key:'x'|'y'|'scale',v:number)=>setPositions(prev=>({...prev,[editing]:{...prev[editing],[key]:v}}));
  return <section aria-label="ทดลองจัดตำแหน่งภาพ PNG" style={{marginTop:20,padding:16,border:'1px solid #92a5ae',borderRadius:16}}>
@@ -97,6 +131,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   </label>)}
   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
    <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่งและภาพ</button>
+   <button type="button" disabled={exporting} onClick={exportComposite} style={{padding:9}}>{exporting?"กำลังสร้าง PNG...":"ส่งออกภาพประกอบ PNG"}</button>
    <button type="button" onClick={()=>{setPositions(defaults);setPicked({});setSaved('คืนตำแหน่งและภาพเริ่มต้นแล้ว (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
   </div>
   {saved&&<p role="status" style={{fontSize:12}}>{saved}</p>}
