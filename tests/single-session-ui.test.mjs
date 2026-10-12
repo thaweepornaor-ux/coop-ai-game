@@ -36,3 +36,8 @@ test('name, QR and legacy scoring are preserved under the simpler flow',()=>{
  assert.match(game,/snapshot\.leaderboard/);
  assert.match(layout,/ประเมินความเข้าใจ AI/);
 });
+
+test('persisted female avatar opens the female face gallery after player state hydration',()=>{
+ assert.match(picker,/useEffect\(\(\)=>\{setGender\(avatar\.bodyStyle==='female'\?'female':'male'\)\},\[avatar\.bodyStyle\]\)/);
+ assert.match(game,/setAvatar\(normalizeWardrobe\(previousAvatar\)\)/);
+});
