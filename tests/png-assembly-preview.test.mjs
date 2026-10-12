@@ -54,3 +54,12 @@ test('alignment preview can temporarily hide and fade individual layers',()=>{
  assert.match(lab,/type="checkbox"/);
  assert.match(lab,/แสดงภาพ\{labels\[editing\]\}/);
 });
+
+test('reviewer can export an actual layered PNG at stable dimensions',()=>{
+ assert.match(lab,/canvas\.width=600;canvas\.height=800/);
+ assert.match(lab,/await image\.decode\(\)/);
+ assert.match(lab,/ctx\.drawImage\(/);
+ assert.match(lab,/canvas\.toBlob\(/);
+ assert.match(lab,/anchor\.download='coop-avatar-png-preview\.png'/);
+ assert.match(lab,/disabled=\{exporting\}/);
+});
