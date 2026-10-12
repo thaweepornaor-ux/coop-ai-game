@@ -1,0 +1,34 @@
+name: Avatar source proof
+on:
+  push:
+    branches: [main, codex/game-recovery]
+    paths:
+      - 'scripts/ci-acquire-avatar-sources.py'
+      - 'scripts/blender-inspect-avatar.py'
+      - '.github/workflows/avatar-source-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: avatar-source-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  inspect-official-models:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check acquisition and inspection syntax
+        run: python3 -m py_compile scripts/ci-acquire-avatar-sources.py scripts/blender-inspect-avatar.py
+      - name: Acquire official sources and inspect raw Blender data
+        run: python3 scripts/ci-acquire-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" --inspector scripts/blender-inspect-avatar.py
+      - name: Preserve source inspection evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: avatar-source-inspection
+          path: ${{ runner.temp }}/avatar-originals-${{ github.run_id }}-${{ github.run_attempt }}/reports/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,31 @@
+import {avatarLayerRect} from './avatar-png-layout.js';
+import {PNG_PARTS} from './avatar-png-catalog.js';
+
+export const PNG_ASSEMBLY_CATEGORIES=Object.freeze(['bottom','shoes','top','face','hair']);
+export const PNG_ASSEMBLY_VERSION=1;
+
+/** Validate a portable artwork alignment snapshot before any game integration. */
+export function validateAssemblySnapshot(input,catalog=PNG_PARTS){
+ if(!input||typeof input!=='object'||Array.isArray(input)||input.version!==PNG_ASSEMBLY_VERSION)throw new TypeError('Unsupported PNG alignment snapshot');
+ if(input.gender!=='male'&&input.gender!=='female')throw new TypeError('Invalid gender');
+ if(!input.positions||typeof input.positions!=='object'||Array.isArray(input.positions))throw new TypeError('Missing positions');
+ if(!input.selected||typeof input.selected!=='object'||Array.isArray(input.selected))throw new TypeError('Missing selected parts');
+ const positions={},selected={};
+ for(const category of PNG_ASSEMBLY_CATEGORIES){
+  const position=input.positions?.[category];
+  // Geometry helper is the authoritative range validator.
+  if(!position||typeof position!=='object'||Array.isArray(position))throw new TypeError('Missing PNG position: '+category);
+  avatarLayerRect(1,1,position);
+  positions[category]={x:position.x,y:position.y,scale:position.scale};
+  const source=input.selected?.[category];
+  if(category==='face'){
+   const face=catalog.face.find(part=>part.ready&&part.playable!==false&&part.value===input.gender);
+   if(!face)throw new TypeError('Gender face is not uploaded');
+   selected.face=face.src;
+  }else{
+   if(typeof source!=='string'||!catalog[category].some(part=>part.ready&&part.playable!==false&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
+   selected[category]=source;
+  }
+ }
+ return {version:PNG_ASSEMBLY_VERSION,gender:input.gender,positions,selected};
+}

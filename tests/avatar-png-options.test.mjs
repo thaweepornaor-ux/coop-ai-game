@@ -1,0 +1,27 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {PNG_PARTS} from '../shared/avatar-png-catalog.js';
+import {AVATAR_OPTIONS} from '../shared/avatar.js';
+
+test('all PNG paths are unique and scoped to avatar-parts',()=>{
+ const paths=Object.values(PNG_PARTS).flat().map(p=>p.src);
+ assert.equal(new Set(paths).size,paths.length);
+ for(const path of paths)assert.match(path,/^\/avatar-parts\/[a-zA-Z0-9_-]+\.png$/);
+});
+test('only seven committed face, hair, clothing and footwear images are flagged uploaded; alignment pending',()=>{
+ for(const part of Object.values(PNG_PARTS).flat()){
+  assert.equal(part.ready,['/avatar-parts/male.png','/avatar-parts/female.png','/avatar-parts/hair2.png','/avatar-parts/hair4.png','/avatar-parts/clothing_male_beige_chinos.png','/avatar-parts/clothing_male_beige_overshirt.png','/avatar-parts/shoes_female_white_sneakers.png'].includes(part.src),'unexpected upload status: '+part.src);
+  assert.equal(part.aligned,false,'cropped thumbnail must not be marked aligned: '+part.src);
+ }
+});
+test('face hair and glasses selectable keys match the live wardrobe values',()=>{
+ for(const [group,key] of [['face','bodyStyle'],['hair','hairStyle'],['glasses','glassesStyle']]){
+  const allowed=new Set(AVATAR_OPTIONS[key].map(v=>v.value));
+  for(const part of PNG_PARTS[group])assert.ok(allowed.has(part.value),group+': '+part.value);
+ }
+});
+test('mislabelled garments are never passed off as verified wardrobe combinations',()=>{
+ assert.equal(PNG_PARTS.top.every(part=>!part.aligned),true);
+ assert.equal(PNG_PARTS.bottom.every(part=>!part.aligned),true);
+ assert.equal(PNG_PARTS.shoes.every(part=>!part.aligned),true);
+});

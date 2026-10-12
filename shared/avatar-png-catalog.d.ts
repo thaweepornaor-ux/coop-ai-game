@@ -1,0 +1,3 @@
+export interface PngPart { readonly value:string;readonly label:string;readonly gender?:'male'|'female';readonly src:string;readonly ready:boolean;readonly aligned:boolean;playable?:boolean;position?:{x:number;y:number;scale:number}; }
+export declare const PNG_PARTS: Readonly<{body:readonly PngPart[];face:readonly PngPart[];hair:readonly PngPart[];top:readonly PngPart[];bottom:readonly PngPart[];shoes:readonly PngPart[];glasses:readonly PngPart[]}>;
+export declare const PNG_ASSETS_DIRECTORY:string;

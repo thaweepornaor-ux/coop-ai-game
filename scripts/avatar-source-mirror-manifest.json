@@ -1,0 +1,329 @@
+{
+  "schema_version": 1,
+  "repository": "mnanimat/software_mnanimat3d",
+  "commit": "d95dff4711bab14cd93aac7f2cb4368d872d1c33",
+  "tree_truncated": false,
+  "total_files": 60,
+  "total_bytes": 179992532,
+  "license": "CC-BY-4.0",
+  "provenance": [
+    "https://github.com/mnanimat/software_mnanimat3d/blob/d95dff4711bab14cd93aac7f2cb4368d872d1c33/assets/characters/LICENSES.md",
+    "https://studio.blender.org/characters/rain/v3/",
+    "https://studio.blender.org/characters/snow/v4/"
+  ],
+  "verification_note": "Git blob IDs pin this documented public source mirror; independently computed SHA256 values will be evidence, not official Blender Foundation checksums.",
+  "models": [
+    {
+      "id": "rain",
+      "blend_path": "assets/characters/rain/original/Rain v3.3/rain_v3.2.blend",
+      "attribution_path": "assets/characters/rain/ATTRIBUTION.txt"
+    },
+    {
+      "id": "snow",
+      "blend_path": "assets/characters/snow/original/Snow/snow_v4.2.blend",
+      "attribution_path": "assets/characters/snow/ATTRIBUTION.txt"
+    }
+  ],
+  "files": [
+    {
+      "path": "assets/characters/LICENSES.md",
+      "bytes": 1559,
+      "git_blob_sha1": "aeb9f2ad553f3b065ed5d9ef67a2311432a10d1a"
+    },
+    {
+      "path": "assets/characters/rain/ATTRIBUTION.txt",
+      "bytes": 292,
+      "git_blob_sha1": "794a556dfa4972a97ae2d745864236fb98ebc80a"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/rain_v3.2.blend",
+      "bytes": 9167189,
+      "git_blob_sha1": "f01eb8ecb069ee6c123579b58b4aeb09a83bf0e6"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_diffuse.1001.png",
+      "bytes": 677145,
+      "git_blob_sha1": "9b413e72fbdad3e57e31651c3c8aaa72b634db07"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_diffuse.1002.png",
+      "bytes": 266895,
+      "git_blob_sha1": "2799178b034a8f249f352158953a77894c64f6a0"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_diffuse.1003.png",
+      "bytes": 2410048,
+      "git_blob_sha1": "02c639f6350401a8caaeb11604453d0c1ded3a2c"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_diffuse.png",
+      "bytes": 677145,
+      "git_blob_sha1": "9b413e72fbdad3e57e31651c3c8aaa72b634db07"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_roughness.1001.png",
+      "bytes": 908287,
+      "git_blob_sha1": "a1f9ea34b417e630108a39d63975a4f08752eca4"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_roughness.1002.png",
+      "bytes": 287300,
+      "git_blob_sha1": "5e01f2acf96d934154c8784b5e56b83d15373f3b"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_roughness.1003.png",
+      "bytes": 3349102,
+      "git_blob_sha1": "46b17bf6d0ae9c619dc2263aaef3bdcb58019612"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_body_roughness.png",
+      "bytes": 908287,
+      "git_blob_sha1": "a1f9ea34b417e630108a39d63975a4f08752eca4"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_eyes.png",
+      "bytes": 327295,
+      "git_blob_sha1": "7c32b26e0ac422e96d9be54d126fe1c2cd2a5e1e"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_hair_diffuse.png",
+      "bytes": 1934798,
+      "git_blob_sha1": "748773be1ca64ab62ab9b1fb9dbfa87825aa770d"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_hair_direction_bw.png",
+      "bytes": 3489005,
+      "git_blob_sha1": "3a12845e2a67483031eb3a25a0096cb9bfd27bdc"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_hair_direction.png",
+      "bytes": 5769740,
+      "git_blob_sha1": "7875427650b5229f88c39b03658c41143583d5fa"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_hands_diffuse.png",
+      "bytes": 266895,
+      "git_blob_sha1": "2799178b034a8f249f352158953a77894c64f6a0"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_hands_roughness.png",
+      "bytes": 287300,
+      "git_blob_sha1": "5e01f2acf96d934154c8784b5e56b83d15373f3b"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_jeans_diffuse.png",
+      "bytes": 16706644,
+      "git_blob_sha1": "d2c499b0b8110a6cffea81e254b85d8087735a5e"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_jeans_normal.png",
+      "bytes": 8588143,
+      "git_blob_sha1": "727e64c7d82fc9093588ad65dc6c5cc0faafdd43"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_jeans_roughness.png",
+      "bytes": 8465185,
+      "git_blob_sha1": "bd73546c3b4124bfdf685e96ee380564851ee83e"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_scarf_cavity.png",
+      "bytes": 2202818,
+      "git_blob_sha1": "cc0f82e482d6e6b41faf7b75e4d112a75abf32bf"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_socks_bump.png",
+      "bytes": 131090,
+      "git_blob_sha1": "aa522a9dec4d30ef77fd3b841696fe8552be9de3"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_socks_roughness.png",
+      "bytes": 100710,
+      "git_blob_sha1": "cf29cbbdc5240386e1ab4378fd6d6278ce61fbb3"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_top_bump.png",
+      "bytes": 566783,
+      "git_blob_sha1": "13d2996deb3e4f41bd443b885be96c88f510062d"
+    },
+    {
+      "path": "assets/characters/rain/original/Rain v3.3/textures/TEX-rain_top_roughness.png",
+      "bytes": 422226,
+      "git_blob_sha1": "f831d8203a707a31f94f07186a051c0edf171da7"
+    },
+    {
+      "path": "assets/characters/snow/ATTRIBUTION.txt",
+      "bytes": 292,
+      "git_blob_sha1": "b60cd8426d02953b0cf122de4fe60d8703787082"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/snow_v4.2.blend",
+      "bytes": 8377421,
+      "git_blob_sha1": "7324fa50fcd38a87155cfad497b0321cb7e98e83"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/eyes_diffuse.png",
+      "bytes": 1286452,
+      "git_blob_sha1": "79dc4d5cbe543fee184515c4cbe73b34afe452e3"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/eyes_metalic.png",
+      "bytes": 13572,
+      "git_blob_sha1": "d71ccea16d36ff5e458cf964f55ce42bfc0a91e2"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/eyes_normal.png",
+      "bytes": 322608,
+      "git_blob_sha1": "ac6e67c9f3535b500ae9a4b99d308fe64ac6b4b6"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/eyes_specular.png",
+      "bytes": 141770,
+      "git_blob_sha1": "7c882bc728e3c001c603fb3908fe8d95857be7d0"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_anisotropy.png",
+      "bytes": 49957,
+      "git_blob_sha1": "2dc306ddb6fbb9cbc9efd8eea844db118e3ccdf6"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_anisotropy_rotation.png",
+      "bytes": 1436352,
+      "git_blob_sha1": "ade16ef3c651dd33bed0108a3f59c322a48c89a8"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_diffuse.png",
+      "bytes": 1509001,
+      "git_blob_sha1": "45016b4bb0b51de274ec17815014c0117809259e"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_roughness.png",
+      "bytes": 522116,
+      "git_blob_sha1": "6266ce497c77234a15b51d99ce6ac9f0988f7a14"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_specular.png",
+      "bytes": 791790,
+      "git_blob_sha1": "1e93a3a6e8f711c0cfa2205cb8bd56d56c04f54c"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_sss_color.png",
+      "bytes": 16586,
+      "git_blob_sha1": "40061c44d1b2e13501e97167bde09140b40a4680"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/hair_sss_value.png",
+      "bytes": 312142,
+      "git_blob_sha1": "3ef54cdb7c68a0c1707ade84e408db1da0cc57b2"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/pants_diffuse.png",
+      "bytes": 22205417,
+      "git_blob_sha1": "817c881320457760433a7c821d165fc065bb9b27"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/pants_normal.png",
+      "bytes": 24855323,
+      "git_blob_sha1": "c9d5671fb44ac960a706f56bb43bc250e634e0e0"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/pants_roughness.png",
+      "bytes": 7087235,
+      "git_blob_sha1": "4b37a4b1e45ddc7d272a85c3d4f03abbacd49138"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shirt_diffuse.png",
+      "bytes": 1653162,
+      "git_blob_sha1": "9233b9c3965086fee82ff146c0433b2288f9e5c8"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shirt_normal.png",
+      "bytes": 4157409,
+      "git_blob_sha1": "887f732b9200199572d13e678642308adbeb448b"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shirt_roughness.png",
+      "bytes": 790282,
+      "git_blob_sha1": "85be61cce362dcdddaa5dbda138be6886657d6d8"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shoes_diffuse.png",
+      "bytes": 2910242,
+      "git_blob_sha1": "50c4d51590563faec304bf5c4f46c63d8fea8979"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shoes_metalness.png",
+      "bytes": 8940,
+      "git_blob_sha1": "93351a6b80e265c16c03f9d12eecd25713cbcd22"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shoes_normal.png",
+      "bytes": 5677803,
+      "git_blob_sha1": "20fdc5244a4eadf43e95cdc303e71b4dcac8dd33"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/shoes_roughness.png",
+      "bytes": 1234818,
+      "git_blob_sha1": "22bcf5f5d8b3155cddc894fe61cb521cc30ea0fc"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_diffuse.1001.png",
+      "bytes": 7739547,
+      "git_blob_sha1": "998154550fa8e1b37e56099012360f8c2f29fe2c"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_diffuse.1002.png",
+      "bytes": 777615,
+      "git_blob_sha1": "d884a30d47743d1a68c7ad9190c36f0c73b6349a"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_diffuse.1003.png",
+      "bytes": 1749732,
+      "git_blob_sha1": "f8977ca9cb1120807031fda254ee8620c72648ad"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_roughness.1001.png",
+      "bytes": 5908666,
+      "git_blob_sha1": "8e863af57002ae3df384951aad9ba45e5acda015"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_roughness.1002.png",
+      "bytes": 628553,
+      "git_blob_sha1": "3b84bf2a406f9dba44f377862c8b6c0d0536e4c1"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_roughness.1003.png",
+      "bytes": 1754544,
+      "git_blob_sha1": "134c965d556c22509640e083d6e56980982198ce"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_color.1001.png",
+      "bytes": 5923576,
+      "git_blob_sha1": "65c26a9738c32822cec67336a367ffb8f2b3b1d7"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_color.1002.png",
+      "bytes": 623679,
+      "git_blob_sha1": "fc462229bdb69757fc58e0ea57354c06f15a0b2c"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_color.1003.png",
+      "bytes": 1501218,
+      "git_blob_sha1": "a652273282ab9061c4288823f99cff9907ebf13c"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_value.1001.png",
+      "bytes": 66762,
+      "git_blob_sha1": "6b71da4baa5c3cde98c02ee497b2ac8eaf92be71"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_value.1002.png",
+      "bytes": 16836,
+      "git_blob_sha1": "1b120f74e480f925f510438108b24d65bb741475"
+    },
+    {
+      "path": "assets/characters/snow/original/Snow/textures/skin_sss_value.1003.png",
+      "bytes": 29233,
+      "git_blob_sha1": "802142c06dd90b7861e45c4aca79da24979e394c"
+    }
+  ]
+}

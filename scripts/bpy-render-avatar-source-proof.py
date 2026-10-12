@@ -1,0 +1,389 @@
+"""Render reviewed original character meshes, preserving the immutable downloaded .blend.
+No embedded Text or mirror code is executed. Pose transforms must name real source bones.
+"""
+import argparse
+import base64
+import hashlib
+import json
+import math
+from pathlib import Path
+import sys
+
+def write_json(path, value):
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
+                    encoding="utf-8")
+
+def json_property(value):
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    try:
+        return [json_property(item) for item in value]
+    except TypeError:
+        return str(type(value).__name__)
+
+def disable_animation_and_scripts(bpy):
+    bpy.context.preferences.filepaths.use_scripts_auto_execute = False
+    removed = []
+    for category in ("objects", "meshes", "armatures", "shape_keys", "materials",
+                     "node_groups", "scenes", "worlds", "curves"):
+        for block in getattr(bpy.data, category):
+            animation = getattr(block, "animation_data", None)
+            if animation:
+                removed.append({
+                    "id_type": category, "name": block.name,
+                    "drivers": [{"path": f.data_path, "index": f.array_index,
+                                 "expression": f.driver.expression}
+                                for f in animation.drivers],
+                    "action": animation.action.name if animation.action else None,
+                })
+                block.animation_data_clear()
+            node_tree = getattr(block, "node_tree", None)
+            if node_tree and node_tree.animation_data:
+                node_tree.animation_data_clear()
+    return removed
+
+def resolve_images(bpy, source_dir):
+    report = []
+    for image in bpy.data.images:
+        if image.source not in ("FILE", "TILED"):
+            continue
+        filename = Path(image.filepath.replace("\\", "/")).name
+        if image.packed_files:
+            report.append({"name": image.name, "filename": filename, "packed": True})
+            continue
+        candidate = Path(bpy.path.abspath(image.filepath))
+        if not candidate.is_file() and image.source != "TILED":
+            candidate = source_dir / "textures" / filename
+        if image.source == "TILED":
+            # Preserve the UDIM token; validate every declared original tile.
+            if "<UDIM>" not in filename:
+                raise RuntimeError("tiled_image_missing_udim_token:" + image.name)
+            candidate = source_dir / "textures" / filename
+            missing = [t.number for t in image.tiles
+                       if not Path(str(candidate).replace("<UDIM>", str(t.number))).is_file()]
+            if missing:
+                raise RuntimeError("missing_original_udim_tiles:" + image.name)
+        elif not candidate.is_file():
+            # Missing images used by custom rig UI are reported, never fetched.
+            report.append({"name": image.name, "filename": filename,
+                           "packed": False, "file_present": False})
+            continue
+        image.filepath = str(candidate.resolve())
+        report.append({"name": image.name, "filename": filename,
+                       "packed": False, "file_present": True,
+                       "source": image.source,
+                       "tiles": [t.number for t in image.tiles] if image.source == "TILED" else []})
+    return report
+
+def rig_info(rig):
+    return {
+        "name": rig.name, "bone_count": len(rig.data.bones),
+        "bones": [{
+            "name": b.name, "parent": b.parent.name if b.parent else None,
+            "deform": b.use_deform,
+            "head_local": list(b.head_local), "tail_local": list(b.tail_local),
+            "matrix_local": [list(row) for row in b.matrix_local],
+            "bbone_segments": b.bbone_segments,
+            "pose_constraints": [{
+                "name": c.name, "type": c.type, "influence": c.influence,
+                "target": getattr(getattr(c, "target", None), "name", None),
+                "subtarget": getattr(c, "subtarget", None),
+                "mute": c.mute,
+            } for c in rig.pose.bones[b.name].constraints],
+            "custom_properties": {
+                str(k): json_property(v)
+                for k, v in rig.pose.bones[b.name].items() if k != "_RNA_UI"
+            },
+        } for b in rig.data.bones],
+    }
+
+def apply_pose(rig, specification):
+    from mathutils import Quaternion, Vector
+    applied = []
+    for item in specification:
+        name = item.get("bone")
+        if not isinstance(name, str) or name not in rig.pose.bones:
+            raise ValueError("pose_requires_existing_source_bone")
+        bone = rig.pose.bones[name]
+        if "axis" in item and "degrees" in item:
+            axis = item["axis"]
+            degrees = item["degrees"]
+            if (not isinstance(axis, list) or len(axis) != 3
+                    or any(type(x) not in (float, int) or not math.isfinite(x) for x in axis)
+                    or type(degrees) not in (float, int) or not math.isfinite(degrees)
+                    or abs(degrees) > 180):
+                raise ValueError("invalid_reviewed_pose_rotation")
+            direction = Vector(axis)
+            if direction.length < 0.001:
+                raise ValueError("zero_pose_axis")
+            rotation = Quaternion(direction.normalized(), math.radians(degrees))
+        elif "quaternion_wxyz" in item:
+            value = item["quaternion_wxyz"]
+            if (not isinstance(value, list) or len(value) != 4
+                    or any(type(x) not in (float, int) or not math.isfinite(x) for x in value)):
+                raise ValueError("invalid_pose_quaternion")
+            rotation = Quaternion(value)
+            if rotation.magnitude < 0.001:
+                raise ValueError("zero_pose_quaternion")
+            rotation.normalize()
+        else:
+            raise ValueError("pose_rotation_required")
+        bone.rotation_mode = "QUATERNION"
+        bone.rotation_quaternion = rotation
+        for key, value in item.get("properties", {}).items():
+            if key not in bone or type(value) not in (int, float, bool):
+                raise ValueError("pose_property_must_exist_and_be_numeric")
+            bone[key] = value
+        applied.append({"bone": name, "rotation_quaternion_wxyz": list(rotation),
+                        "properties": item.get("properties", {})})
+    return applied
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--blend", required=True)
+    parser.add_argument("--model", choices=("rain", "snow"), required=True)
+    parser.add_argument("--out", required=True)
+    parser.add_argument("--config", required=True)
+    parser.add_argument("--emit-preview", action="store_true")
+    parser.add_argument("--save-working", action="store_true")
+    args = parser.parse_args()
+    import bpy
+    from mathutils import Matrix, Vector
+    if sys.version_info[:2] != (3, 11) or tuple(bpy.app.version) != (4, 5, 9):
+        raise RuntimeError("requires_python_3_11_and_bpy_4_5_9")
+    source = Path(args.blend).resolve(strict=True)
+    source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+    destination = Path(args.out).resolve()
+    destination.mkdir(parents=True, exist_ok=False)
+    config = json.loads(Path(args.config).read_text(encoding="utf-8"))
+    if config.get("model") != args.model:
+        raise ValueError("config_model_mismatch")
+    mesh_names = config.get("mesh_names")
+    rig_name = config.get("rig_name")
+    poses = config.get("poses")
+    if (not isinstance(mesh_names, list) or not mesh_names
+            or len(set(mesh_names)) != len(mesh_names)
+            or not isinstance(rig_name, str)
+            or not isinstance(poses, dict) or "neutral" not in poses):
+        raise ValueError("reviewed_mesh_rig_and_pose_config_required")
+    for pose_name, transforms in poses.items():
+        if pose_name not in ("neutral", "raised-arm") or not isinstance(transforms, list):
+            raise ValueError("unsupported_proof_pose")
+    bpy.context.preferences.filepaths.use_scripts_auto_execute = False
+    bpy.ops.wm.open_mainfile(filepath=str(source), load_ui=False, use_scripts=False)
+    removed_animation = disable_animation_and_scripts(bpy)
+    rig = bpy.data.objects.get(rig_name)
+    if not rig or rig.type != "ARMATURE":
+        raise ValueError("reviewed_original_armature_not_found")
+    selected_meshes = []
+    for name in mesh_names:
+        obj = bpy.data.objects.get(name)
+        if not obj or obj.type != "MESH" or not obj.data.vertices:
+            raise ValueError("reviewed_original_mesh_not_found:" + str(name))
+        selected_meshes.append(obj)
+    # The source inventory must explicitly name geometry. No source widgets or
+    # primitive substitute characters are selected by guessing name prefixes.
+    image_report = resolve_images(bpy, source.parent)
+    used_image_names = set()
+    visited_trees = set()
+    def collect_used_images(tree):
+        if tree is None or tree.as_pointer() in visited_trees:
+            return
+        visited_trees.add(tree.as_pointer())
+        for node in tree.nodes:
+            if node.type == "SCRIPT":
+                raise RuntimeError("script_shader_is_not_allowed_in_source_proof")
+            image = getattr(node, "image", None)
+            if image:
+                used_image_names.add(image.name)
+            collect_used_images(getattr(node, "node_tree", None))
+    for obj in selected_meshes:
+        for slot in obj.material_slots:
+            if slot.material:
+                collect_used_images(slot.material.node_tree)
+    missing_used = [entry["name"] for entry in image_report
+                    if entry.get("file_present") is False and entry["name"] in used_image_names]
+    if missing_used:
+        raise RuntimeError("missing_original_material_images:" + ",".join(missing_used))
+    audit = {
+        "model": args.model, "blender_version": bpy.app.version_string,
+        "source_filename": source.name, "source_sha256": source_hash,
+        "selected_meshes": [{"name": o.name, "raw_vertices": len(o.data.vertices),
+                             "materials": [s.material.name if s.material else None
+                                           for s in o.material_slots]}
+                            for o in selected_meshes],
+        "rig": rig_info(rig), "images": image_report,
+        "removed_animation_metadata": removed_animation,
+        "policy": {"embedded_text_executed": False, "automatic_python_execution": False,
+                   "source_modified_on_disk": False, "uses_original_character_meshes": True},
+        "renders": [],
+        "limits": [
+            "Raw source constraints remain native; Python drivers/actions were removed in memory.",
+            "A rendered pose is visual evidence, not production GLB or animation acceptance.",
+            "No 20-face variations or independent wardrobe geometry is asserted.",
+            "No shape, neckline or garment modifications are silently performed by this baseline proof.",
+        ],
+    }
+    write_json(destination / "render-proof.json", audit)
+    scene = bpy.context.scene
+    if scene is None:
+        raise RuntimeError("source_has_no_active_scene")
+    scene.name = "AVATAR_SOURCE_PROOF"
+    # Reuse the active scene so the bpy module does not require a UI window.
+    # Unlink scene contents without deleting any original dependency datablocks.
+    for collection in list(scene.collection.children):
+        scene.collection.children.unlink(collection)
+    for obj in list(scene.collection.objects):
+        scene.collection.objects.unlink(obj)
+    for obj in selected_meshes:
+        scene.collection.objects.link(obj)
+        obj.hide_render = False
+        obj.hide_viewport = False
+    # Link original transform/rig dependencies, never source widget geometry.
+    for obj in list(bpy.data.objects):
+        if obj.type in ("ARMATURE", "EMPTY", "LATTICE") and obj.name not in scene.objects:
+            scene.collection.objects.link(obj)
+    # Keep mesh modifier dependencies in the scene but never render helper geometry.
+    pending = list(selected_meshes)
+    linked_dependencies = []
+    scanned = set()
+    while pending:
+        owner = pending.pop()
+        if owner.as_pointer() in scanned:
+            continue
+        scanned.add(owner.as_pointer())
+        for modifier in owner.modifiers:
+            for attribute in ("object", "target"):
+                dependency = getattr(modifier, attribute, None)
+                if not isinstance(dependency, bpy.types.Object):
+                    continue
+                if dependency.name not in scene.objects:
+                    scene.collection.objects.link(dependency)
+                if dependency.type == "MESH" and dependency not in selected_meshes:
+                    dependency.hide_render = True
+                    linked_dependencies.append(dependency.name)
+                    pending.append(dependency)
+    audit["linked_hidden_modifier_dependencies"] = sorted(set(linked_dependencies))
+    scene.render.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = 48
+    scene.cycles.use_denoising = True
+    scene.cycles.use_adaptive_sampling = True
+    scene.cycles.adaptive_threshold = 0.05
+    scene.render.resolution_x = 640
+    scene.render.resolution_y = 800
+    scene.render.resolution_percentage = 100
+    scene.render.image_settings.file_format = "PNG"
+    scene.render.image_settings.color_mode = "RGBA"
+    scene.render.film_transparent = False
+    scene.view_settings.view_transform = "AgX"
+    scene.view_settings.exposure = 0.0
+    world = bpy.data.worlds.new("AVATAR_PROOF_WORLD")
+    world.use_nodes = True
+    world.node_tree.nodes["Background"].inputs["Color"].default_value = (0.10, 0.14, 0.17, 1)
+    world.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.45
+    scene.world = world
+    original_pose = {b.name: b.matrix_basis.copy() for b in rig.pose.bones}
+    neutral_applied = apply_pose(rig, poses["neutral"])
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    points = []
+    for obj in selected_meshes:
+        evaluated = obj.evaluated_get(depsgraph)
+        points.extend(evaluated.matrix_world @ Vector(corner) for corner in evaluated.bound_box)
+    minimum = Vector(tuple(min(p[i] for p in points) for i in range(3)))
+    maximum = Vector(tuple(max(p[i] for p in points) for i in range(3)))
+    height = maximum.z - minimum.z
+    if not math.isfinite(height) or height <= 0:
+        raise RuntimeError("invalid_original_geometry_bounds")
+    center = (minimum + maximum) * 0.5
+    camera_data = bpy.data.cameras.new("AVATAR_PROOF_CAMERA")
+    camera = bpy.data.objects.new("AVATAR_PROOF_CAMERA", camera_data)
+    scene.collection.objects.link(camera)
+    camera.location = center + Vector((height * 1.10, -height * 3.5, height * 0.13))
+    camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+    camera.data.type = "ORTHO"
+    camera.data.ortho_scale = height * 1.32
+    camera.data.lens = 65
+    camera.data.clip_end = max(100, height * 20)
+    scene.camera = camera
+    def light(name, offset, energy, size, color):
+        data = bpy.data.lights.new(name, "AREA")
+        obj = bpy.data.objects.new(name, data)
+        scene.collection.objects.link(obj)
+        obj.location = center + Vector(tuple(height * x for x in offset))
+        obj.rotation_euler = (center - obj.location).to_track_quat("-Z", "Y").to_euler()
+        data.energy = energy * height * height
+        data.shape = "DISK"
+        data.size = size * height
+        data.color = color
+    light("KEY_SOFT", (-1.8, -2.6, 2.0), 320, 2.5, (1.0, 0.91, 0.82))
+    light("FILL_SOFT", (2.1, -1.2, 0.9), 145, 2.5, (0.80, 0.89, 1.0))
+    light("RIM_SOFT", (1.0, 1.9, 1.8), 240, 2.0, (0.86, 1.0, 0.97))
+    # A neutral floor is the only new mesh; the character stays the real source.
+    floor_mesh = bpy.data.meshes.new("AVATAR_PROOF_FLOOR")
+    width = height * 10
+    z = minimum.z - height * 0.008
+    floor_mesh.from_pydata([
+        (center.x - width, center.y - width, z),
+        (center.x + width, center.y - width, z),
+        (center.x + width, center.y + width, z),
+        (center.x - width, center.y + width, z),
+    ], [], [(0, 1, 2, 3)])
+    floor_mesh.update()
+    floor = bpy.data.objects.new("AVATAR_PROOF_FLOOR", floor_mesh)
+    scene.collection.objects.link(floor)
+    material = bpy.data.materials.new("AVATAR_PROOF_FLOOR")
+    material.diffuse_color = (0.20, 0.27, 0.30, 1)
+    material.use_nodes = True
+    principal = material.node_tree.nodes.get("Principled BSDF")
+    principal.inputs["Base Color"].default_value = (0.20, 0.27, 0.30, 1)
+    principal.inputs["Roughness"].default_value = 0.82
+    floor.data.materials.append(material)
+    for pose_name, transforms in poses.items():
+        for bone in rig.pose.bones:
+            bone.matrix_basis = original_pose[bone.name]
+        applied = apply_pose(rig, transforms)
+        if pose_name == "raised-arm" and not applied:
+            raise RuntimeError("raised_arm_requires_real_bone_transforms")
+        bpy.context.view_layer.update()
+        path = destination / (args.model + "-" + pose_name + ".png")
+        scene.render.filepath = str(path)
+        bpy.ops.render.render(write_still=True, scene=scene.name)
+        if not path.is_file():
+            raise RuntimeError("render_output_missing")
+        result = {"pose": pose_name, "file": path.name,
+                  "png_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                  "bytes": path.stat().st_size, "applied_source_bones": applied}
+        audit["renders"].append(result)
+        write_json(destination / "render-proof.json", audit)
+        print("AVATAR_ACTUAL_RENDER " + json.dumps(result), flush=True)
+        if args.emit_preview:
+            image = bpy.data.images.load(str(path), check_existing=False)
+            image.scale(320, 400)
+            preview = destination / (args.model + "-" + pose_name + "-preview.jpg")
+            # Save the already color-managed PNG as an ordinary image, avoiding
+            # a second AgX display transform in the small proof thumbnail.
+            image.file_format = "JPEG"
+            image.filepath_raw = str(preview)
+            image.save()
+            bpy.data.images.remove(image)
+            print("AVATAR_ACTUAL_JPEG " + json.dumps({
+                "model": args.model, "pose": pose_name, "mime_type": "image/jpeg",
+                "base64": base64.b64encode(preview.read_bytes()).decode("ascii"),
+            }), flush=True)
+    if args.save_working:
+        working = destination / (args.model + "-proof-working.blend")
+        bpy.ops.wm.save_as_mainfile(filepath=str(working), check_existing=False)
+        audit["working_derivative"] = working.name
+    if hashlib.sha256(source.read_bytes()).hexdigest() != source_hash:
+        raise RuntimeError("immutable_source_changed")
+    audit["source_hash_rechecked"] = True
+    write_json(destination / "render-proof.json", audit)
+    print("AVATAR_SOURCE_PROOF_COMPLETE " + json.dumps({
+        "model": args.model, "poses": [r["pose"] for r in audit["renders"]],
+        "original_source_unchanged": True, "production_glb_approved": False,
+    }), flush=True)
+
+if __name__ == "__main__":
+    main()

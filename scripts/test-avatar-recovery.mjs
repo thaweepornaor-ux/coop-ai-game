@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),wr=createRequire(require.resolve('wrangler'));await wr('esbuild').build({stdin:{contents:"export * from './shared/avatar3d';export * from './shared/avatar3d-engine';export * from './shared/avatar.js';",resolveDir:process.cwd()},outfile:'.sites-runtime/avatar-recovery-test.mjs',bundle:true,platform:'node',format:'esm'});
+const {createCharacter,poseVertex,AVATAR_OPTIONS}=await import('../.sites-runtime/avatar-recovery-test.mjs');
+const engine=readFileSync('shared/avatar3d-engine.ts','utf8');assert.ok(!engine.includes('texture2D'),'no image skin patches or baked hair');assert.ok(!engine.includes('getAtlas'),'no hidden atlas load');
+for(const presetId of ['M07','M04','M10','F01','F10'])for(const tone of AVATAR_OPTIONS.skinTone){const m=createCharacter({presetId,skinTone:tone.value});let head=0,hands=0;for(const o of m.children){if(o.name==="head"&&o.material.color===tone.color){head++;assert.equal(o.geometry.faceCard,-1);assert.equal(o.geometry.uvs.length,0);assert.equal(o.geometry.colors.length,0);}if(o.rigPart===3||o.rigPart===4){if(o.name==="hand")hands++;}}assert.equal(head,1);assert.equal(hands,2,'each hand is one connected implicit sculpt');}
+const p=[.49,1.5,.235],n=[0,0,1],still=poseVertex(p,n,4,0),active=poseVertex(p,n,4,1);assert.deepEqual(still.p,p);assert.notDeepEqual(active.p,p);assert.notDeepEqual(active.n,n);
+for(const [part,p]of [[1,[.1,2.9,.3]],[2,[.2,2,.1]],[3,[-.49,1.5,.235]],[4,[.49,1.5,.235]]])assert.notDeepEqual(poseVertex(p,n,part,1).p,p,'independent joint pose');
+assert.deepEqual(poseVertex([.2,.5,0],n,5,1).p,[.2,.5,0],'grounded legs do not bob');
+console.log('Recovery checks passed: M07/M04/M10/F01/F10 all four skin tones, no atlas/UV/color mask, two sculpted hands, independent head/spine/arm joints and grounded legs. Not GPU or browser validation.');
