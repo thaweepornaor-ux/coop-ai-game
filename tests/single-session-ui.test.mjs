@@ -22,8 +22,8 @@ test('learner QR join does not ask for room or open a separate character studio'
 });
 test('face picker offers ten male and ten female images and writes the selected preset',()=>{
  assert.match(picker,/CHARACTERS\.filter\(c=>c\.gender===gender\)/);
- assert.match(picker,/setGender\('male'\)/);
- assert.match(picker,/setGender\('female'\)/);
+ assert.match(picker,/chooseGender\('male'\)/);
+ assert.match(picker,/chooseGender\('female'\)/);
  assert.match(picker,/onClick=\{\(\)=>selectPreset\(c\)\}/);
  assert.match(picker,/aria-pressed=\{selectedId===c\.id\}/);
  assert.match(picker,/onChange\(next\)/);
