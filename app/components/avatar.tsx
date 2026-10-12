@@ -22,7 +22,7 @@ export function Avatar({options={},className}:AvatarProps){
  const eyewear=PNG_PARTS.glasses.find(p=>p.value===String(v.glassesStyle));
  const parts=[face,top,bottom,shoes,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
  // Do not compose thumbnail crops at arbitrary shared full-frame coordinates.
- const complete=parts.every(p=>p&&p.ready===true&&p.aligned===true);
+ const complete=parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[p.src]==='ok');
