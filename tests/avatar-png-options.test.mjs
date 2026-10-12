@@ -8,9 +8,9 @@ test('all PNG paths are unique and scoped to avatar-parts',()=>{
  assert.equal(new Set(paths).size,paths.length);
  for(const path of paths)assert.match(path,/^\/avatar-parts\/[a-zA-Z0-9_-]+\.png$/);
 });
-test('only four committed face and hair images are flagged uploaded; alignment pending',()=>{
+test('only five committed face, hair and clothing images are flagged uploaded; alignment pending',()=>{
  for(const part of Object.values(PNG_PARTS).flat()){
-  assert.equal(part.ready,['/avatar-parts/male.png','/avatar-parts/female.png','/avatar-parts/hair2.png','/avatar-parts/hair4.png'].includes(part.src),'unexpected upload status: '+part.src);
+  assert.equal(part.ready,['/avatar-parts/male.png','/avatar-parts/female.png','/avatar-parts/hair2.png','/avatar-parts/hair4.png','/avatar-parts/clothing_male_beige_chinos.png'].includes(part.src),'unexpected upload status: '+part.src);
   assert.equal(part.aligned,false,'cropped thumbnail must not be marked aligned: '+part.src);
  }
 });
