@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {Avatar,AVATAR_OPTIONS,type AvatarOptionKey} from '../components/avatar';
 import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
 import {renderAvatar} from '../../shared/avatar.js';
+import {normalizeWardrobe} from '../../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../../shared/avatar-studio-transfer.js';
 
 const storageKey='coop-ai-avatar-studio-draft-v1';
@@ -27,7 +28,7 @@ export default function AvatarStudio(){
  const [characterName,setCharacterName]=useState('');
  const [returnRoom,setReturnRoom]=useState('');
  const [status,setStatus]=useState('ตัวอย่างนี้ใช้ภาพวาด SVG ที่เปลี่ยนชุดได้จริง ภาพ PNG ที่ยังจัดตำแหน่งไม่เสร็จจะไม่ถูกแสดงแทน');
- useEffect(()=>{try{const raw=localStorage.getItem(storageKey);if(raw)setAvatar(clean(JSON.parse(raw)));setCharacterName(cleanName(localStorage.getItem(nameKey)));}catch{}
+ useEffect(()=>{try{const raw=localStorage.getItem(storageKey)||localStorage.getItem('coop-ai-game-avatar');if(raw)setAvatar(clean(normalizeWardrobe(JSON.parse(raw))));setCharacterName(cleanName(localStorage.getItem(nameKey)||localStorage.getItem('coop-ai-game-name')));}catch{}
   const room=new URLSearchParams(window.location.search).get('room')||'';
   if(/^[A-Z0-9]{6}$/.test(room.toUpperCase()))setReturnRoom(room.toUpperCase());
  },[]);
