@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+import { setTimeout as sleep } from 'node:timers/promises';
+
+const target=process.argv[2]||'';
+let base;
+try{
+ base=new URL(target);
+ if(base.protocol!=='https:'||base.username||base.password||base.search||base.hash||base.pathname!=='/')throw Error('Invalid base URL');
+ if(base.hostname!=='coop-ai-game-staging.thaweeporn-aor.workers.dev')throw Error('Not the approved staging host');
+}catch{
+ console.error('Expected the exact https://coop-ai-game-staging.thaweeporn-aor.workers.dev/ host; no requests sent.');
+ process.exit(2);
+}
+const routes=['/','/play','/host','/avatar-studio'];
+for(const route of routes){
+ let last='';
+ let passed=false;
+ for(let attempt=1;attempt<=6;attempt++){
+  try{
+   const response=await fetch(new URL(route,base),{signal:AbortSignal.timeout(12000),redirect:'error'});
+   const contentType=response.headers.get('content-type')||'';
+   if(!response.ok||!contentType.includes('text/html'))throw Error('HTTP '+response.status+' '+contentType);
+   const html=await response.text();
+   if(!html.toLowerCase().includes('<html'))throw Error('Response is not an HTML document');
+   if(route==='/'&&!html.includes('ภารกิจ AI')&&!html.includes('เข้าร่วมภารกิจ'))throw Error('Expected game landing markers are missing');
+   console.log('STAGING HTTP PASS '+route+' HTTP '+response.status);
+   passed=true;break;
+  }catch(e){last=e instanceof Error?e.message:String(e);if(attempt<6)await sleep(3000);}
+ }
+ if(!passed){console.error('STAGING HTTP FAIL '+route+': '+last);process.exit(1);}
+}
+console.log('Staging HTTP smoke passed for all four game routes.');
