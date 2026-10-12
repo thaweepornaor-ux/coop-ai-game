@@ -24,6 +24,7 @@ test('playable Avatar layers come from one validated selection without separate 
 test('existing cropped PNG previews are not authorized as a full playable avatar',()=>{
  assert.equal(avatarSelectionReadiness(choices).ready,false);
  assert.equal(PNG_PARTS.body.length,0);
+ assert.equal(PNG_PARTS.bottom.find(p=>p.src==='/avatar-parts/clothing_male_beige_chinos.png')?.playable,false);
  for(const group of Object.values(PNG_PARTS))for(const part of group)assert.equal(part.aligned,false);
 });
 
