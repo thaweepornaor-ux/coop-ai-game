@@ -24,3 +24,13 @@ test('every question is answerable and has a 15-second timer',()=>{
 test('opening question matches approved prompt',()=>{
  assert.equal(questions[0].question,'ข้อไหนคือใช้ AI สร้างเนื้อหาใหม่?');
 });
+
+test('no duplicate prompts or answer choices can make a round ambiguous',()=>{
+ const seen=new Set();
+ for(const q of questions){
+  assert.ok(!seen.has(q.question),'duplicate question '+q.number);
+  seen.add(q.question);
+  assert.equal(new Set(q.options).size,q.options.length,'duplicate options at question '+q.number);
+  assert.ok(typeof q.topic==='string'&&q.topic.trim().length>0);
+ }
+});
