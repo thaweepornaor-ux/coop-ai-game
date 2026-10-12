@@ -1,11 +1,12 @@
 'use client';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
 
 type Part = {src:string;label:string;ready:boolean;aligned:boolean};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
 const order:Category[]=['bottom','shoes','top','face','hair'];
 const labels:Record<Category,string>={face:'ใบหน้า',hair:'ทรงผม',top:'เสื้อ',bottom:'กางเกง',shoes:'รองเท้า'};
+const storageKey='coop-ai-game-png-alignment-v1';
 const defaults:Record<Category,{x:number;y:number;scale:number}>={
  face:{x:50,y:22,scale:40},hair:{x:50,y:14,scale:46},
  top:{x:50,y:51,scale:60},bottom:{x:50,y:73,scale:52},shoes:{x:50,y:92,scale:38}
@@ -16,6 +17,30 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const [picked,setPicked]=useState<Partial<Record<Category,string>>>({});
  const [positions,setPositions]=useState(defaults);
  const [editing,setEditing]=useState<Category>('face');
+ const [saved,setSaved]=useState('');
+ useEffect(()=>{
+  try {
+   const raw=localStorage.getItem(storageKey);
+   if(!raw)return;
+   const decoded=JSON.parse(raw) as unknown;
+   if(!decoded||typeof decoded!=='object')return;
+   const data=decoded as Record<string,unknown>;
+   const verified={} as typeof defaults;
+   for(const category of order){
+    const item=data[category];
+    if(!item||typeof item!=='object')return;
+    const v=item as Record<string,unknown>;
+    if(!(['x','y','scale'] as const).every(key=>typeof v[key]==='number'&&Number.isFinite(v[key])&&v[key]>=0&&v[key]<=100))return;
+    verified[category]={x:v.x as number,y:v.y as number,scale:v.scale as number};
+   }
+   setPositions(verified);
+   setSaved('โหลดตำแหน่งที่บันทึกไว้แล้ว');
+  }catch{}
+ },[]);
+ const save=()=>{
+  try{localStorage.setItem(storageKey,JSON.stringify(positions));setSaved('บันทึกตำแหน่งไว้บนอุปกรณ์นี้แล้ว');}
+  catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
+ };
  const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready)])) as Record<Category,Part[]>;
  const active=(category:Category)=>lists[category].find(p=>p.src===picked[category])||lists[category].find(p=>category==='face'&&p.src.endsWith('/'+gender+'.png'))||lists[category][0];
  const current=positions[editing];
@@ -39,6 +64,10 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   {(['x','y','scale'] as const).map(key=><label key={key} style={{display:'block',marginTop:10,fontSize:13}}>{key==='x'?'แนวนอน':key==='y'?'แนวตั้ง':'ขนาด'}: {current[key]}%
     <input type="range" min={key==='scale'?10:0} max={key==='scale'?100:100} value={current[key]} onChange={e=>update(key,Number(e.target.value))} style={{display:'block',width:'100%'}}/>
   </label>)}
-  <button type="button" onClick={()=>setPositions(defaults)} style={{marginTop:10,padding:9}}>คืนตำแหน่งเริ่มต้น</button>
+  <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
+   <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่ง</button>
+   <button type="button" onClick={()=>{setPositions(defaults);setSaved('กลับสู่ค่าเริ่มต้น (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
+  </div>
+  {saved&&<p role="status" style={{fontSize:12}}>{saved}</p>}
  </section>;
 }
