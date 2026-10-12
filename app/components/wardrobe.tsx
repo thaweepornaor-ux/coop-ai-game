@@ -65,18 +65,18 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
       </div>}
       {category.style === 'hairStyle' && PNG_PARTS.hair.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างทรงผม PNG ที่นำเข้าแล้ว">
         {PNG_PARTS.hair.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.hairStyle === part.value ? ' selected' : ''}`} aria-pressed={avatar.hairStyle === part.value} onClick={() => change('hairStyle',part.value)}>
-          <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}} />
+          <img src={part.src} alt="" loading="lazy" decoding="async" width={72} height={72} style={{objectFit:'contain'}} />
           <span>{part.label} · ภาพต้นฉบับ</span>
           <span className="wardrobe-tile-check" aria-hidden="true">{avatar.hairStyle === part.value ? '✓' : ''}</span>
         </button>)}
       </div>}
-      {category.style === 'shirtStyle' && PNG_PARTS.top.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างเสื้อ PNG จริง">
+      {category.style === 'shirtStyle' && PNG_PARTS.top.some(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างเสื้อ PNG จริง">
         {PNG_PARTS.top.filter(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shirtStyle === 'jacket' ? ' selected' : ''}`} aria-label={`เลือกสไตล์เสื้อคลุม จากภาพ ${part.label}`} aria-pressed={avatar.shirtStyle === 'jacket'} onClick={() => change('shirtStyle','jacket')}>
           <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}}/>
           <span>{part.label} · ตัวอย่างสไตล์เสื้อคลุม</span>
         </button>)}
       </div>}
-      {category.color === 'shoeColor' && PNG_PARTS.shoes.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างรองเท้า PNG จริง">
+      {category.color === 'shoeColor' && PNG_PARTS.shoes.some(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างรองเท้า PNG จริง">
         {PNG_PARTS.shoes.filter(part=>part.ready&&(!part.gender||part.gender===avatar.bodyStyle)).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.shoeColor === 'white' ? ' selected' : ''}`} aria-label={`เลือกสีรองเท้าขาว จากภาพ ${part.label}`} aria-pressed={avatar.shoeColor === 'white'} onClick={() => change('shoeColor','white')}>
           <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}}/>
           <span>{part.label} · ตัวอย่างสีขาว</span>
