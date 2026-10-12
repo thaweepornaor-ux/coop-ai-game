@@ -70,7 +70,7 @@ assert.equal(CHARACTERS.length,20);assert.equal(new Set(CHARACTERS.map(c=>c.id))
 const catalogueHost=await post({action:'create'});assert.equal(catalogueHost.status,201);const catalogueRoom=catalogueHost.data.roomCode;
 const entries=[];
 for(const c of CHARACTERS){
- const avatar={presetId:c.id,bodyStyle:c.gender,skinTone:c.skinTone,hairStyle:c.hairStyle,hairColor:c.hairColor,shirtStyle:'tshirt',shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,shoeColor:'black',hatStyle:'none',hatColor:'navy'};
+ const avatar={presetId:c.id,bodyStyle:c.gender,skinTone:c.skinTone,hairStyle:c.hairStyle,hairColor:c.hairColor,shirtStyle:'tshirt',shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,shoeColor:'black',glassesStyle:'none',hatStyle:'none',hatColor:'navy'};
  const joined=await post({action:'join',room:catalogueRoom,name:'ชื่อเอง '+c.id,avatar});assert.equal(joined.status,201,JSON.stringify(joined));entries.push({c,avatar,joined});
  const refreshed=await state(joined.data.token,catalogueRoom);const self=refreshed.players.find(p=>p.id===refreshed.caller.playerId);assert.deepEqual(self.avatar,avatar);assert.equal(self.name,'ชื่อเอง '+c.id);assert.equal(refreshed.correctAnswer,undefined);assert.equal(JSON.stringify(self.avatar).includes('token'),false);
 }
