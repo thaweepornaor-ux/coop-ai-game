@@ -9,7 +9,7 @@ test('existing authentic thumbnail PNGs cannot go live without alignment and bod
  assert.ok(result.reasons.includes('body-base'));
  assert.ok(result.reasons.includes('unaligned:face'));
  assert.ok(result.reasons.includes('missing:bottom'));
- assert.ok(!result.reasons.includes('missing:shoes'));
+ assert.ok(result.reasons.includes('missing:shoes'));
  assert.ok(!result.reasons.includes('missing:top'));
 });
 test('glasses missing is required only when player has selected glasses',()=>{
@@ -78,6 +78,18 @@ test('genuine reviewed long pants can unlock the bottom slot',()=>{
  catalog.body=[{value:'male',src:'/avatar-parts/body.png',ready:true,aligned:true}];
  catalog.bottom.push({value:'pants',src:'/avatar-parts/reviewed-long-pants.png',ready:true,aligned:true,playable:true});
  const result=avatarSelectionReadiness(choices,catalog);
- assert.equal(result.ready,true);
+ assert.equal(result.ready,false);
+ assert.ok(result.reasons.includes('missing:shoes'));
  assert.ok(result.selected.some(p=>p.src==='/avatar-parts/reviewed-long-pants.png'));
+});
+
+test('female-only sneakers cannot fulfill a male player shoe choice',()=>{
+ const result=avatarSelectionReadiness(choices);
+ assert.ok(result.reasons.includes('missing:shoes'));
+ assert.equal(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'),false);
+});
+test('female-only shoes are selectable for female characters but male overshirt is not',()=>{
+ const result=avatarSelectionReadiness({...choices,bodyStyle:'female'});
+ assert.equal(result.reasons.includes('missing:shoes'),false);
+ assert.ok(result.reasons.includes('missing:top'));
 });
