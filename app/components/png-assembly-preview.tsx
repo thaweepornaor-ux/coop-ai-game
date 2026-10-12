@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
 import {avatarLayerRect,AVATAR_CANVAS_WIDTH,AVATAR_CANVAS_HEIGHT} from '../../shared/avatar-png-layout.js';
 import {validateAssemblySnapshot,PNG_ASSEMBLY_VERSION} from '../../shared/avatar-png-snapshot.js';
+import {avatarArtReadiness} from '../../shared/avatar-art-readiness.js';
 
 type Part = {src:string;label:string;ready:boolean;aligned:boolean};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
@@ -142,6 +143,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  return <section aria-label="ทดลองจัดตำแหน่งภาพ PNG" style={{marginTop:20,padding:16,border:'1px solid #92a5ae',borderRadius:16}}>
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
   <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน ต้องปรับก่อนนำไปใช้จริง</p>
+  {!avatarArtReadiness().ready&&<p role="note" style={{fontSize:12,color:'#8b4912'}}>ภาพที่นำเข้ายังไม่มีร่างกายเต็มตัวและแว่นตา PNG ที่พร้อมใช้งาน ภาพที่ประกอบเป็นเพียงตัวอย่างสำหรับตรวจสัดส่วน ยังไม่ใช่ตัวละครเกมฉบับสมบูรณ์</p>}
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
     {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)&&!hidden.includes(category)?<img key={category} src={part.src} alt={part.label} onLoad={e=>{const width=e.currentTarget.naturalWidth,height=e.currentTarget.naturalHeight;setDimensions(prev=>prev[part.src]?.width===width&&prev[part.src]?.height===height?prev:{...prev,[part.src]:{width,height}});}} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={(()=>{const d=dimensions[part.src];const r=d?avatarLayerRect(d.width,d.height,a):null;return {position:'absolute' as const,width:r?100*r.width/AVATAR_CANVAS_WIDTH+'%':a.scale+'%',height:r?100*r.height/AVATAR_CANVAS_HEIGHT+'%':'auto',maxHeight:'65%',objectFit:'contain' as const,opacity:editing===category?opacity/100:1,left:r?100*r.left/AVATAR_CANVAS_WIDTH+'%':a.x+'%',top:r?100*r.top/AVATAR_CANVAS_HEIGHT+'%':a.y+'%',transform:r?'none':'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none' as const};})()}/>:null})}
   </div>
