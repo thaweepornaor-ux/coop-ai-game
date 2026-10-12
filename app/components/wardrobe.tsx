@@ -14,7 +14,7 @@ const CATEGORIES: { label: string; short: string; style?: AvatarOptionKey; color
   { label: 'หมวก', short: '07', style: 'hatStyle', color: 'hatColor', colorLabel: 'สีหมวก', icon: 'hat' },
 ];
 
-/** Item illustrations are selection icons, separate from the live 3D character. */
+/** Selection icons for the front-facing character. */
 function ItemIcon({ kind, value = '', color = 'currentColor' }: { kind: string; value?: string; color?: string }) {
   let shape;
   if (kind === 'shirt') shape = <><path d="m19 15-11 9 7 10 6-4v23h22V30l6 4 7-10-11-9-8 4h-10z" fill={color} /><path d="M26 18q6 8 12 0" />{value !== 'tshirt' && <path d="m25 18 7 7 7-7M32 25v26" />}{value === 'jacket' && <path d="m25 18 4 15-8-3m18-12-4 15 8-3M23 43h5m8 0h5" />}{value === 'polo' && <path d="m25 18 3 10 4-3 4 3 3-10" />}</>;
@@ -37,7 +37,7 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
   const change = (key: AvatarOptionKey, value: string) => onChange({ ...avatar, [key]: value });
   const color = AVATAR_OPTIONS[category.color].find(option => option.value === avatar[category.color])?.color;
   const selectedLabel = AVATAR_OPTIONS[category.color].find(option => option.value === avatar[category.color])?.label;
-  const applyPreset = (preset: CharacterPreset) => onChange({ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone });
+  const applyPreset = (preset: CharacterPreset) => onChange({ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, ...(preset.gender === 'male' && avatar.bottomStyle === 'skirt' ? {bottomStyle:'pants'} : {}) });
   const swatches = category.color === 'shirtColor'
     ? ['lightgreen', 'white', 'red', 'gray', 'charcoal', 'blueviolet'].flatMap(value => AVATAR_OPTIONS.shirtColor.filter(option => option.value === value))
     : AVATAR_OPTIONS[category.color];
