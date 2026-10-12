@@ -42,3 +42,8 @@ test('broken PNGs are hidden and reported instead of displaying broken image ico
  assert.match(lab,/!broken\.includes\(part\.src\)/);
  assert.match(lab,/role="alert"/);
 });
+
+test('failed PNG layers can be explicitly retried after a transient load error',()=>{
+ assert.match(lab,/onClick=\{\(\)=>setBroken\(\[\]\)\}/);
+ assert.match(lab,/ลองโหลดภาพอีกครั้ง/);
+});
