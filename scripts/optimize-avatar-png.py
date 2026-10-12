@@ -41,8 +41,9 @@ def optimize(source: Path, target: Path, limit: int = MAX_BYTES):
         image = original.convert("RGBA")
         if image.getchannel("A").getextrema()[0] == 255:
             raise ValueError("Source PNG is fully opaque")
-        # Quality first: try full-color PNG at every size before reducing colors.
-        # Avoid upscaling a source that is already smaller.
+        # Choose the largest image that fits, preferring full color at equal size.
+        # This avoids the old failure mode: a tiny RGBA image winning over
+        # a much clearer 768px indexed image within the same byte budget.
         frames = []
         seen = set()
         for size in SIZES:
@@ -51,16 +52,15 @@ def optimize(source: Path, target: Path, limit: int = MAX_BYTES):
             if frame.size not in seen:
                 frames.append(frame)
                 seen.add(frame.size)
-        for colors in (None, 256, 192, 128):
-            for frame in frames:
-                if min(frame.size) < MIN_DIMENSION and frame.size != image.size:
-                    continue
+        for frame in frames:
+            if max(frame.size) < MIN_DIMENSION and frame.size != image.size:
+                continue
+            for colors in (None, 256, 192, 128):
                 try:
                     data, mode = _encode(frame, indexed_colors=colors)
                 except ValueError:
                     continue
                 if len(data) <= limit:
-                    # Don't modify target until a complete validated output is available.
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_bytes(data)
                     return frame.size, len(data), mode
