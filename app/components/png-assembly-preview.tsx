@@ -5,7 +5,7 @@ import {avatarLayerRect,AVATAR_CANVAS_WIDTH,AVATAR_CANVAS_HEIGHT} from '../../sh
 import {validateAssemblySnapshot,PNG_ASSEMBLY_VERSION} from '../../shared/avatar-png-snapshot.js';
 import {avatarArtReadiness} from '../../shared/avatar-art-readiness.js';
 
-type Part = {src:string;label:string;ready:boolean;aligned:boolean};
+type Part = {src:string;label:string;ready:boolean;aligned:boolean;gender?:'male'|'female'};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
 const order:Category[]=['bottom','shoes','top','face','hair'];
 const labels:Record<Category,string>={face:'ใบหน้า',hair:'ทรงผม',top:'เสื้อ',bottom:'กางเกง',shoes:'รองเท้า'};
@@ -56,7 +56,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    const valid:Partial<Record<Category,string>>={};
    for(const category of order){
     const src=data[category];
-    if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.src===src))valid[category]=src;
+    if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.src===src&&(!part.gender||part.gender===gender)))valid[category]=src;
    }
    // The selected face follows the current gender; do not resurrect a saved opposite-gender face.
    delete valid.face;
@@ -67,7 +67,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify({...picked,face:undefined}));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
  };
- const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready)])) as Record<Category,Part[]>;
+ const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready&&(!p.gender||p.gender===gender))])) as Record<Category,Part[]>;
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
   : lists[category].find(p=>p.src===picked[category])||lists[category][0];
@@ -142,7 +142,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const update=(key:'x'|'y'|'scale',v:number)=>setPositions(prev=>({...prev,[editing]:{...prev[editing],[key]:v}}));
  return <section aria-label="ทดลองจัดตำแหน่งภาพ PNG" style={{marginTop:20,padding:16,border:'1px solid #92a5ae',borderRadius:16}}>
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
-  <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน ต้องปรับก่อนนำไปใช้จริง</p>
+  <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน และบางเพศยังไม่มีเสื้อหรือรองเท้า PNG ที่ตรงชุด จึงยังส่งออกชุดสมบูรณ์ไม่ได้</p>
   {!avatarArtReadiness().ready&&<p role="note" style={{fontSize:12,color:'#8b4912'}}>ภาพที่นำเข้ายังไม่มีร่างกายเต็มตัวและแว่นตา PNG ที่พร้อมใช้งาน ภาพที่ประกอบเป็นเพียงตัวอย่างสำหรับตรวจสัดส่วน ยังไม่ใช่ตัวละครเกมฉบับสมบูรณ์</p>}
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
     {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)&&!hidden.includes(category)?<img key={category} src={part.src} alt={part.label} onLoad={e=>{const width=e.currentTarget.naturalWidth,height=e.currentTarget.naturalHeight;setDimensions(prev=>prev[part.src]?.width===width&&prev[part.src]?.height===height?prev:{...prev,[part.src]:{width,height}});}} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={(()=>{const d=dimensions[part.src];const r=d?avatarLayerRect(d.width,d.height,a):null;return {position:'absolute' as const,width:r?100*r.width/AVATAR_CANVAS_WIDTH+'%':a.scale+'%',height:r?100*r.height/AVATAR_CANVAS_HEIGHT+'%':'auto',maxHeight:'65%',objectFit:'contain' as const,opacity:editing===category?opacity/100:1,left:r?100*r.left/AVATAR_CANVAS_WIDTH+'%':a.x+'%',top:r?100*r.top/AVATAR_CANVAS_HEIGHT+'%':a.y+'%',transform:r?'none':'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none' as const};})()}/>:null})}
