@@ -14,3 +14,12 @@ test('different eyewear variants render distinct SVG and never print user input'
 test('legacy avatar remains valid when eyewear is absent',()=>{
  assert.equal(renderAvatar({bodyStyle:'male'}),renderAvatar({bodyStyle:'male',glassesStyle:'none'}));
 });
+
+test('all advertised hairstyle options render visibly',()=>{
+ const bald=renderAvatar({hairStyle:'bald'});
+ for(const option of AVATAR_OPTIONS.hairStyle){
+  const svg=renderAvatar({hairStyle:option.value});
+  assert.match(svg,/^<svg[\s\S]*<\/svg>$/);
+  if(option.value!=='bald')assert.notEqual(svg,bald,`hairStyle ${option.value} must render`);
+ }
+});
