@@ -21,6 +21,13 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
      bottomStyle:person.bottomStyle,shirtColor:person.shirtColor,bottomColor:person.bottomColor});
    onChange(next);
  };
+ const chooseGender=(next:'male'|'female')=>{
+   setGender(next);
+   if(avatar.bodyStyle!==next){
+     const first=CHARACTERS.find(c=>c.gender===next);
+     if(first)selectPreset(first);
+   }
+ };
  const change=(key:AvatarOptionKey,value:string)=>{
    const next={...avatar,[key]:value};
    if(next.bodyStyle==='male'&&next.bottomStyle==='skirt')next.bottomStyle='pants';
@@ -29,8 +36,8 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
  return <div className="quick-wardrobe" aria-label="เลือกตัวละครและแต่งตัว">
    <div className="quick-title"><strong>1. เลือกตัวละคร</strong><span>แตะรูปที่ชอบได้เลย</span></div>
    <div className="quick-gender" role="group" aria-label="เลือกตัวละครชายหรือหญิง">
-     <button type="button" aria-pressed={gender==='male'} onClick={()=>setGender('male')}>ผู้ชาย · 10 แบบ</button>
-     <button type="button" aria-pressed={gender==='female'} onClick={()=>setGender('female')}>ผู้หญิง · 10 แบบ</button>
+     <button type="button" aria-pressed={gender==='male'} onClick={()=>chooseGender('male')}>ผู้ชาย · 10 แบบ</button>
+     <button type="button" aria-pressed={gender==='female'} onClick={()=>chooseGender('female')}>ผู้หญิง · 10 แบบ</button>
    </div>
    <div className="quick-characters" aria-label={gender==='male'?'ตัวละครผู้ชาย':'ตัวละครผู้หญิง'}>
     {CHARACTERS.filter(c=>c.gender===gender).map(c=><button type="button" key={c.id}
