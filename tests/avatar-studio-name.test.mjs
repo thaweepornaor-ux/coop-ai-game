@@ -11,7 +11,7 @@ test('avatar studio name is independent of appearance preset',()=>{
  assert.match(source,/maxLength=\{24\}/);
 });
 test('avatar name is restored, saved and cleared with draft controls',()=>{
- assert.match(source,/setCharacterName\(cleanName\(localStorage\.getItem\(nameKey\)\)\)/);
+ assert.match(source,/setCharacterName\(cleanName\(localStorage\.getItem\(nameKey\)\|\|localStorage\.getItem\('coop-ai-game-name'\)\)\)/);
  assert.match(source,/localStorage\.setItem\(nameKey,cleanName\(characterName\)\)/);
  assert.match(source,/setCharacterName\(''\)/);
  assert.match(source,/Array\.from\(value\.trim\(\)\)\.slice\(0,24\)/);
