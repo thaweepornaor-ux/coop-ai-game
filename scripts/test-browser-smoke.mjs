@@ -237,6 +237,15 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).waitFor();
     assert.equal(await page.getByRole('link', { name: /เข้าร่วมภารกิจ/ }).getAttribute('href'), '/play');
     assert.equal(await page.getByRole('link', { name: /เปิดเวทีผู้สอน/ }).getAttribute('href'), '/host');
+    if (size.label === 'desktop-1280' && reducedMotion === 'no-preference') {
+      const releaseResponse = await page.request.get(preview.origin + '/coop-release.json');
+      assert.equal(releaseResponse.status(), 200, 'Release identity endpoint must be served through the app router');
+      const release = await releaseResponse.json();
+      assert.equal(release.schema, 1);
+      assert.equal(release.application, 'coop-ai-game');
+      assert.match(release.commit, /^(development|[0-9a-f]{40})$/);
+      row.checks.push('Release identity is served from a real application route');
+    }
     await stage('landing-avatar');
     row.heroRaster = await avatarPainted(page, '.hero-avatar');
     row.checks.push({ landing: await noOverflow(page, label + ' landing') }); await shot(page, label + '-landing');
