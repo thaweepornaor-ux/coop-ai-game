@@ -62,7 +62,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    delete valid.face;
    setPicked(valid);
   }catch{}
- },[]);
+ },[gender]);
  const save=()=>{
   try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify({...picked,face:undefined}));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
@@ -110,6 +110,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const exportComposite=async()=>{
   setExporting(true);
   try{
+   if(missing.length>0)throw new Error('Incomplete gender-compatible PNG layer set');
    const canvas=document.createElement('canvas');
    canvas.width=AVATAR_CANVAS_WIDTH;canvas.height=AVATAR_CANVAS_HEIGHT;
    const ctx=canvas.getContext('2d');
