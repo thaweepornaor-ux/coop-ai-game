@@ -63,3 +63,9 @@ test('reviewer can export an actual layered PNG at stable dimensions',()=>{
  assert.match(lab,/anchor\.download='coop-avatar-png-preview\.png'/);
  assert.match(lab,/disabled=\{exporting\}/);
 });
+
+test('PNG export preserves CSS max-height scaling for portrait source images',()=>{
+ assert.match(lab,/const naturalHeight=boxWidth\*image\.naturalHeight\/image\.naturalWidth/);
+ assert.match(lab,/const boxHeight=Math\.min\(naturalHeight,canvas\.height\*0\.65\)/);
+ assert.match(lab,/const drawWidth=naturalHeight>boxHeight\?boxHeight\*image\.naturalWidth\/image\.naturalHeight:boxWidth/);
+});
