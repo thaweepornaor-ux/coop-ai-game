@@ -2,6 +2,7 @@
 import {useEffect,useState} from 'react';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
 import {avatarLayerRect,AVATAR_CANVAS_WIDTH,AVATAR_CANVAS_HEIGHT} from '../../shared/avatar-png-layout.js';
+import {validateAssemblySnapshot,PNG_ASSEMBLY_VERSION} from '../../shared/avatar-png-snapshot.js';
 
 type Part = {src:string;label:string;ready:boolean;aligned:boolean};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
@@ -69,6 +70,24 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
   : lists[category].find(p=>p.src===picked[category])||lists[category][0];
+ const exportSettings=()=>{
+  try{
+   const selected=Object.fromEntries(order.map(category=>[category,active(category)?.src]));
+   const snapshot=validateAssemblySnapshot({version:PNG_ASSEMBLY_VERSION,gender,positions,selected});
+   const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'});
+   const url=URL.createObjectURL(blob);
+   const anchor=document.createElement('a');
+   anchor.href=url;
+   anchor.download='coop-avatar-layout-'+gender+'.json';
+   document.body.appendChild(anchor);
+   anchor.click();
+   anchor.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+   setSaved('ส่งออกข้อมูลชิ้นส่วนและตำแหน่งแล้ว สามารถนำไปใช้ปรับตัวละครจริงได้');
+  }catch{
+   setSaved('ส่งออกข้อมูลไม่ได้: ยังมีภาพหรือค่าตำแหน่งไม่ครบ');
+  }
+ };
  const exportComposite=async()=>{
   setExporting(true);
   try{
@@ -132,6 +151,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   </label>)}
   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
    <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่งและภาพ</button>
+   <button type="button" onClick={exportSettings} style={{padding:9}}>ส่งออกค่าจัดตำแหน่ง JSON</button>
    <button type="button" disabled={exporting} onClick={exportComposite} style={{padding:9}}>{exporting?"กำลังสร้าง PNG...":"ส่งออกภาพประกอบ PNG"}</button>
    <button type="button" onClick={()=>{setPositions(defaults);setPicked({});setSaved('คืนตำแหน่งและภาพเริ่มต้นแล้ว (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
   </div>
