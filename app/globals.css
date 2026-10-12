@@ -185,3 +185,9 @@ em{color:#15906b}
  .quick-character-portrait{height:110px}
  .topbar .preferences{gap:4px}
 }
+
+/* Prevent fractional SVG/scoreboard layout from creating a 1–2px projector scroll. */
+html,body{max-width:100%;overflow-x:clip}
+.game-shell{overflow-x:clip;overflow-y:visible}
+.question-layout,.results-page,.lobby{min-width:0}
+.question-layout>*,.results-page>*,.lobby>*{min-width:0}
