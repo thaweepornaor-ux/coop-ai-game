@@ -93,8 +93,10 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    const url=URL.createObjectURL(blob);
    const anchor=document.createElement('a');
    anchor.href=url;anchor.download='coop-avatar-png-preview.png';
+   document.body.appendChild(anchor);
    anchor.click();
-   URL.revokeObjectURL(url);
+   anchor.remove();
+   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
    setSaved('ส่งออกภาพประกอบ PNG สำหรับตรวจสอบแล้ว (ยังไม่ใช้เป็นตัวละครหลัก)');
   }catch{
    setSaved('ส่งออก PNG ไม่สำเร็จ กรุณาตรวจสอบไฟล์ภาพที่เลือก');
