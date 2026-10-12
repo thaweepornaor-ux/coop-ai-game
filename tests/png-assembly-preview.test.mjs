@@ -14,3 +14,11 @@ test('workbench only offers uploaded parts and has x/y/scale controls',()=>{
  for(const key of ['x','y','scale'])assert.ok(lab.includes(key));
  assert.match(lab,/type="range"/);
 });
+
+test('alignment settings can be saved and restored with bounded values',()=>{
+ assert.match(lab,/localStorage\.getItem\(storageKey\)/);
+ assert.match(lab,/localStorage\.setItem\(storageKey,JSON\.stringify\(positions\)\)/);
+ assert.match(lab,/Number\.isFinite\(v\[key\]\)/);
+ assert.match(lab,/setPositions\(verified\)/);
+ assert.match(lab,/บันทึกตำแหน่ง/);
+});
