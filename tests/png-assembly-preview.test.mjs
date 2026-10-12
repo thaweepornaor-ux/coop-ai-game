@@ -67,5 +67,5 @@ test('reviewer can export an actual layered PNG at stable dimensions',()=>{
 test('preview and export share one tested geometry calculation',()=>{
  assert.match(lab,/avatarLayerRect\(image\.naturalWidth,image\.naturalHeight,positions\[category\],canvas\.width,canvas\.height\)/);
  assert.match(lab,/avatarLayerRect\(d\.width,d\.height,a\)/);
- assert.match(lab,/onLoad=\{e=>setDimensions\(/);
+ assert.match(lab,/onLoad=\{e=>\{const width=e\.currentTarget\.naturalWidth,height=e\.currentTarget\.naturalHeight/);
 });
