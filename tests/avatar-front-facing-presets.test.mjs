@@ -11,7 +11,7 @@ test('all twenty front-facing presets generate distinct SVG faces',()=>{
  }
 });
 test('every visible style choice still affects the front-facing avatar',()=>{
- const baseline={bodyStyle:'female',presetId:'F01'};
+ const baseline={bodyStyle:'female',presetId:'F01',hatStyle:'cap'};
  for(const key of ['skinTone','hairStyle','hairColor','shirtStyle','shirtColor','bottomStyle','bottomColor','shoeColor','glassesStyle','hatStyle','hatColor']){
   const variants=AVATAR_OPTIONS[key];
   const first=renderAvatar({...baseline,[key]:variants[0].value});
