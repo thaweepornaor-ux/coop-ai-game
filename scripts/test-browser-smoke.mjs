@@ -295,13 +295,14 @@ async function realRoom(browser, browserName) {
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
+    await player.waitForFunction(expected => document.querySelector('.join-fields input')?.value === expected, room, { timeout: 20_000 });
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
     const [sent] = await Promise.all([
       player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
       player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
     ]);
     const submittedAvatar = sent.postDataJSON().avatar;
-    assert.equal(Object.keys(submittedAvatar).length, 12); assert.equal(submittedAvatar.presetId, 'F03');
+    assert.equal(Object.keys(submittedAvatar).length, 13); assert.equal(submittedAvatar.presetId, 'F03');
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
@@ -309,7 +310,7 @@ async function realRoom(browser, browserName) {
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
-    assert.deepEqual(persisted, submittedAvatar); row.checks.push('Name, room session and twelve-field wardrobe survive reload');
+    assert.deepEqual(persisted, submittedAvatar); row.checks.push('Name, room session and thirteen-field wardrobe survive reload');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
     await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
     let expectedScore = 0;
