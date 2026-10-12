@@ -21,3 +21,10 @@ test('unsupported schema, gender and invalid percentages are rejected',()=>{
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'other',positions,selected}),TypeError);
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:{...positions,hair:{x:Infinity,y:50,scale:50}},selected}),RangeError);
 });
+
+test('malformed JSON snapshots report missing coordinates and selections cleanly',()=>{
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',selected}),/Missing positions/);
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions}),/Missing selected parts/);
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:{...positions,face:null},selected}),/Missing PNG position/);
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:{...positions,face:[1,2]},selected}),/Missing PNG position/);
+});
