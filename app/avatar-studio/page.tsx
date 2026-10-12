@@ -25,8 +25,12 @@ function clean(value:unknown){
 export default function AvatarStudio(){
  const [avatar,setAvatar]=useState<Record<string,string>>(defaults);
  const [characterName,setCharacterName]=useState('');
+ const [returnRoom,setReturnRoom]=useState('');
  const [status,setStatus]=useState('ตัวอย่างนี้ใช้ภาพวาด SVG ที่เปลี่ยนชุดได้จริง ภาพ PNG ที่ยังจัดตำแหน่งไม่เสร็จจะไม่ถูกแสดงแทน');
- useEffect(()=>{try{const raw=localStorage.getItem(storageKey);if(raw)setAvatar(clean(JSON.parse(raw)));setCharacterName(cleanName(localStorage.getItem(nameKey)));}catch{}},[]);
+ useEffect(()=>{try{const raw=localStorage.getItem(storageKey);if(raw)setAvatar(clean(JSON.parse(raw)));setCharacterName(cleanName(localStorage.getItem(nameKey)));}catch{}
+  const room=new URLSearchParams(window.location.search).get('room')||'';
+  if(/^[A-Z0-9]{6}$/.test(room.toUpperCase()))setReturnRoom(room.toUpperCase());
+ },[]);
  const update=(key:AvatarOptionKey,value:string)=>setAvatar(before=>clean({...before,[key]:value}));
  const preset=(person:CharacterPreset)=>setAvatar(before=>clean({...before,bodyStyle:person.gender,presetId:person.id,skinTone:person.skinTone,hairStyle:person.hairStyle,hairColor:person.hairColor,glassesStyle:person.glasses?'round':'none',bottomStyle:person.bottomStyle,bottomColor:person.bottomColor,shirtColor:person.shirtColor}));
  const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify(clean(avatar)));localStorage.setItem(nameKey,cleanName(characterName));setStatus('บันทึกชื่อตัวละครและชุดทดลองในเบราว์เซอร์นี้แล้ว (ยังไม่เปลี่ยนผู้เล่นในห้องเกม)');}catch{setStatus('บันทึกไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล');}};
@@ -36,7 +40,7 @@ export default function AvatarStudio(){
   if(!handoff){setStatus('กรุณาตั้งชื่อตัวละครก่อนนำเข้าเกม');return;}
   try{
    localStorage.setItem(STUDIO_TRANSFER_KEY,JSON.stringify(handoff));
-   window.location.assign('/play?studio=1');
+   window.location.assign('/play?studio=1'+(returnRoom?'&room='+encodeURIComponent(returnRoom):''));
   }catch{setStatus('ส่งตัวละครไปหน้าเกมไม่สำเร็จ: เบราว์เซอร์ไม่อนุญาตให้บันทึก');}
  };
  const exportSvg=()=>{
@@ -54,7 +58,7 @@ export default function AvatarStudio(){
  const picked=CHARACTERS.find(c=>c.id===avatar.presetId);
  return <main style={{minHeight:'100vh',background:'#f0f4f7',color:'#21313c',padding:'24px 16px',fontFamily:'system-ui,sans-serif'}}>
   <div style={{maxWidth:1080,margin:'0 auto'}}>
-   <header style={{marginBottom:20}}><a href="/" style={{color:'#285969'}}>← กลับหน้าเกม</a><h1 style={{fontSize:'clamp(24px,4vw,38px)',margin:'14px 0 8px'}}>ทดลองแต่งตัวละครหน้าตรง</h1><p>เลือกตัวละครชาย–หญิง แล้วเปลี่ยนผม สีผิว เสื้อ กางเกง รองเท้า และเครื่องประดับได้ทันที โดยไม่แก้ห้องเกมจริง</p></header>
+   <header style={{marginBottom:20}}><a href={returnRoom?'/play?room='+encodeURIComponent(returnRoom):'/'} style={{color:'#285969'}}>← กลับหน้าเกม</a><h1 style={{fontSize:'clamp(24px,4vw,38px)',margin:'14px 0 8px'}}>ทดลองแต่งตัวละครหน้าตรง</h1><p>เลือกตัวละครชาย–หญิง แล้วเปลี่ยนผม สีผิว เสื้อ กางเกง รองเท้า และเครื่องประดับได้ทันที โดยไม่แก้ห้องเกมจริง</p>{returnRoom&&<p style={{fontWeight:700}}>ห้องที่กำลังเตรียมเข้าร่วม: {returnRoom} — ระบบจะจำรหัสห้องให้เมื่อแต่งตัวเสร็จ</p>}</header>
    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,320px),1fr))',gap:20,alignItems:'start'}}>
     <section aria-label="ภาพตัวละคร" style={{background:'white',borderRadius:20,padding:20,position:'sticky',top:12,boxShadow:'0 6px 24px #21313c12'}}>
      <h2 style={{fontSize:18}}>{cleanName(characterName)||'ตัวละครของคุณ'} · {picked?.id||avatar.presetId}</h2>
