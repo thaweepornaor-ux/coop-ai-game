@@ -14,17 +14,19 @@ type LoadedState='loading'|'ok'|'error';
  */
 export function Avatar({options={},className}:AvatarProps){
  const v=options as Record<string,unknown>;
- const gender=v.bodyStyle==='female'?'female':'male';
- const body=PNG_PARTS.body?.find(p=>p.value===gender&&p.ready&&p.aligned);
- const face=PNG_PARTS.face.find(p=>p.value===gender);
- const hair=PNG_PARTS.hair.find(p=>p.value===String(v.hairStyle));
- const top=PNG_PARTS.top.find(p=>(p.value==='overshirt'?'jacket':p.value)===String(v.shirtStyle)&&p.ready)||PNG_PARTS.top.find(p=>p.value===String(v.shirtStyle));
- const bottom=PNG_PARTS.bottom.find(p=>p.value===String(v.bottomStyle));
- const shoes=PNG_PARTS.shoes.find(p=>(p.value==='sneakers'?'white':p.value)===String(v.shoeColor));
- const eyewear=PNG_PARTS.glasses.find(p=>p.value===String(v.glassesStyle));
- const parts=[body,bottom,shoes,top,face,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
- // Do not compose thumbnail crops at arbitrary shared full-frame coordinates.
- const complete=avatarSelectionReadiness(v,PNG_PARTS).ready && parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
+ const readiness=avatarSelectionReadiness(v,PNG_PARTS);
+ // Use exactly the verified parts returned by readiness, not a second lookup with different aliases.
+ const layers=readiness.selected;
+ const parts=[
+  ...layers.filter(p=>PNG_PARTS.body.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.bottom.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.shoes.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.top.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.face.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.hair.includes(p)),
+  ...layers.filter(p=>PNG_PARTS.glasses.includes(p))
+ ];
+ const complete=readiness.ready&&parts.length===layers.length;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[p.src]==='ok');
