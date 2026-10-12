@@ -230,3 +230,16 @@ html,body{max-width:100%;overflow-x:clip}
 .host-scored-roster .mini-player.answered{background:#e6f7ed;border-color:#61b98c}
 @media(max-width:1100px){.host-question .host-scored-roster{grid-template-columns:1fr 1fr}}
 @media(max-width:750px){.host-question .host-scored-roster{grid-template-columns:1fr 1fr;max-height:450px}}
+
+/* On phones, the selected portrait is already highlighted in the gallery.
+   Do not show a duplicate hero panel above the only two required learner steps. */
+@media(max-width:900px){
+ .quick-player .customizer-preview{display:none!important}
+ .quick-player{display:block}
+ .quick-player .wardrobe{padding:20px 16px;margin:0 auto;max-width:620px}
+ .quick-player .wardrobe-heading h2{font-size:clamp(1.35rem,5.5vw,1.8rem)}
+ .quick-player .wardrobe-heading p{font-size:.88rem;margin-bottom:16px}
+ .quick-player .join-fields input{font-size:18px;min-height:58px}
+ .quick-player .quick-gender button{min-height:54px}
+ .quick-player .quick-character{min-height:120px}
+}
