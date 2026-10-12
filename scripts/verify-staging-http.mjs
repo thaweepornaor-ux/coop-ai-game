@@ -17,17 +17,26 @@ if(!/^[0-9a-f]{40}$/.test(expectedSha)){
  process.exit(2);
 }
 const manifestUrl=new URL('/coop-release.json',base);
-let manifest;
-try{
- const response=await fetch(manifestUrl,{signal:AbortSignal.timeout(12000),redirect:'error',headers:{'Cache-Control':'no-cache'}});
- if(!response.ok)throw Error('Release manifest HTTP '+response.status);
- manifest=await response.json();
- if(manifest?.schema!==1||manifest?.application!=='coop-ai-game'||manifest?.commit!==expectedSha){
-  throw Error('Published game version does not match the expected commit');
+let releaseOk=false;
+let releaseError='';
+for(let attempt=1;attempt<=6;attempt++){
+ try{
+  const response=await fetch(manifestUrl,{signal:AbortSignal.timeout(12000),redirect:'error',headers:{'Cache-Control':'no-cache'}});
+  if(!response.ok)throw Error('Release manifest HTTP '+response.status);
+  const manifest=await response.json();
+  if(manifest?.schema!==1||manifest?.application!=='coop-ai-game'||manifest?.commit!==expectedSha){
+   throw Error('Published game version does not match the expected commit');
+  }
+  console.log('STAGING RELEASE PASS '+expectedSha);
+  releaseOk=true;
+  break;
+ }catch(e){
+  releaseError=e instanceof Error?e.message:String(e);
+  if(attempt<6)await sleep(3000);
  }
- console.log('STAGING RELEASE PASS '+expectedSha);
-}catch(e){
- console.error('STAGING RELEASE FAIL: '+(e instanceof Error?e.message:String(e)));
+}
+if(!releaseOk){
+ console.error('STAGING RELEASE FAIL: '+releaseError);
  process.exit(1);
 }
 const routes=['/','/play','/host','/avatar-studio'];
