@@ -12,7 +12,8 @@ test('uploaded PNG shirt and shoe aliases resolve to actual wardrobe selections'
  assert.ok(AVATAR_OPTIONS.shoeColor.some(p=>p.value==='white'));
  const result=avatarSelectionReadiness(choices);
  assert.ok(result.selected.some(p=>p.src==='/avatar-parts/clothing_male_beige_overshirt.png'));
- assert.ok(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'));
+ assert.ok(result.reasons.includes('missing:shoes'));
+ assert.equal(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'),false);
 });
 test('playable Avatar layers come from one validated selection without separate lookups',()=>{
  assert.match(source,/const readiness=avatarSelectionReadiness\(v,PNG_PARTS\)/);
