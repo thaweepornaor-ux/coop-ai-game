@@ -168,7 +168,16 @@ function rasterProbe(selector) {
   const image = container.querySelector('img');
   const visibleCanvas = canvas && Number(getComputedStyle(canvas).opacity) > 0 && canvas.width > 0 && canvas.height > 0;
   const source = visibleCanvas ? canvas : image?.complete && image.naturalWidth > 0 ? image : null;
-  if (!source) return null;
+  if (!source) {
+    // Current playable fallback is an inline front-facing SVG, not a raster canvas.
+    // Verify meaningful painted geometry and a visible box in the actual browser.
+    const svg = container.querySelector('svg');
+    if (!svg || svg.getBoundingClientRect().width < 16 || svg.getBoundingClientRect().height < 16) return null;
+    if (getComputedStyle(svg).visibility === 'hidden' || Number(getComputedStyle(svg).opacity) === 0) return null;
+    const shapes = svg.querySelectorAll('path,ellipse,rect,circle,polygon').length;
+    if (shapes < 15) return null;
+    return { source: 'inline-svg', shapeCount: shapes, width: svg.getBoundingClientRect().width };
+  }
   try {
     const sample = document.createElement('canvas'); sample.width = sample.height = 32;
     const ctx = sample.getContext('2d', { willReadFrequently: true });
