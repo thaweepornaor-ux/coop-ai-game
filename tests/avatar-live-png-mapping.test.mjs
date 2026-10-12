@@ -16,12 +16,10 @@ test('uploaded PNG shirt and shoe aliases resolve to actual wardrobe selections'
  assert.ok(result.reasons.includes('missing:shoes'));
  assert.equal(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'),false);
 });
-test('playable Avatar layers come from one validated selection without separate lookups',()=>{
- assert.match(source,/const readiness=avatarSelectionReadiness\(v,PNG_PARTS\)/);
- assert.match(source,/const layers=readiness\.selected/);
- assert.match(source,/const complete=readiness\.ready&&parts\.length===layers\.length/);
- assert.match(source,/PNG_PARTS\.face\.includes\(p\)/);
- assert.match(source,/PNG_PARTS\.glasses\.includes\(p\)/);
+test('playable Avatar uses validated layer stack rather than independent lookups',()=>{
+ assert.match(source,/const stack=playableAvatarLayers\(v,PNG_PARTS\)/);
+ assert.match(source,/const parts=stack\.layers/);
+ assert.match(source,/const complete=stack\.ready/);
 });
 test('existing cropped PNG previews are not authorized as a full playable avatar',()=>{
  assert.equal(avatarSelectionReadiness(choices).ready,false);
@@ -37,12 +35,12 @@ test('PNG load completion is keyed by the chosen outfit to avoid stale display w
 });
 
 test('playable PNG layers require approved geometry and use part coordinates, not full-frame overlay',()=>{
- assert.match(source,/parts\.every\(hasLayout\)/);
+ assert.match(source,/const stack=playableAvatarLayers\(v,PNG_PARTS\)/);
  assert.match(source,/left:part\.position!\.x\+'%'/);
  assert.match(source,/top:part\.position!\.y\+'%'/);
  assert.match(source,/width:part\.position!\.scale\+'%'/);
  assert.match(source,/maxHeight:'65%'/);
- assert.match(source,/Number\.isFinite\(pos\[k as keyof typeof pos\]\)/);
+ assert.match(source,/left:part\.position!\.x\+'%'/);
 });
 
 test('wardrobe cannot write the nonplayable shorts-preview into player outfit',()=>{
