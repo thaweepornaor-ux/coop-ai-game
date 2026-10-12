@@ -83,6 +83,8 @@ const shade = (hex, ratio = 0.83) => '#' + [1, 3, 5].map((start) =>
   Math.round(parseInt(hex.slice(start, start + 2), 16) * ratio).toString(16).padStart(2, '0')).join('');
 
 function backHair(style, color) {
+  if (style === 'shoulder' || style === 'wavy') return `<path d="M52 60Q48 28 80 28Q111 28 108 60L113 111Q97 116 80 104Q63 116 47 111Z" fill="${color}"/><path d="M50 86Q57 82 50 97M110 86Q103 82 110 97" stroke="${shade(color)}" stroke-width="3" fill="none"/>`;
+  if (style === 'bun') return `<ellipse cx="80" cy="92" rx="15" ry="12" fill="${color}"/><path d="M70 92Q80 102 90 92" stroke="${shade(color)}" stroke-width="2" fill="none"/>`;
   if (style === 'long') return `<path d="M53 56C49 26 111 24 108 57L112 109Q95 118 80 102Q65 118 48 109Z" fill="${color}"/><path d="M53 71L51 103M106 70L109 104" stroke="${shade(color)}" stroke-width="3" stroke-linecap="round"/>`;
   if (style === 'bob') return `<path d="M52 57C48 22 112 23 108 57L110 87Q100 102 80 91Q60 102 50 87Z" fill="${color}"/>`;
   if (style === 'ponytail') return `<path d="M100 49Q128 39 122 69Q117 84 125 101Q104 99 106 76L97 63Z" fill="${color}"/><path d="M111 58Q121 65 115 85" fill="none" stroke="${shade(color)}" stroke-width="3" stroke-linecap="round"/>`;
@@ -98,6 +100,10 @@ function frontHair(style, color) {
   style = aliases[style] || style;
   const dark = shade(color);
   switch (style) {
+    case 'wavy': case 'shoulder': return `<path d="M52 65L53 45Q56 26 80 29Q107 26 108 48L107 67L99 61L97 46Q88 56 81 43Q70 57 61 54L60 66Z" fill="${color}"/><path d="M61 43Q72 33 81 38M87 36Q98 38 101 45" stroke="${dark}" stroke-width="2" fill="none"/>`;
+    case 'pixie': return `<path d="M55 58Q48 43 61 35Q78 22 96 32Q111 39 103 58L99 50L94 45Q84 49 74 41Q67 52 59 53Z" fill="${color}"/><path d="M65 37Q76 30 84 34" stroke="${dark}" stroke-width="2" fill="none"/>`;
+    case 'swept': return `<path d="M55 61L54 43Q61 25 84 29Q104 28 107 45L103 61L99 54Q92 45 83 40Q72 57 58 59Z" fill="${color}"/><path d="M84 36Q73 45 60 49" stroke="${dark}" stroke-width="2" fill="none"/>`;
+    case 'bun': return `<path d="M55 61L54 46Q58 27 81 28Q104 28 106 47L104 61L99 56L98 45Q80 50 62 44L61 61Z" fill="${color}"/><path d="M66 35Q80 31 97 39" stroke="${dark}" stroke-width="2" fill="none"/>`;
     case 'short': return `<path d="M56 60L55 47Q57 27 79 31Q98 25 105 44L104 59L99 51Q94 48 93 42Q77 50 63 45L61 59Z" fill="${color}"/><path d="M65 37Q78 32 91 36" fill="none" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`;
     case 'sidepart': return `<path d="M55 59L55 44Q58 27 79 31Q104 26 106 47L104 60L99 56L98 44Q89 48 74 45Q65 54 60 55L60 61Z" fill="${color}"/><path d="M75 33Q71 40 61 47M78 34Q90 33 99 40" fill="none" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`;
     case 'bob': return `<path d="M53 65L53 46Q57 28 80 30Q104 28 108 47L107 70L100 66L98 48Q86 54 77 45Q68 55 62 50L61 68Z" fill="${color}"/><path d="M61 40Q69 35 78 35" fill="none" stroke="${dark}" stroke-width="2" stroke-linecap="round"/>`;
