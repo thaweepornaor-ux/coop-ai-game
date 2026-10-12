@@ -31,7 +31,6 @@ const sizes = [
   { label: 'desktop-1280', width: 1280, height: 900, mobile: false },
 ];
 const syntheticName = 'ผู้เล่นทดสอบ';
-const roomLabel = 'รหัสห้อง';
 const nameLabel = '2. ชื่อผู้เล่น';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
@@ -286,12 +285,12 @@ async function realRoom(browser, browserName) {
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
-    await player.waitForFunction(expected => document.querySelector('.join-fields input')?.value === expected, room, { timeout: 20_000 });
+    await player.locator('.quick-characters').waitFor({timeout:20000});
     await player.locator('.quick-characters').waitFor({timeout:15000});
     await player.getByLabel(nameLabel, { exact: true }).fill(syntheticName); await wardrobe(player);
     const [sent] = await Promise.all([
       player.waitForRequest(req => req.method() === 'POST' && new URL(req.url()).pathname === '/api/game' && req.postDataJSON()?.action === 'join'),
-      player.getByRole('button', { name: /พร้อมแล้ว เข้าสู่เวที/ }).click(),
+      player.getByRole('button', { name: 'เข้าเล่นเกม →' }).click(),
     ]);
     const submittedAvatar = sent.postDataJSON().avatar;
     assert.equal(Object.keys(submittedAvatar).length, 13); assert.equal(submittedAvatar.presetId, 'F03'); assert.equal(submittedAvatar.bodyStyle,'female');
