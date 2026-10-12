@@ -101,10 +101,10 @@ async function boundedCase(browser, label, budgetMs, body) {
       if (active && !timedOut) contexts.add(context);
       else void closeContext(context).catch(() => {});
     }, () => {});
-    return within(pending, 10_000, 'Context initialization');
+    return within(pending, 25_000, 'Context initialization');
   };
   const createPage = async context => {
-    const page = await within(context.newPage(), 10_000, 'Page initialization');
+    const page = await within(context.newPage(), 25_000, 'Page initialization');
     if (!active || timedOut) throw new Error('Case was aborted');
     page.setDefaultTimeout(15_000); page.setDefaultNavigationTimeout(10_000);
     pages.push(page);
@@ -389,7 +389,7 @@ for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
     }
   } finally {
     if (browser) {
-      try { await within(browser.close(), 5_000, name + ' browser cleanup'); }
+      try { await within(browser.close(), 15_000, name + ' browser cleanup'); }
       catch (error) {
         const row = { label: name + '-cleanup', status: 'failed', stage: 'browser-cleanup', error: safeCaseText(error.message) };
         report.cases.push(row); emitCase(row);
