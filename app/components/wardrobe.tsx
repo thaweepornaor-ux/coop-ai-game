@@ -11,7 +11,6 @@ const CATEGORIES: { label: string; short: string; style?: AvatarOptionKey; color
   { label: 'ท่อนล่าง', short: '04', style: 'bottomStyle', color: 'bottomColor', colorLabel: 'สีท่อนล่าง', icon: 'bottom' },
   { label: 'รองเท้า', short: '05', color: 'shoeColor', colorLabel: 'สีรองเท้า', icon: 'shoe' },
   { label: 'แว่นตา', short: '06', style: 'glassesStyle', color: 'glassesStyle', colorLabel: 'รูปแบบแว่น', icon: 'glasses' },
-  { label: 'หมวก', short: '07', style: 'hatStyle', color: 'hatColor', colorLabel: 'สีหมวก', icon: 'hat' },
 ];
 
 /** Selection icons for the front-facing character. */
