@@ -36,3 +36,9 @@ test('face image follows selected gender and reset clears old image choices',()=
  assert.match(lab,/endsWith\('\/'\+gender\+'\.png'\)/);
  assert.match(lab,/setPicked\(\{\}\)/);
 });
+
+test('broken PNGs are hidden and reported instead of displaying broken image icons',()=>{
+ assert.match(lab,/onError=\{\(\)=>setBroken\(/);
+ assert.match(lab,/!broken\.includes\(part\.src\)/);
+ assert.match(lab,/role="alert"/);
+});
