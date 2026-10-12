@@ -2,7 +2,7 @@
 import {useMemo,useState} from 'react';
 import {renderAvatar} from '../../shared/avatar.js';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
-import {avatarSelectionReadiness} from '../../shared/avatar-selection-readiness.js';
+import {playableAvatarLayers} from '../../shared/avatar-playable-layers.js';
 import type {AvatarChoices} from '../../shared/avatar.js';
 export {AVATAR_OPTIONS} from '../../shared/avatar.js';
 export type {AvatarChoices,AvatarOption,AvatarOptionKey} from '../../shared/avatar.js';
@@ -14,23 +14,9 @@ type LoadedState='loading'|'ok'|'error';
  */
 export function Avatar({options={},className}:AvatarProps){
  const v=options as Record<string,unknown>;
- const readiness=avatarSelectionReadiness(v,PNG_PARTS);
- // Use exactly the verified parts returned by readiness, not a second lookup with different aliases.
- const layers=readiness.selected;
- const parts=[
-  ...layers.filter(p=>PNG_PARTS.body.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.bottom.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.shoes.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.top.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.face.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.hair.includes(p)),
-  ...layers.filter(p=>PNG_PARTS.glasses.includes(p))
- ];
- const hasLayout=(p:typeof parts[number])=>{
-  const pos=p.position;
-  return !!pos&&['x','y','scale'].every(k=>Number.isFinite(pos[k as keyof typeof pos])&&pos[k as keyof typeof pos]>=0&&pos[k as keyof typeof pos]<=100)&&pos.scale>0;
- };
- const complete=readiness.ready&&parts.length===layers.length&&parts.every(hasLayout);
+ const stack=playableAvatarLayers(v,PNG_PARTS);
+ const parts=stack.layers;
+ const complete=stack.ready;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
