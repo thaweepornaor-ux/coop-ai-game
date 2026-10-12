@@ -33,3 +33,18 @@
 ## One-time verified staging refresh — 13 October 2026
 
 The QR-first simplified AI understanding assessment passed 12/12 browser scenarios on commit `cfb4df0f`. Additional source changes only extend bounded Cloudflare release verification with observed-commit diagnostics. A staging-only one-shot publish is requested to verify the latest `main` revision. The workflow will be restored to manual-only publishing immediately after verification.
+
+
+## Verified Cloudflare staging publication — 13 October 2026 (Thailand)
+
+- **Game name:** ประเมินความเข้าใจ AI.
+- **Instructor:** Opening `/` automatically prepares the QR code; learners do not type room codes.
+- **Learner:** Scan QR → choose one of 20 face presets → enter a name → join; additional wardrobe customization is optional.
+- **Gameplay:** 15 questions, 15 seconds each, instructor reveal/next control, cumulative scoreboard.
+- **Latest browser proof of the simplified mobile flow:** [Run 38287582451](https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38287582451) — 12/12 passed on commit `cfb4df0f`.
+- **Staging publication:** [Run 38288979952](https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38288979952) — successful publication of commit `e30514d018452f36e7cc3122612852cc13160eb7`, Worker version `a283f762-05bf-4621-8ed3-61fbe5d25a73`.
+- **Release propagation:** Immediately after deploy, the release endpoint temporarily returned the previous SHA `db239796`; a subsequent check returned the exact new SHA after ~5 seconds. Verification intentionally retries, but never treats the wrong SHA as success.
+- **Live staging routes verified HTTP 200:** `/`, `/play`, `/host`, and `/avatar-studio`.
+- **Publishing safeguards:** Automatic one-shot publishing was disabled again after success; new GitHub pushes build/test staging only. A new publication requires deliberate `workflow_dispatch` with `publish=true`.
+- **Scope:** This is **Cloudflare staging**, not a publication to the original ChatGPT Sites URL. Transparent layered PNG character art is still incomplete; the playable characters currently use SVG fallback.
+
