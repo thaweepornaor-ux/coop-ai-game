@@ -20,3 +20,10 @@ test('real PNG hair and pants previews are interactive wardrobe choices',()=>{
  assert.match(source,/aria-pressed=\{avatar\.hairStyle === part\.value\}/);
  assert.match(source,/aria-pressed=\{avatar\.bottomStyle === part\.value\}/);
 });
+
+test('uploaded shirt and shoe thumbnails select valid wardrobe styles',()=>{
+ assert.match(source,/onClick=\{\(\) => change\('shirtStyle','jacket'\)\}/);
+ assert.match(source,/onClick=\{\(\) => change\('shoeColor','white'\)\}/);
+ assert.match(source,/aria-pressed=\{avatar\.shirtStyle === 'jacket'\}/);
+ assert.match(source,/aria-pressed=\{avatar\.shoeColor === 'white'\}/);
+});
