@@ -191,3 +191,28 @@ html,body{max-width:100%;overflow-x:clip}
 .game-shell{overflow-x:clip;overflow-y:visible}
 .question-layout,.results-page,.lobby{min-width:0}
 .question-layout>*,.results-page>*,.lobby>*{min-width:0}
+
+/* Avatar preview: no title/body or caption overlap at mobile and desktop widths. */
+.quick-player .customizer-preview{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;text-align:center}
+.quick-player .customizer-preview h1{margin:0;line-height:1.35}
+.quick-player .character-stage{flex:none;width:100%;height:315px;min-height:0;overflow:hidden;border-radius:18px;background:linear-gradient(180deg,#f7fcf7,#e1f1e7)}
+.quick-player .avatar-preview{width:min(100%,235px)!important;height:auto!important;max-height:100%!important;aspect-ratio:3/4;margin:auto!important;overflow:hidden}
+.quick-player .avatar-preview>div{max-height:100%;overflow:hidden}
+.quick-player .character-name{display:inline-block;align-self:center;position:relative;z-index:5;margin:0;padding:9px 20px;border-radius:14px;background:#fff;border:1px solid #dcebe3;box-shadow:0 4px 12px #18553e12}
+.quick-player .character-name strong{display:block;max-width:300px;overflow-wrap:anywhere;font-size:1.16rem;line-height:1.4;color:#185742}
+.game-shell[data-role="player"] .preferences{display:none}
+@media(max-width:900px){
+ .quick-player .customizer-preview{display:grid;grid-template-columns:116px minmax(0,1fr);grid-template-rows:auto auto auto;grid-template-areas:"avatar eyebrow" "avatar heading" "avatar caption";align-items:center;gap:7px 14px;text-align:left;min-height:196px;padding:15px}
+ .quick-player .customizer-preview .eyebrow{grid-area:eyebrow;grid-column:auto;justify-content:flex-start;margin:0;font-size:.74rem}
+ .quick-player .customizer-preview h1{grid-area:heading;grid-column:auto;font-size:clamp(1.27rem,4.7vw,1.9rem);line-height:1.42;letter-spacing:-.035em}
+ .quick-player .character-stage{grid-area:avatar;grid-column:auto;grid-row:auto;min-height:0;height:163px;width:116px;overflow:hidden}
+ .quick-player .avatar-preview{width:116px!important;height:auto!important;max-height:155px!important;margin:auto!important}
+ .quick-player .character-name{grid-area:caption;grid-column:auto;align-self:start;margin:0;padding:7px 9px;max-width:100%}
+ .quick-player .character-name strong{font-size:.86rem}
+}
+@media(max-width:430px){
+ .quick-player .customizer-preview{grid-template-columns:105px minmax(0,1fr);gap:5px 12px;min-height:172px}
+ .quick-player .character-stage{height:145px;width:105px;min-height:0}
+ .quick-player .avatar-preview{width:105px!important;max-height:140px!important}
+ .quick-player .customizer-preview h1{font-size:1.32rem}
+}
