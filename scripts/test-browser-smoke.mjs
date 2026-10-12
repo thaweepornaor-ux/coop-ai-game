@@ -227,21 +227,23 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     const context = await createContext({ viewport: { width: size.width, height: size.height }, isMobile: size.mobile, hasTouch: size.mobile, deviceScaleFactor: 1, reducedMotion, locale: 'th-TH' });
     const page = await createPage(context);
     let previewImage = null;
-    await stage('landing-document');
-    await page.goto(preview.origin + '/', {waitUntil:'domcontentloaded'});
-    await page.locator('.host-lobby .qr img').waitFor({timeout:25000});
-    row.checks.push({instructor:await noOverflow(page,label+' instructor')});
-    await shot(page,label+'-projector');
+    // Only the projector opens an instructor room. Mobile learners use QR deep links.
+    // This prevents synthetic test contexts from consuming the real anti-abuse quota.
     if(size.label==='desktop-1280'&&reducedMotion==='no-preference'){
+      await stage('landing-document');
+      await page.goto(preview.origin+'/',{waitUntil:'domcontentloaded'});
+      await page.locator('.host-lobby .qr img').waitFor({timeout:25000});
+      row.checks.push({instructor:await noOverflow(page,label+' instructor')});
+      await shot(page,label+'-projector');
       const releaseResponse=await page.request.get(preview.origin+'/coop-release.json');
       assert.equal(releaseResponse.status(),200);
       const release=await releaseResponse.json();
       assert.equal(release.application,'coop-ai-game');
+      await stage('host-entry');
+      await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
+      await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
+      row.checks.push({hostEntry:await noOverflow(page,label+' host')});
     }
-    await stage('host-entry');
-    await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
-    await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
-    row.checks.push({hostEntry:await noOverflow(page,label+' host')});
     await stage('player-entry-hydration');
     await page.goto(preview.origin+'/play?room=ABC234',{waitUntil:'domcontentloaded'});
     await page.locator('.quick-characters').waitFor({timeout:15000});
