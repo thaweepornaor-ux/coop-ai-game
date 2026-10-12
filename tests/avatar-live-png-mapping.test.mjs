@@ -3,19 +3,26 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {AVATAR_OPTIONS} from '../shared/avatar.js';
 import {PNG_PARTS} from '../shared/avatar-png-catalog.js';
+import {avatarSelectionReadiness} from '../shared/avatar-selection-readiness.js';
 const source=readFileSync(new URL('../app/components/avatar.tsx',import.meta.url),'utf8');
 
-test('ready PNG wardrobe asset aliases match actual selectable values',()=>{
- const shirtValues=new Set(AVATAR_OPTIONS.shirtStyle.map(v=>v.value));
- const shoeValues=new Set(AVATAR_OPTIONS.shoeColor.map(v=>v.value));
- assert.ok(shirtValues.has('jacket'));
- assert.ok(shoeValues.has('white'));
- assert.equal(PNG_PARTS.top.find(p=>p.value==='overshirt')?.ready,true);
- assert.equal(PNG_PARTS.shoes.find(p=>p.value==='sneakers')?.ready,true);
- assert.match(source,/p\.value==='overshirt'\?'jacket':p\.value/);
- assert.match(source,/p\.value==='sneakers'\?'white':p\.value/);
+const choices={bodyStyle:'male',hairStyle:'shoulder',shirtStyle:'jacket',bottomStyle:'pants',shoeColor:'white',glassesStyle:'none'};
+test('uploaded PNG shirt and shoe aliases resolve to actual wardrobe selections',()=>{
+ assert.ok(AVATAR_OPTIONS.shirtStyle.some(p=>p.value==='jacket'));
+ assert.ok(AVATAR_OPTIONS.shoeColor.some(p=>p.value==='white'));
+ const result=avatarSelectionReadiness(choices);
+ assert.ok(result.selected.some(p=>p.src==='/avatar-parts/clothing_male_beige_overshirt.png'));
+ assert.ok(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'));
 });
-test('unapproved PNG crops cannot replace the playable full avatar',()=>{
- assert.match(source,/p\.ready===true&&p\.aligned===true/);
+test('playable Avatar layers come from one validated selection without separate lookups',()=>{
+ assert.match(source,/const readiness=avatarSelectionReadiness\(v,PNG_PARTS\)/);
+ assert.match(source,/const layers=readiness\.selected/);
+ assert.match(source,/const complete=readiness\.ready&&parts\.length===layers\.length/);
+ assert.match(source,/PNG_PARTS\.face\.includes\(p\)/);
+ assert.match(source,/PNG_PARTS\.glasses\.includes\(p\)/);
+});
+test('existing cropped PNG previews are not authorized as a full playable avatar',()=>{
+ assert.equal(avatarSelectionReadiness(choices).ready,false);
+ assert.equal(PNG_PARTS.body.length,0);
  for(const group of Object.values(PNG_PARTS))for(const part of group)assert.equal(part.aligned,false);
 });
