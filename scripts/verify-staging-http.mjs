@@ -11,6 +11,25 @@ try{
  console.error('Expected the exact https://coop-ai-game-staging.thaweeporn-aor.workers.dev/ host; no requests sent.');
  process.exit(2);
 }
+const expectedSha=process.argv[3]||'';
+if(!/^[0-9a-f]{40}$/.test(expectedSha)){
+ console.error('Expected exact forty-character release SHA; no requests sent.');
+ process.exit(2);
+}
+const manifestUrl=new URL('/coop-release.json',base);
+let manifest;
+try{
+ const response=await fetch(manifestUrl,{signal:AbortSignal.timeout(12000),redirect:'error',headers:{'Cache-Control':'no-cache'}});
+ if(!response.ok)throw Error('Release manifest HTTP '+response.status);
+ manifest=await response.json();
+ if(manifest?.schema!==1||manifest?.application!=='coop-ai-game'||manifest?.commit!==expectedSha){
+  throw Error('Published game version does not match the expected commit');
+ }
+ console.log('STAGING RELEASE PASS '+expectedSha);
+}catch(e){
+ console.error('STAGING RELEASE FAIL: '+(e instanceof Error?e.message:String(e)));
+ process.exit(1);
+}
 const routes=['/','/play','/host','/avatar-studio'];
 for(const route of routes){
  let last='';
