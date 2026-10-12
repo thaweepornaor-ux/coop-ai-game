@@ -16,9 +16,9 @@ export function Avatar({options={},className}:AvatarProps){
  const gender=v.bodyStyle==='female'?'female':'male';
  const face=PNG_PARTS.face.find(p=>p.value===gender);
  const hair=PNG_PARTS.hair.find(p=>p.value===String(v.hairStyle));
- const top=PNG_PARTS.top.find(p=>p.value===String(v.shirtStyle));
+ const top=PNG_PARTS.top.find(p=>(p.value==='overshirt'?'jacket':p.value)===String(v.shirtStyle)&&p.ready)||PNG_PARTS.top.find(p=>p.value===String(v.shirtStyle));
  const bottom=PNG_PARTS.bottom.find(p=>p.value===String(v.bottomStyle));
- const shoes=PNG_PARTS.shoes.find(p=>p.value===String(v.shoeColor));
+ const shoes=PNG_PARTS.shoes.find(p=>(p.value==='sneakers'?'white':p.value)===String(v.shoeColor));
  const eyewear=PNG_PARTS.glasses.find(p=>p.value===String(v.glassesStyle));
  const parts=[face,top,bottom,shoes,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
  // Do not compose thumbnail crops at arbitrary shared full-frame coordinates.
