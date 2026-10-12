@@ -9,6 +9,7 @@ export const PNG_PARTS=Object.freeze({
   {value:'ponytail',label:'ผมบลอนด์',src:'/avatar-parts/hair4.png',ready:true,aligned:false}
  ],
  top: [
+  {value:'overshirt',label:'เสื้อคลุมสีเบจ',src:'/avatar-parts/clothing_male_beige_overshirt.png',ready:true,aligned:false},
   {value:'shirt',label:'เสื้อโบฟ้า',src:'/avatar-parts/clothing_female_blue_bow_blouse.png',ready:false,aligned:false},
   {value:'jacket',label:'คาร์ดิแกนสีครีม',src:'/avatar-parts/clothing_female_cream_cardigan.png',ready:false,aligned:false},
   {value:'polo',label:'เสื้อโบขาว',src:'/avatar-parts/clothing_female_white_bow_blouse.png',ready:false,aligned:false},
@@ -27,7 +28,7 @@ export const PNG_PARTS=Object.freeze({
  shoes: [
   {value:'beige',label:'รองเท้าครีม',src:'/avatar-parts/shoes_female_beige_maryjanes.png',ready:false,aligned:false},
   {value:'boots',label:'รองเท้าบูต',src:'/avatar-parts/shoes_female_brown_ankle_boots.png',ready:false,aligned:false},
-  {value:'sneakers',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png',ready:false,aligned:false}
+  {value:'sneakers',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png',ready:true,aligned:false}
  ]
 });
 /** Files may not be present in a branch until the audited binary assets are committed. */
