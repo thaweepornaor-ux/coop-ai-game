@@ -24,7 +24,7 @@ export function Avatar({options={},className}:AvatarProps){
  return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
   {complete&&<div key={signature} aria-hidden="true" style={{position:'absolute',inset:0,opacity:everyLoaded?1:0,pointerEvents:'none'}}>
-    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} style={{position:'absolute',left:part.position!.x+'%',top:part.position!.y+'%',width:part.position!.scale+'%',height:'auto',maxHeight:'65%',transform:'translate(-50%,-50%)',objectFit:'contain',zIndex:index+1}}/>)}
+    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={e=>{const img=e.currentTarget;void img.decode().then(()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))).catch(()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'})));}} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} decoding="async" style={{position:'absolute',left:part.position!.x+'%',top:part.position!.y+'%',width:part.position!.scale+'%',height:'auto',maxHeight:'65%',transform:'translate(-50%,-50%)',objectFit:'contain',zIndex:index+1}}/>)}
   </div>}
  </div>;
 }
