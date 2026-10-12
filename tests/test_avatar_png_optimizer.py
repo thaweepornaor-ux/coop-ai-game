@@ -66,5 +66,23 @@ class AvatarPngOptimizerTests(unittest.TestCase):
             self.assertEqual(mode, "indexed-256")
             self.assertLessEqual(size, module.MAX_BYTES)
 
+    def test_real_image_optimization_preserves_partial_alpha_and_file_budget(self):
+        with tempfile.TemporaryDirectory() as d:
+            source, target = Path(d) / "input.png", Path(d) / "result.png"
+            im = Image.new("RGBA", (512, 512), (80, 140, 210, 0))
+            for y in range(80, 430):
+                for x in range(80, 430):
+                    alpha = max(0, min(255, (x - 80) * 255 // 350))
+                    im.putpixel((x, y), ((x * 31) % 256, (y * 17) % 256, 120, alpha))
+            im.save(source)
+            dimensions, byte_count, _ = module.optimize(source, target)
+            self.assertLessEqual(byte_count, module.MAX_BYTES)
+            self.assertLessEqual(max(dimensions), module.MAX_DIMENSION)
+            with Image.open(target) as result:
+                self.assertEqual(result.format, "PNG")
+                alpha = result.convert("RGBA").getchannel("A")
+                self.assertEqual(alpha.getextrema()[0], 0)
+                self.assertGreater(alpha.getextrema()[1], 0)
+
 if __name__ == "__main__":
     unittest.main()
