@@ -19,11 +19,11 @@ export function validateAssemblySnapshot(input,catalog=PNG_PARTS){
   positions[category]={x:position.x,y:position.y,scale:position.scale};
   const source=input.selected?.[category];
   if(category==='face'){
-   const face=catalog.face.find(part=>part.ready&&part.value===input.gender);
+   const face=catalog.face.find(part=>part.ready&&part.playable!==false&&part.value===input.gender);
    if(!face)throw new TypeError('Gender face is not uploaded');
    selected.face=face.src;
   }else{
-   if(typeof source!=='string'||!catalog[category].some(part=>part.ready&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
+   if(typeof source!=='string'||!catalog[category].some(part=>part.ready&&part.playable!==false&&part.src===source&&(!part.gender||part.gender===input.gender)))throw new TypeError('Unverified PNG layer: '+category);
    selected[category]=source;
   }
  }
