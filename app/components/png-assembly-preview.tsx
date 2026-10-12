@@ -5,7 +5,7 @@ import {avatarLayerRect,AVATAR_CANVAS_WIDTH,AVATAR_CANVAS_HEIGHT} from '../../sh
 import {validateAssemblySnapshot,PNG_ASSEMBLY_VERSION} from '../../shared/avatar-png-snapshot.js';
 import {avatarArtReadiness} from '../../shared/avatar-art-readiness.js';
 
-type Part = {src:string;label:string;ready:boolean;aligned:boolean;gender?:'male'|'female'};
+type Part = {src:string;label:string;ready:boolean;aligned:boolean;gender?:'male'|'female';playable?:boolean};
 type Category = 'face'|'hair'|'top'|'bottom'|'shoes';
 const order:Category[]=['bottom','shoes','top','face','hair'];
 const labels:Record<Category,string>={face:'ใบหน้า',hair:'ทรงผม',top:'เสื้อ',bottom:'กางเกง',shoes:'รองเท้า'};
@@ -56,7 +56,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
    const valid:Partial<Record<Category,string>>={};
    for(const category of order){
     const src=data[category];
-    if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.src===src&&(!part.gender||part.gender===gender)))valid[category]=src;
+    if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.playable!==false&&part.src===src&&(!part.gender||part.gender===gender)))valid[category]=src;
    }
    // The selected face follows the current gender; do not resurrect a saved opposite-gender face.
    delete valid.face;
@@ -67,7 +67,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify({...picked,face:undefined}));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
  };
- const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready&&(!p.gender||p.gender===gender))])) as Record<Category,Part[]>;
+ const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready&&p.playable!==false&&(!p.gender||p.gender===gender))])) as Record<Category,Part[]>;
  const missing=order.filter(category=>lists[category].length===0);
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
