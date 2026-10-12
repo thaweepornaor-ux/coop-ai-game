@@ -35,7 +35,7 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
   const change = (key: AvatarOptionKey, value: string) => onChange({ ...avatar, [key]: value });
   const color = AVATAR_OPTIONS[category.color].find(option => option.value === avatar[category.color])?.color;
   const selectedLabel = AVATAR_OPTIONS[category.color].find(option => option.value === avatar[category.color])?.label;
-  const applyPreset = (preset: CharacterPreset) => onChange({ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, bottomStyle: preset.gender === 'male' ? 'pants' : avatar.bottomStyle });
+  const applyPreset = (preset: CharacterPreset) => onChange({ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, bottomStyle: preset.gender === 'male' ? 'pants' : avatar.bottomStyle, glasses: preset.glasses ? 'on' : 'off' });
   const swatches = category.color === 'shirtColor'
     ? ['lightgreen', 'white', 'red', 'gray', 'charcoal', 'blueviolet'].flatMap(value => AVATAR_OPTIONS.shirtColor.filter(option => option.value === value))
     : AVATAR_OPTIONS[category.color];
@@ -47,7 +47,7 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
       <div className="wardrobe-panel-heading"><span className="eyebrow">WARDROBE / {category.short}</span><h3>{category.label}</h3></div>
       {category.style === 'bodyStyle' && <div className="character-catalogue">
         <div className="character-gender-tabs" aria-label="กลุ่มตัวละคร">
-          {(['male', 'female'] as const).map(value => <button type="button" key={value} className={gender === value ? 'selected' : ''} aria-pressed={gender === value} onClick={() => setGender(value)}>{value === 'male' ? 'ชาย · 10 แบบ' : 'หญิง · 10 แบบ'}</button>)}
+          {(['male', 'female'] as const).map(value => <button type="button" key={value} className={gender === value ? 'selected' : ''} aria-pressed={gender === value} onClick={() => {setGender(value);const next=CHARACTERS.find(p=>p.gender===value);if(next)applyPreset(next);}}>{value === 'male' ? 'ชาย · 10 แบบ' : 'หญิง · 10 แบบ'}</button>)}
         </div>
         <p className="character-catalogue-hint">เลือกใบหน้าและทรงผมที่ชอบ ชุดที่แต่งไว้ยังอยู่เหมือนเดิม</p>
         <div className="character-card-grid" aria-label={`เลือกตัวละคร${gender === 'male' ? 'ชาย' : 'หญิง'}`}>
