@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from 'react';
 import { Avatar, AVATAR_OPTIONS, type AvatarOptionKey } from './avatar';
 import { CHARACTERS, characterFor, type CharacterPreset } from '../../shared/characters';
 import { PNG_PARTS } from '../../shared/avatar-png-catalog.js';
+import { PngAssemblyPreview } from './png-assembly-preview';
 
 const CATEGORIES: { label: string; short: string; style?: AvatarOptionKey; color: AvatarOptionKey; colorLabel: string; icon: string }[] = [
   { label: 'ตัวละคร', short: '01', style: 'bodyStyle', color: 'skinTone', colorLabel: 'โทนผิว', icon: 'body' },
@@ -107,6 +108,7 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
         {swatches.map(option => <button type="button" key={option.value} className={`swatch-button${avatar[category.color] === option.value ? ' selected' : ''}`} aria-label={`${category.colorLabel}: ${option.label}`} aria-pressed={avatar[category.color] === option.value} title={option.label} onClick={() => change(category.color, option.value)}><span className="swatch-color" style={{ backgroundColor: option.color }}><span aria-hidden="true">{avatar[category.color] === option.value ? '✓' : ''}</span></span><span className="swatch-label">{option.label}</span></button>)}
       </div>}
     </div>
+    {category.style === "bodyStyle" && <PngAssemblyPreview gender={gender}/>}
     <div className="wardrobe-navigation"><button type="button" style={{ minHeight: 48 }} onClick={() => setIndex((index + CATEGORIES.length - 1) % CATEGORIES.length)} aria-label="หมวดก่อนหน้า">← ก่อนหน้า</button><span>{index + 1} / {CATEGORIES.length}</span><button type="button" style={{ minHeight: 48 }} onClick={() => setIndex((index + 1) % CATEGORIES.length)} aria-label="หมวดถัดไป">ถัดไป →</button></div>
   </section>;
 }
