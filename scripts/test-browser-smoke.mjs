@@ -252,6 +252,21 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     await page.getByLabel(nameLabel,{exact:true}).fill(syntheticName);
     await stage('wardrobe-controls');
     await wardrobe(page);
+    // Regression: the gallery tab must follow an asynchronously restored female preset.
+    if(browserName==='chromium' && size.label==='mobile-390' && reducedMotion==='no-preference'){
+      await stage('saved-female-preset-restore');
+      await page.evaluate(()=>{
+        localStorage.setItem('coop-ai-game-avatar',JSON.stringify({presetId:'F03',bodyStyle:'female'}));
+        localStorage.setItem('coop-ai-game-name','ผู้เล่นทดสอบ');
+      });
+      await page.reload({waitUntil:'domcontentloaded'});
+      await page.waitForFunction(()=>{
+        const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ผู้หญิง'));
+        return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character.selected')?.textContent?.includes('F03');
+      },null,{timeout:15000});
+      assert.equal(await page.getByLabel(nameLabel,{exact:true}).inputValue(),syntheticName);
+      row.checks.push({femaleSelectionRestored:true});
+    }
     await stage('wardrobe-avatar');
     const overlap = await page.evaluate(() => {
       const parent=document.querySelector('.quick-player .customizer-preview');
