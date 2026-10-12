@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import Image from 'next/image';
 import { Avatar, AVATAR_OPTIONS } from './components/avatar';
 import { normalizeWardrobe } from '../shared/avatar-registry';
+import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
 import { Wardrobe } from './components/wardrobe';
 import { LOGO_SRC, COOPERATIVE_NAME } from '../shared/brand';
 
@@ -82,6 +83,17 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
     const previousName=safeRead('coop-ai-game-name');if(previousName)setName(previousName);
     try{const previousAvatar=JSON.parse(safeRead('coop-ai-game-avatar')||'null');if(previousAvatar&&typeof previousAvatar==='object')setAvatar(normalizeWardrobe(previousAvatar))}catch{}
+    if(initialRole==='player'&&query.get('studio')==='1'&&!sessionRef.current){
+      try{
+        const raw=safeRead(STUDIO_TRANSFER_KEY);
+        const transfer=validateStudioTransfer(JSON.parse(raw||'null'));
+        if(transfer){
+          setName(transfer.name);
+          setAvatar(normalizeWardrobe(transfer.avatar,true));
+          localStorage.removeItem(STUDIO_TRANSFER_KEY);
+        }
+      }catch{}
+    }
     setSound(safeRead('coop-ai-game-sound')!=='off');
     setMotion(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     return()=>window.clearInterval(id);
