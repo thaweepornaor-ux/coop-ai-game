@@ -68,6 +68,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
  };
  const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready&&(!p.gender||p.gender===gender))])) as Record<Category,Part[]>;
+ const missing=order.filter(category=>lists[category].length===0);
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
   : lists[category].find(p=>p.src===picked[category])||lists[category][0];
@@ -142,6 +143,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const update=(key:'x'|'y'|'scale',v:number)=>setPositions(prev=>({...prev,[editing]:{...prev[editing],[key]:v}}));
  return <section aria-label="ทดลองจัดตำแหน่งภาพ PNG" style={{marginTop:20,padding:16,border:'1px solid #92a5ae',borderRadius:16}}>
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
+  {missing.length>0&&<p role="alert" style={{fontSize:12,color:'#9c412f'}}>ยังไม่มีชิ้นส่วน PNG ที่ตรงกับตัวละครนี้: {missing.map(key=>labels[key]).join(' / ')} ภาพที่ยังไม่ครบจะไม่เปิดใช้ในเกม</p>}
   <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน และบางเพศยังไม่มีเสื้อหรือรองเท้า PNG ที่ตรงชุด จึงยังส่งออกชุดสมบูรณ์ไม่ได้</p>
   {!avatarArtReadiness().ready&&<p role="note" style={{fontSize:12,color:'#8b4912'}}>ภาพที่นำเข้ายังไม่มีร่างกายเต็มตัวและแว่นตา PNG ที่พร้อมใช้งาน ภาพที่ประกอบเป็นเพียงตัวอย่างสำหรับตรวจสัดส่วน ยังไม่ใช่ตัวละครเกมฉบับสมบูรณ์</p>}
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
