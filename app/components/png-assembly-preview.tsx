@@ -50,15 +50,19 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     const src=data[category];
     if(typeof src==='string'&&PNG_PARTS[category].some(part=>part.ready&&part.src===src))valid[category]=src;
    }
+   // The selected face follows the current gender; do not resurrect a saved opposite-gender face.
+   delete valid.face;
    setPicked(valid);
   }catch{}
  },[]);
  const save=()=>{
-  try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify(picked));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
+  try{localStorage.setItem(storageKey,JSON.stringify(positions));localStorage.setItem(selectionKey,JSON.stringify({...picked,face:undefined}));setSaved('บันทึกตำแหน่งและภาพที่เลือกไว้บนอุปกรณ์นี้แล้ว');}
   catch{setSaved('ไม่สามารถบันทึกบนอุปกรณ์นี้ได้');}
  };
  const lists=Object.fromEntries(order.map(category=>[category,PNG_PARTS[category].filter(p=>p.ready)])) as Record<Category,Part[]>;
- const active=(category:Category)=>lists[category].find(p=>p.src===picked[category])||lists[category].find(p=>category==='face'&&p.src.endsWith('/'+gender+'.png'))||lists[category][0];
+ const active=(category:Category)=>category==='face'
+  ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
+  : lists[category].find(p=>p.src===picked[category])||lists[category][0];
  const current=positions[editing];
  const update=(key:'x'|'y'|'scale',v:number)=>setPositions(prev=>({...prev,[editing]:{...prev[editing],[key]:v}}));
  return <section aria-label="ทดลองจัดตำแหน่งภาพ PNG" style={{marginTop:20,padding:16,border:'1px solid #92a5ae',borderRadius:16}}>
@@ -72,7 +76,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     {order.map(key=><option key={key} value={key}>{labels[key]}</option>)}
    </select>
   </label>
-  {lists[editing].length>1&&<label style={{display:'block',marginTop:8}}>เลือกภาพ
+  {editing!=='face'&&lists[editing].length>1&&<label style={{display:'block',marginTop:8}}>เลือกภาพ
    <select value={active(editing)?.src||''} onChange={e=>setPicked(prev=>({...prev,[editing]:e.target.value}))} style={{display:'block',width:'100%',padding:8}}>
     {lists[editing].map(part=><option key={part.src} value={part.src}>{part.label}</option>)}
    </select>
@@ -82,7 +86,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   </label>)}
   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
    <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่งและภาพ</button>
-   <button type="button" onClick={()=>{setPositions(defaults);setSaved('กลับสู่ค่าเริ่มต้น (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
+   <button type="button" onClick={()=>{setPositions(defaults);setPicked({});setSaved('คืนตำแหน่งและภาพเริ่มต้นแล้ว (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
   </div>
   {saved&&<p role="status" style={{fontSize:12}}>{saved}</p>}
  </section>;
