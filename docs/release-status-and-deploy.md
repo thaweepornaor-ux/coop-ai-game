@@ -48,3 +48,14 @@ The QR-first simplified AI understanding assessment passed 12/12 browser scenari
 - **Publishing safeguards:** Automatic one-shot publishing was disabled again after success; new GitHub pushes build/test staging only. A new publication requires deliberate `workflow_dispatch` with `publish=true`.
 - **Scope:** This is **Cloudflare staging**, not a publication to the original ChatGPT Sites URL. Transparent layered PNG character art is still incomplete; the playable characters currently use SVG fallback.
 
+
+
+## Latest verified player gallery fix — 13 October 2026
+
+- **Production-like staging release:** [Run 38289953348](https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38289953348), release commit `03bfa2e3279984c2da62a692d7574282f2a131d0`, Cloudflare Worker Version ID `2438fbe2-f892-4bed-9f08-4f402a752224`.
+- **Remote checks:** Release identity matched immediately; the four staging routes `/`, `/play`, `/host` and `/avatar-studio` all returned HTTP 200.
+- **Actual browser proof:** [Run 38289484787](https://github.com/thaweepornaor-ux/coop-ai-game/actions/runs/38289484787) passed 12/12 scenarios including Chromium mobile restoration of saved female F03 preset, selected tab and player name.
+- **User-facing behavior:** Scanning the instructor's QR Code directly opens the learner's character gallery/name field. There is no room code field. On mobile the duplicate oversized hero is omitted; the projector shows cumulative scores.
+- **Publishing control:** A one-time staging-only release was disabled after publication; future main pushes do not auto-publish.
+- **Known visual limitation:** The approved, aligned PNG wardrobe layers are not complete; SVG remains the functioning character renderer. This should not be described as final 3D artwork.
+
