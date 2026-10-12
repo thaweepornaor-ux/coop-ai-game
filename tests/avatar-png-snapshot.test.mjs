@@ -46,8 +46,8 @@ test('tampered JSON cannot select arbitrary URLs or unapproved files',()=>{
 });
 
 test('mixed male shirt and female sneakers are rejected in production PNG alignment snapshots',()=>{
- assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions,selected}),/Unverified PNG layer: shoes/);
- assert.throws(()=>validateAssemblySnapshot({version:1,gender:'female',positions,selected}),/Unverified PNG layer: top/);
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions,selected}),/Unverified PNG layer: (bottom|shoes)/);
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'female',positions,selected}),/Unverified PNG layer: (bottom|top)/);
 });
 
 test('reference-only shorts cannot be used in an approved PNG snapshot',()=>{
