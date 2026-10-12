@@ -264,7 +264,13 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     });
     assert.deepEqual(overlap,{titlePortrait:0,captionPortrait:0,titleCaption:0},label+' preview must never cover title or player name');
     row.checks.push({previewNoOverlap:true});
-    row.avatarRaster = await avatarPainted(page, '.avatar-preview');
+    if (size.width <= 900) {
+      assert.equal(await page.locator('.quick-player .customizer-preview').isVisible(),false,'Mobile must show face choices without duplicate hero panel');
+      const firstFace=await page.locator('.quick-character').first().boundingBox();
+      assert.ok(firstFace&&firstFace.y < size.height,'A face choice must begin within the initial phone viewport');
+      row.checks.push({mobileFaceChoicesAboveFold:true});
+    }
+    row.avatarRaster = await avatarPainted(page, size.width <= 900 ? '.quick-character.selected' : '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
     if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
     await stage('motion-controls');
