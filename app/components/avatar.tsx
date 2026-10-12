@@ -29,12 +29,12 @@ export function Avatar({options={},className}:AvatarProps){
  const complete=readiness.ready&&parts.length===layers.length;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
- const everyLoaded=complete&&parts.every(p=>p&&loaded[p.src]==='ok');
+ const everyLoaded=complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
  const fallback=useMemo(()=>renderAvatar(options),[JSON.stringify(options)]);
  return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
   {complete&&<div key={signature} aria-hidden="true" style={{position:'absolute',inset:0,opacity:everyLoaded?1:0,pointerEvents:'none'}}>
-    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={()=>setLoaded(prev=>({...prev,[part.src]:'ok'}))} onError={()=>setLoaded(prev=>({...prev,[part.src]:'error'}))} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',zIndex:index+1}}/>)}
+    {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'contain',zIndex:index+1}}/>)}
   </div>}
  </div>;
 }
