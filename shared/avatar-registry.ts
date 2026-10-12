@@ -1,7 +1,7 @@
 import { AVATAR_OPTIONS } from './avatar.js';
 import { CHARACTERS, characterFor } from './characters';
 export const WARDROBE_KEYS = Object.keys(AVATAR_OPTIONS) as (keyof typeof AVATAR_OPTIONS)[];
-const defaults: Record<string,string>={bodyStyle:'male',skinTone:'warm',hairStyle:'sidepart',hairColor:'brown',shirtStyle:'tshirt',shirtColor:'lightgreen',bottomStyle:'pants',bottomColor:'charcoal',shoeColor:'black',hatStyle:'none',hatColor:'navy'};
+const defaults: Record<string,string>={bodyStyle:'male',skinTone:'warm',hairStyle:'sidepart',hairColor:'brown',shirtStyle:'tshirt',shirtColor:'lightgreen',bottomStyle:'pants',bottomColor:'charcoal',shoeColor:'black',glassesStyle:'none',hatStyle:'none',hatColor:'navy'};
 /** One flat catalogue contract for the API and every display context. */
 export function normalizeWardrobe(value:Record<string,unknown>,strict=false):Record<string,string>{
  if(strict){for(const key of Object.keys(value))if(key!=='presetId'&&!WARDROBE_KEYS.includes(key as keyof typeof AVATAR_OPTIONS))throw new Error('ไม่รับข้อมูลนอกชุดแต่งตัว');}
