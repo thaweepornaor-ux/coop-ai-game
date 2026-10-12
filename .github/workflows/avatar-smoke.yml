@@ -5,11 +5,11 @@ on:
   pull_request:
     branches: [main]
 jobs:
-  avatar:
+  game:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/avatar-eyewear.test.mjs tests/avatar-png-registry.test.mjs tests/avatar-png-options.test.mjs tests/questions-integrity.test.mjs
+      - run: npm test
