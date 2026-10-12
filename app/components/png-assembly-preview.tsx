@@ -20,6 +20,8 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const [editing,setEditing]=useState<Category>('face');
  const [saved,setSaved]=useState('');
  const [broken,setBroken]=useState<string[]>([]);
+ const [hidden,setHidden]=useState<Category[]>([]);
+ const [opacity,setOpacity]=useState(100);
  useEffect(()=>{
   try {
    const raw=localStorage.getItem(storageKey);
@@ -70,7 +72,7 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   <h3>ทดลองประกอบภาพ PNG จริง</h3>
   <p style={{fontSize:12}}>พื้นที่ทดลองแยกจากตัวละครที่ใช้เล่น ภาพบางชิ้นยังไม่ตรงสัดส่วน ต้องปรับก่อนนำไปใช้จริง</p>
   <div style={{position:'relative',margin:'14px auto',width:'min(100%,280px)',aspectRatio:'3 / 4',borderRadius:12,background:'linear-gradient(#eef5f5,#d6e5ed)',overflow:'hidden'}}>
-    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)?<img key={category} src={part.src} alt={part.label} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={{position:'absolute',width:a.scale+'%',height:'auto',maxHeight:'65%',objectFit:'contain',left:a.x+'%',top:a.y+'%',transform:'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none'}}/>:null})}
+    {order.map((category,i)=>{const part=active(category);const a=positions[category];return part&&!broken.includes(part.src)&&!hidden.includes(category)?<img key={category} src={part.src} alt={part.label} onError={()=>setBroken(prev=>prev.includes(part.src)?prev:[...prev,part.src])} style={{position:'absolute',width:a.scale+'%',height:'auto',maxHeight:'65%',objectFit:'contain',opacity:editing===category?opacity/100:1,left:a.x+'%',top:a.y+'%',transform:'translate(-50%,-50%)',zIndex:i+1,pointerEvents:'none'}}/>:null})}
   </div>
   {broken.length>0&&<div role="alert" style={{fontSize:12,color:'#a12626'}}>โหลดภาพบางชิ้นไม่สำเร็จ: {broken.length} ภาพ <button type="button" onClick={()=>setBroken([])} style={{padding:6,marginLeft:6}}>ลองโหลดภาพอีกครั้ง</button></div>}
   <label style={{display:'block',fontSize:13}}>ชิ้นส่วนที่ต้องการปรับ
@@ -83,6 +85,13 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
     {lists[editing].map(part=><option key={part.src} value={part.src}>{part.label}</option>)}
    </select>
   </label>}
+  <label style={{display:'block',marginTop:10,fontSize:13}}>
+   <input type="checkbox" checked={!hidden.includes(editing)} onChange={e=>setHidden(prev=>e.target.checked?prev.filter(x=>x!==editing):[...prev.filter(x=>x!==editing),editing])}/>
+   {' '}แสดงภาพ{labels[editing]}
+  </label>
+  <label style={{display:'block',marginTop:10,fontSize:13}}>ความโปร่งใสขณะปรับชิ้นส่วน: {opacity}%
+   <input type="range" min={20} max={100} step={5} value={opacity} onChange={e=>setOpacity(Number(e.target.value))} style={{display:'block',width:'100%'}}/>
+  </label>
   {(['x','y','scale'] as const).map(key=><label key={key} style={{display:'block',marginTop:10,fontSize:13}}>{key==='x'?'แนวนอน':key==='y'?'แนวตั้ง':'ขนาด'}: {current[key]}%
     <input type="range" min={key==='scale'?10:0} max={key==='scale'?100:100} value={current[key]} onChange={e=>update(key,Number(e.target.value))} style={{display:'block',width:'100%'}}/>
   </label>)}
