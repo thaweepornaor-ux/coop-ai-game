@@ -37,6 +37,8 @@ jobs:
         run: corepack pnpm install --frozen-lockfile
       - name: Generate isolated staging configuration
         run: bash scripts/configure-staging.sh
+      - name: Stamp release commit for post-deploy verification
+        run: node scripts/stamp-release.mjs "$GITHUB_SHA"
       - name: Build full game for staging
         run: corepack pnpm exec vite build --config vite.staging.config.ts
       - name: Verify generated worker is staging-only
@@ -75,4 +77,4 @@ jobs:
         run: corepack pnpm exec wrangler deploy --config dist/server/wrangler.json
       - name: Verify published staging serves the actual game
         if: inputs.publish
-        run: node scripts/verify-staging-http.mjs https://coop-ai-game-staging.thaweeporn-aor.workers.dev/
+        run: node scripts/verify-staging-http.mjs https://coop-ai-game-staging.thaweeporn-aor.workers.dev/ "$GITHUB_SHA"
