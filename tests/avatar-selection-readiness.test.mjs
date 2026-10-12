@@ -25,7 +25,8 @@ test('correct gender and specific garment are required instead of any unrelated 
 });
 test('a fully prepared selected outfit can pass even if other catalog entries are unapproved',()=>{
  const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([k,v])=>[k,v.map(p=>({...p,aligned:p.ready}))]));
- const result=avatarSelectionReadiness(choices,catalog,{hasBodyBase:true});
+ catalog.body=[{value:'male',src:'/avatar-parts/approved-male-body.png',ready:true,aligned:true}];
+ const result=avatarSelectionReadiness(choices,catalog);
  assert.equal(result.ready,true);
  assert.deepEqual(result.reasons,[]);
 });
@@ -39,4 +40,9 @@ test('a committed and approved body PNG unlocks the readiness gate for its own g
 test('an absent, unapproved, or unaligned base never unlocks the real avatar',()=>{
  const catalog={...PNG_PARTS,body:[{value:'male',src:'/avatar-parts/bad-body.png',ready:true,aligned:false}]};
  assert.ok(avatarSelectionReadiness(choices,catalog).reasons.includes('body-base'));
+});
+
+test('caller cannot fake an approved body by setting an obsolete override flag',()=>{
+ const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
+ assert.ok(avatarSelectionReadiness(choices,catalog,{hasBodyBase:true}).reasons.includes('body-base'));
 });
