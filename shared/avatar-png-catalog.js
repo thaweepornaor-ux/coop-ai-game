@@ -5,8 +5,8 @@ export const PNG_PARTS=Object.freeze({
   {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png',ready:true,aligned:false}
  ],
  hair: [
-  {value:'shoulder',label:'ผมครึ่งหัวน้ำตาล',src:'/avatar-parts/hair2.png',ready:false,aligned:false},
-  {value:'ponytail',label:'ผมบลอนด์',src:'/avatar-parts/hair4.png',ready:false,aligned:false}
+  {value:'shoulder',label:'ผมครึ่งหัวน้ำตาล',src:'/avatar-parts/hair2.png',ready:true,aligned:false},
+  {value:'ponytail',label:'ผมบลอนด์',src:'/avatar-parts/hair4.png',ready:true,aligned:false}
  ],
  top: [
   {value:'shirt',label:'เสื้อโบฟ้า',src:'/avatar-parts/clothing_female_blue_bow_blouse.png',ready:false,aligned:false},
