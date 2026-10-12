@@ -46,3 +46,20 @@ test('caller cannot fake an approved body by setting an obsolete override flag',
  const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
  assert.ok(avatarSelectionReadiness(choices,catalog,{hasBodyBase:true}).reasons.includes('body-base'));
 });
+
+test('a chosen garment prefers the aligned uploaded variant over an earlier unaligned variant',()=>{
+ const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
+ catalog.body=[{value:'male',src:'/avatar-parts/body.png',ready:true,aligned:true}];
+ catalog.top.unshift({value:'overshirt',src:'/avatar-parts/unreviewed.png',ready:true,aligned:false});
+ const result=avatarSelectionReadiness(choices,catalog);
+ assert.equal(result.ready,true);
+ assert.equal(result.selected.find(p=>p.value==='overshirt')?.src,'/avatar-parts/clothing_male_beige_overshirt.png');
+});
+test('arbitrary remote URLs and unsafe body file paths cannot be approved',()=>{
+ const catalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([key,parts])=>[key,parts.map(part=>({...part,aligned:part.ready}))]));
+ catalog.body=[{value:'male',src:'https://example.com/avatar.png',ready:true,aligned:true}];
+ assert.ok(avatarSelectionReadiness(choices,catalog).reasons.includes('body-base'));
+ catalog.body[0].src='/avatar-parts/body.png';
+ catalog.top=[{value:'overshirt',src:'javascript:bad.png',ready:true,aligned:true}];
+ assert.ok(avatarSelectionReadiness(choices,catalog).reasons.includes('missing:top'));
+});
