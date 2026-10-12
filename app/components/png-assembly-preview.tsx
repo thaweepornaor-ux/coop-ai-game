@@ -70,6 +70,23 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
  const active=(category:Category)=>category==='face'
   ? lists.face.find(p=>p.src.endsWith('/'+gender+'.png'))
   : lists[category].find(p=>p.src===picked[category])||lists[category][0];
+ const importSettings=async(file:File|undefined)=>{
+  if(!file)return;
+  try{
+   if(file.size>64*1024)throw new Error('File too large');
+   const raw=await file.text();
+   const snapshot=validateAssemblySnapshot(JSON.parse(raw));
+   if(snapshot.gender!==gender)throw new Error('Different character gender');
+   setPositions(snapshot.positions);
+   setPicked({...snapshot.selected,face:undefined});
+   setHidden([]);
+   setBroken([]);
+   setOpacity(100);
+   setSaved('นำเข้าค่าตำแหน่งและชิ้นส่วน PNG สำเร็จ (ยังไม่ได้บันทึกลงอุปกรณ์)');
+  }catch{
+   setSaved('นำเข้า JSON ไม่สำเร็จ: ตรวจสอบเพศ ข้อมูลตำแหน่ง และไฟล์ PNG ที่อัปโหลด');
+  }
+ };
  const exportSettings=()=>{
   try{
    const selected=Object.fromEntries(order.map(category=>[category,active(category)?.src]));
@@ -152,6 +169,9 @@ export function PngAssemblyPreview({gender}:{gender:'male'|'female'}){
   <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:10}}>
    <button type="button" onClick={save} style={{padding:9}}>บันทึกตำแหน่งและภาพ</button>
    <button type="button" onClick={exportSettings} style={{padding:9}}>ส่งออกค่าจัดตำแหน่ง JSON</button>
+   <label style={{padding:9,border:'1px solid #92a5ae',borderRadius:6,cursor:'pointer'}}>นำเข้าค่าจัดตำแหน่ง JSON
+    <input type="file" accept=".json,application/json" aria-label="นำเข้าไฟล์จัดตำแหน่ง PNG" onChange={e=>{const file=e.currentTarget.files?.[0];void importSettings(file);e.currentTarget.value='';}} style={{display:'block',maxWidth:190}} />
+   </label>
    <button type="button" disabled={exporting} onClick={exportComposite} style={{padding:9}}>{exporting?"กำลังสร้าง PNG...":"ส่งออกภาพประกอบ PNG"}</button>
    <button type="button" onClick={()=>{setPositions(defaults);setPicked({});setSaved('คืนตำแหน่งและภาพเริ่มต้นแล้ว (ยังไม่ได้บันทึก)')}} style={{padding:9}}>คืนตำแหน่งเริ่มต้น</button>
   </div>
