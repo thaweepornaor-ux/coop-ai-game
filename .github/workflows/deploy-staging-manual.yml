@@ -35,6 +35,8 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: corepack pnpm install --frozen-lockfile
+      - name: Verify staging release safeguards
+        run: node --test tests/staging-http-guard.test.mjs
       - name: Generate isolated staging configuration
         run: bash scripts/configure-staging.sh
       - name: Stamp release commit for post-deploy verification
