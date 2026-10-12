@@ -1,4 +1,4 @@
-name: Avatar smoke tests
+name: Game smoke tests
 on:
   push:
     branches: [codex/game-recovery]
@@ -12,4 +12,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/avatar-eyewear.test.mjs tests/avatar-png-registry.test.mjs tests/avatar-png-options.test.mjs
+      - run: node --test tests/avatar-eyewear.test.mjs tests/avatar-png-registry.test.mjs tests/avatar-png-options.test.mjs tests/questions-integrity.test.mjs
