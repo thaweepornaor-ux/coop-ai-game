@@ -1,28 +1,33 @@
 /** Selected PNG parts from the reviewed candidate pack. These paths become active when uploaded into /public/avatar-parts. */
 export const PNG_PARTS=Object.freeze({
  face: [
-  {value:'male',label:'ใบหน้าชาย',src:'/avatar-parts/male.png'},
-  {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png'}
+  {value:'male',label:'ใบหน้าชาย',src:'/avatar-parts/male.png',ready:false,aligned:false},
+  {value:'female',label:'ใบหน้าหญิง',src:'/avatar-parts/female.png',ready:false,aligned:false}
  ],
  hair: [
-  {value:'halfup',label:'ผมครึ่งหัวน้ำตาล',src:'/avatar-parts/hair2.png'},
-  {value:'blonde',label:'ผมบลอนด์',src:'/avatar-parts/hair4.png'}
+  {value:'halfup',label:'ผมครึ่งหัวน้ำตาล',src:'/avatar-parts/hair2.png',ready:false,aligned:false},
+  {value:'blonde',label:'ผมบลอนด์',src:'/avatar-parts/hair4.png',ready:false,aligned:false}
  ],
  top: [
-  {value:'bluebow',label:'เสื้อโบฟ้า',src:'/avatar-parts/clothing_female_blue_bow_blouse.png'},
-  {value:'cream',label:'คาร์ดิแกนสีครีม',src:'/avatar-parts/clothing_female_cream_cardigan.png'},
-  {value:'whitebow',label:'เสื้อโบขาว',src:'/avatar-parts/clothing_female_white_bow_blouse.png'},
-  {value:'denim',label:'แจ็กเก็ตยีนส์',src:'/avatar-parts/clothing_male_blue_denim_jacket.png'}
+  {value:'bluebow',label:'เสื้อโบฟ้า',src:'/avatar-parts/clothing_female_blue_bow_blouse.png',ready:false,aligned:false},
+  {value:'cream',label:'คาร์ดิแกนสีครีม',src:'/avatar-parts/clothing_female_cream_cardigan.png',ready:false,aligned:false},
+  {value:'whitebow',label:'เสื้อโบขาว',src:'/avatar-parts/clothing_female_white_bow_blouse.png',ready:false,aligned:false},
+  {value:'denim',label:'แจ็กเก็ตยีนส์',src:'/avatar-parts/clothing_male_blue_denim_jacket.png',ready:false,aligned:false}
  ],
  bottom: [
-  {value:'chinos',label:'กางเกงชิโน',src:'/avatar-parts/clothing_male_beige_chinos.png'},
-  {value:'jeans',label:'กางเกงยีนส์',src:'/avatar-parts/clothing_male_blue_jeans.png'},
-  {value:'skirt',label:'กระโปรงพลีตดำ',src:'/avatar-parts/clothing_female_black_pleated_skirt.png'}
+  {value:'chinos',label:'กางเกงชิโน',src:'/avatar-parts/clothing_male_beige_chinos.png',ready:false,aligned:false},
+  {value:'jeans',label:'กางเกงยีนส์',src:'/avatar-parts/clothing_male_blue_jeans.png',ready:false,aligned:false},
+  {value:'skirt',label:'กระโปรงพลีตดำ',src:'/avatar-parts/clothing_female_black_pleated_skirt.png',ready:false,aligned:false}
+ ],
+ glasses: [
+  {value:'round',label:'แว่นกลม',src:'/avatar-parts/glasses_round.png',ready:false,aligned:false},
+  {value:'rectangle',label:'แว่นเหลี่ยม',src:'/avatar-parts/glasses_rectangle.png',ready:false,aligned:false},
+  {value:'aviator',label:'แว่นนักบิน',src:'/avatar-parts/glasses_aviator.png',ready:false,aligned:false}
  ],
  shoes: [
-  {value:'beige',label:'รองเท้าครีม',src:'/avatar-parts/shoes_female_beige_maryjanes.png'},
-  {value:'boots',label:'รองเท้าบูต',src:'/avatar-parts/shoes_female_brown_ankle_boots.png'},
-  {value:'sneakers',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png'}
+  {value:'beige',label:'รองเท้าครีม',src:'/avatar-parts/shoes_female_beige_maryjanes.png',ready:false,aligned:false},
+  {value:'boots',label:'รองเท้าบูต',src:'/avatar-parts/shoes_female_brown_ankle_boots.png',ready:false,aligned:false},
+  {value:'sneakers',label:'รองเท้าผ้าใบขาว',src:'/avatar-parts/shoes_female_white_sneakers.png',ready:false,aligned:false}
  ]
 });
 /** Files may not be present in a branch until the audited binary assets are committed. */
