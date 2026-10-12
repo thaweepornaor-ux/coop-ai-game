@@ -13,3 +13,10 @@ test('actual cropped assets are labelled as previews, not a composed avatar',()=
  assert.match(source,/ตัวอย่างกางเกง PNG ที่นำเข้าแล้ว/);
  assert.match(source,/กำลังปรับตำแหน่งเพื่อประกอบกับชุด/);
 });
+
+test('real PNG hair and pants previews are interactive wardrobe choices',()=>{
+ assert.match(source,/onClick=\{\(\) => change\('hairStyle',part\.value\)\}/);
+ assert.match(source,/onClick=\{\(\) => change\('bottomStyle',part\.value\)\}/);
+ assert.match(source,/aria-pressed=\{avatar\.hairStyle === part\.value\}/);
+ assert.match(source,/aria-pressed=\{avatar\.bottomStyle === part\.value\}/);
+});
