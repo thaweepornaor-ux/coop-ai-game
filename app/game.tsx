@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Avatar, AVATAR_OPTIONS } from './components/avatar';
 import { normalizeWardrobe } from '../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
-import { Wardrobe } from './components/wardrobe';
+import { SimpleWardrobe } from './components/simple-wardrobe';
 import { LOGO_SRC, COOPERATIVE_NAME } from '../shared/brand';
 
 type Role='choose'|'host'|'player';
@@ -94,6 +94,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         }
       }catch{}
     }
+    // A single teaching session: create the instructor's private room automatically.
+    // The room identifier is carried only in the QR link, never typed by learners.
+    if(initialRole==='host'&&!sessionRef.current&&!busyRef.current)void send('create');
     setSound(safeRead('coop-ai-game-sound')!=='off');
     setMotion(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     return()=>window.clearInterval(id);
@@ -157,7 +160,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   }
   function join(){
     const code=roomInput.toUpperCase().trim(),playerName=name.trim();
-    if(!/^[A-Z0-9]{6}$/.test(code)){setError('ใส่รหัสห้อง 6 ตัวให้ครบครับ');return}
+    if(!/^[A-Z0-9]{6}$/.test(code)){setError('กรุณาสแกน QR Code บนจอผู้สอนอีกครั้งครับ');return}
     if(!playerName){setError('ตั้งชื่อผู้เล่นก่อนครับ');return}
     safeWrite('coop-ai-game-name',playerName);safeWrite('coop-ai-game-avatar',JSON.stringify(avatar));
     void send('join',{room:code,name:playerName,avatar});
@@ -184,37 +187,54 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
     <header className="topbar">
-      <a className="brand" href="/"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ภารกิจ AI ในสหกรณ์</strong></span></a>
+      <a className="brand" href="/"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></a>
       <div className="preferences">
         <button className="icon-button" type="button" aria-label={sound?'ปิดเสียง':'เปิดเสียง'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เสียงเปิด':'♪ เสียงปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
       </div>
     </header>
     {error&&<div className="notice error" role="alert">{error}</div>}
-    {session&&<div className={'connection '+network} role="status"><i/>{network==='online'?'เชื่อมต่อแล้ว':network==='offline'?'กำลังเชื่อมต่อใหม่… คำตอบจะเปิดเมื่อเชื่อมต่อได้':'กำลังเข้าห้อง…'} <span>ห้อง {session.room}</span>{showRecovery&&<button onClick={leave}>กลับหน้าเข้าห้อง</button>}</div>}
+    {session&&<div className={'connection '+network} role="status"><i/>{network==='online'?'เชื่อมต่อแล้ว':network==='offline'?'กำลังเชื่อมต่อใหม่… คำตอบจะเปิดเมื่อเชื่อมต่อได้':'กำลังเข้าห้อง…'} {showRecovery&&<button onClick={leave}>กลับหน้าเข้าห้อง</button>}</div>}
 
     {!session&&role==='choose'&&<section className="welcome entry-stage enter">
-      <div className="entry-copy"><div className="eyebrow"><i/> COOPERATIVE • AI ARENA</div><h1>ภารกิจ AI<br/><em>ในสหกรณ์</em></h1><p className="entry-description">เข้าเวทีแห่งไอเดีย ท้าทายความเข้าใจ<br/>และเรียนรู้พลังของ AI ไปด้วยกัน</p><RulesStrip/><div className="entry-actions"><a className="button primary" href="/play">เข้าร่วมภารกิจ <span>↗</span></a><a className="button secondary" href="/host">เปิดเวทีผู้สอน <span>→</span></a></div><p className="small-note">เล่นผ่านมือถือ · ไม่ต้องสมัครสมาชิก</p></div>
+      <div className="entry-copy"><div className="eyebrow"><i/> COOPERATIVE • AI ARENA</div><h1>ประเมิน<br/><em>ความเข้าใจ AI</em></h1><p className="entry-description">เข้าเวทีแห่งไอเดีย ท้าทายความเข้าใจ<br/>และเรียนรู้พลังของ AI ไปด้วยกัน</p><RulesStrip/><div className="entry-actions"><a className="button primary" href="/play">เข้าร่วมภารกิจ <span>↗</span></a><a className="button secondary" href="/host">เปิดเวทีผู้สอน <span>→</span></a></div><p className="small-note">เล่นผ่านมือถือ · ไม่ต้องสมัครสมาชิก</p></div>
       <div className="hero-stage"><div className="orbit-ring"/><span className="stage-label">YOUR NEXT MISSION</span><Avatar options={initialAvatar()} className="hero-avatar" interactive motion={motion}/><div className="stage-platform"/><div className="stage-id"><i/> AI EXPLORER <span>01</span></div></div>
     </section>}
-    {!session&&role==='host'&&<section className="host-entry entry-stage enter"><div className="entry-copy"><div className="eyebrow"><i/> INSTRUCTOR CONTROL ROOM</div><h1>เปิดเวทีใหม่<br/><em>ปลุกพลัง AI</em></h1><p className="entry-description">คุณเป็นผู้คุมจังหวะ ทุกคนมีส่วนร่วม<br/>เปิดคำถาม เฉลย และเรียนรู้ไปด้วยกัน</p><RulesStrip/><button className="button primary launch-button" disabled={busy} onClick={()=>void send('create')}>{busy?'กำลังเตรียมเวที…':'สร้างห้องเกม →'}</button><p className="small-note">เก็บหน้านี้ไว้เพื่อควบคุมเกม<br/>รีเฟรชบนเบราว์เซอร์เดิมเพื่อกลับเข้าห้อง</p><a className="text-link" href="/play">ไปหน้าผู้เล่น ↗</a></div><div className="hero-stage"><div className="orbit-ring"/><span className="stage-label">READY TO HOST</span><Avatar options={{...initialAvatar(),shirtStyle:'jacket',hatStyle:'none'}} className="hero-avatar" interactive motion={motion}/><div className="stage-platform"/><div className="stage-id"><i/> MISSION DIRECTOR <span>AI</span></div></div></section>}
-    {!session&&role==='player'&&<section className="customizer enter">
-      <div className="customizer-preview"><div className="eyebrow"><i/> PLAYER STUDIO</div><h1>สร้างตัวตน<br/><em>ก่อนขึ้นเวที</em></h1><div className="character-stage"><div className="orbit-ring"/><Avatar options={avatar} className="avatar-preview" interactive motion={motion}/><div className="stage-platform"/></div><div className="character-name"><span>PLAYER</span><strong>{name.trim()||'ตัวละครของคุณ'}</strong></div><p className="small-note">ตัวละครแสดงหน้าตรง • เลือกเปลี่ยนใบหน้า ทรงผม และชุดได้ทันที</p></div>
-      <form className="wardrobe card" onSubmit={e=>{e.preventDefault();join()}}>
-        <div className="wardrobe-heading"><span className="eyebrow">MISSION CHECK-IN</span><h2>แต่งตัว พร้อมเข้าห้อง</h2><p>เลือกสไตล์ของคุณ แล้วไปพบเพื่อนร่วมภารกิจ</p><a href={roomInput&&/^[A-Z0-9]{6}$/.test(roomInput)?"/avatar-studio?room="+encodeURIComponent(roomInput):"/avatar-studio"} style={{display:"inline-block",marginTop:8,color:"#b9eee0",textDecoration:"underline",fontWeight:700}}>เปิดห้องแต่งตัวเต็มรูปแบบ (20 ตัวละคร) ↗</a></div>
-        <div className="join-fields"><label>รหัสห้อง<input autoComplete="off" inputMode="text" maxLength={6} placeholder="รหัส 6 ตัว" value={roomInput} onChange={e=>setRoomInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,''))}/></label><label>ชื่อผู้เล่น<input autoComplete="nickname" maxLength={24} placeholder="ชื่อที่แสดงบนเวที" value={name} onChange={e=>setName(e.target.value)}/></label></div>
-        <Wardrobe avatar={avatar} onChange={setAvatar}/>
-        <button className="button primary join-button" type="submit" disabled={busy}>{busy?'กำลังเข้าห้อง…':'พร้อมแล้ว เข้าสู่เวที →'}</button>
-        <p className="small-note">ใช้ชื่อเล่นได้ ไม่ต้องสมัครสมาชิก</p>
-      </form>
+    {!session&&role==='host'&&<section className="single-host-welcome card" aria-label="หน้าผู้สอน">
+      <div className="eyebrow">สำหรับผู้สอน · แสดงขึ้นโปรเจคเตอร์</div>
+      <h1>ประเมินความเข้าใจ AI</h1>
+      <p>กำลังเตรียม QR Code ให้ผู้เรียนสแกนเข้าร่วมอัตโนมัติ</p>
+      <RulesStrip/>
+      <div className="host-loading"><span className="host-loading-dot"/> {busy?'กำลังเปิดเกม…':'หาก QR Code ยังไม่ขึ้น กดปุ่มด้านล่าง'}</div>
+      <button className="button primary" type="button" disabled={busy} onClick={()=>void send('create')}>{busy?'กำลังเตรียมเกม…':'เปิดเกมและแสดง QR Code'}</button>
+      <p className="small-note">ผู้เรียนไม่ต้องใส่รหัสห้องหรือลงทะเบียน</p>
     </section>}
-
+    {!session&&role==='player'&&(!/^[A-Z0-9]{6}$/.test(roomInput)?<section className="scan-needed card">
+      <div className="eyebrow">สำหรับผู้เรียน</div>
+      <h1>ประเมินความเข้าใจ AI</h1>
+      <p>ใช้กล้องโทรศัพท์สแกน QR Code ที่แสดงบนจอโปรเจคเตอร์ของผู้สอน เพื่อเลือกตัวละครและเข้าเล่นได้เลย</p>
+      <p className="small-note">ไม่ต้องกรอกรหัสห้อง ไม่ต้องสมัครสมาชิก</p>
+    </section>:<section className="customizer quick-player enter">
+      <div className="customizer-preview">
+        <div className="eyebrow">สำหรับผู้เรียน</div>
+        <h1>เลือกตัวละคร<br/><em>แล้วเข้าเล่นเลย</em></h1>
+        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false}/></div>
+        <div className="character-name"><strong>{name.trim()||'ตัวละครของฉัน'}</strong></div>
+      </div>
+      <form className="wardrobe card" onSubmit={e=>{e.preventDefault();join()}}>
+        <div className="wardrobe-heading"><h2>เลือกตัวละครและตั้งชื่อ</h2><p>แค่ 2 ขั้นตอน แล้วรอผู้สอนเริ่มเกม</p></div>
+        <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
+        <div className="join-fields"><label htmlFor="quick-player-name">2. ชื่อผู้เล่น<input id="quick-player-name" autoComplete="nickname" maxLength={24} placeholder="พิมพ์ชื่อเล่นของคุณ" value={name} onChange={e=>setName(e.target.value)}/></label></div>
+        <button className="button primary join-button" type="submit" disabled={busy||!name.trim()}>{busy?'กำลังเข้าร่วม…':'เข้าเล่นเกม →'}</button>
+        <p className="small-note">ไม่ต้องสมัครสมาชิก ไม่ต้องใส่รหัสห้อง</p>
+      </form>
+    </section>)}
     {session&&snapshot&&snapshot.room.phase==='lobby'&&<section className={'lobby '+(isHost?'host-lobby':'player-lobby')}>
-      <div className="card lobby-main enter"><div className="badge">{isHost?'MISSION LOBBY':'YOU ARE IN'}</div><h1>{isHost?'รวมทีม พร้อมขึ้นเวที':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>
-        {isHost?<><div className="join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><p>สแกนเพื่อเข้าเล่น</p><strong className="room-code">{session.room}</strong><p>หรือเปิดลิงก์แล้วใส่รหัสห้อง</p><button className="button secondary" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์ผู้เล่น'}</button><input className="join-url" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน →</button></>
+      <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'สแกนเพื่อเข้าร่วมเกม':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>
+        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน →</button></>
         :<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>ผู้สอนจะเป็นคนเริ่มเกม<br/>ข้อละ 15 วินาที ตอบถูกได้ 1 คะแนน</p><div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}
       </div>
-      <div className="card roster-panel"><h2>เพื่อนร่วมภารกิจ <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอทุกคนสแกนเข้าห้องครับ</p>}</div>
+      <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอผู้เรียนสแกน QR Code ครับ</p>}</div>
     </section>}
 
     {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')}>
@@ -248,7 +268,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนเป็นคนควบคุมเกม':'ออกเพื่อเข้าห้องอื่น หรือเปลี่ยนชื่อผู้เล่น'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>ออกจากห้อง</button></div></footer>}
+    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนเป็นคนควบคุมเกม':'ออกเพื่อเข้าห้องอื่น หรือเปลี่ยนชื่อผู้เล่น'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>ออกจากเกม</button></div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากห้องผู้สอนไหม?</h2><p>สิทธิ์ควบคุมห้องนี้ในเบราว์เซอร์นี้จะหายไป และกลับมาควบคุมห้องเดิมไม่ได้<br/>การออกจะไม่รีเซ็ตห้อง ไม่ล้างคะแนนหรือคำตอบของผู้เล่น<br/>คุณสามารถสร้างห้องใหม่ได้หลังออก</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
     {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
   </main>;
