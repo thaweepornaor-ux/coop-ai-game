@@ -6,6 +6,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from PIL import Image
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "optimize-avatar-png.py"
@@ -44,6 +45,26 @@ class AvatarPngOptimizerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 module.optimize(source, Path(d) / "out.png", 150 * 1024 + 1)
             self.assertEqual(source.read_bytes(), original)
+
+    def test_prefers_high_resolution_indexed_png_over_tiny_full_color(self):
+        with tempfile.TemporaryDirectory() as d:
+            source, target = Path(d) / "in.png", Path(d) / "out.png"
+            image = Image.new("RGBA", (512, 512), (20, 80, 120, 0))
+            image.putpixel((250, 250), (200, 10, 10, 255))
+            image.save(source)
+
+            def fake_encode(frame, indexed_colors=None):
+                if indexed_colors is None and max(frame.size) > 160:
+                    return b"x" * (module.MAX_BYTES + 1), "RGBA"
+                if indexed_colors is not None:
+                    return b"PNG-fast" * 20, "indexed-256"
+                return b"PNG-small" * 20, "RGBA"
+
+            with patch.object(module, "_encode", side_effect=fake_encode):
+                dimensions, size, mode = module.optimize(source, target)
+            self.assertEqual(dimensions, (512, 512))
+            self.assertEqual(mode, "indexed-256")
+            self.assertLessEqual(size, module.MAX_BYTES)
 
 if __name__ == "__main__":
     unittest.main()
