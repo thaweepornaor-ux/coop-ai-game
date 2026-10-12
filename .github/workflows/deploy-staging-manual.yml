@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: 'Publish to coop-ai-game-staging only; unchecked means test build'
+        description: 'Publish the simplified AI assessment to staging; unchecked means test build'
         type: boolean
         required: true
         default: false
