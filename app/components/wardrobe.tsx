@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Avatar, AVATAR_OPTIONS, type AvatarOptionKey } from './avatar';
 import { CHARACTERS, characterFor, type CharacterPreset } from '../../shared/characters';
+import { PNG_PARTS } from '../../shared/avatar-png-catalog.js';
 
 const CATEGORIES: { label: string; short: string; style?: AvatarOptionKey; color: AvatarOptionKey; colorLabel: string; icon: string }[] = [
   { label: 'ตัวละคร', short: '01', style: 'bodyStyle', color: 'skinTone', colorLabel: 'โทนผิว', icon: 'body' },
@@ -50,6 +51,10 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
           {(['male', 'female'] as const).map(value => <button type="button" key={value} className={gender === value ? 'selected' : ''} aria-pressed={gender === value} onClick={() => setGender(value)}>{value === 'male' ? 'ชาย · 10 แบบ' : 'หญิง · 10 แบบ'}</button>)}
         </div>
         <p className="character-catalogue-hint">เลือกใบหน้าและทรงผมที่ชอบ ชุดที่แต่งไว้ยังอยู่เหมือนเดิม</p>
+        {PNG_PARTS.face.some(part=>part.value===gender&&part.ready) && <figure className="character-png-preview" style={{display:'flex',alignItems:'center',gap:12,margin:'12px 0',padding:12,borderRadius:14,background:'rgba(255,255,255,.08)'}}>
+          <img src={PNG_PARTS.face.find(part=>part.value===gender)?.src} alt={gender==='male'?'ตัวอย่างใบหน้า PNG ชาย':'ตัวอย่างใบหน้า PNG หญิง'} width={72} height={72} style={{objectFit:'contain',borderRadius:10}} />
+          <figcaption style={{fontSize:12,lineHeight:1.5}}>ตัวอย่างใบหน้า PNG จริงในเกม (กำลังปรับตำแหน่งเพื่อประกอบกับชุด)</figcaption>
+        </figure>}
         <div className="character-card-grid" aria-label={`เลือกตัวละคร${gender === 'male' ? 'ชาย' : 'หญิง'}`}>
           {CHARACTERS.filter(preset => preset.gender === gender).map(preset => <button type="button" key={preset.id} className={`character-card${selectedPreset === preset.id ? ' selected' : ''}`} aria-label={`${preset.id} ${preset.label}${selectedPreset === preset.id ? ' เลือกแล้ว' : ''}`} aria-pressed={selectedPreset === preset.id} onClick={() => applyPreset(preset)}>
             <span className="character-card-portrait"><Avatar className="character-card-avatar" options={{ ...avatar, bodyStyle: preset.gender, presetId:preset.id, hairStyle: preset.hairStyle, hairColor: preset.hairColor, skinTone: preset.skinTone, hatStyle: 'none' }} motion={false} /></span>
