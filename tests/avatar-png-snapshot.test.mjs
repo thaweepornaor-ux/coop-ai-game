@@ -28,3 +28,16 @@ test('malformed JSON snapshots report missing coordinates and selections cleanly
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:{...positions,face:null},selected}),/Missing PNG position/);
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:{...positions,face:[1,2]},selected}),/Missing PNG position/);
 });
+
+test('portable PNG alignment survives JSON export and re-import without changing selected parts',()=>{
+ const original=validateAssemblySnapshot({version:1,gender:'male',positions,selected});
+ const restored=validateAssemblySnapshot(JSON.parse(JSON.stringify(original)));
+ assert.deepEqual(restored,original);
+ assert.equal(restored.selected.face,'/avatar-parts/male.png');
+});
+test('tampered JSON cannot select arbitrary URLs or unapproved files',()=>{
+ const selectedBad={...selected,hair:'https://example.com/evil.png'};
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions,selected:selectedBad}),TypeError);
+ const positionedBad={...positions,top:{x:101,y:10,scale:20}};
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions:positionedBad,selected}),RangeError);
+});
