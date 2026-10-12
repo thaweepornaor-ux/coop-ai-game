@@ -69,7 +69,7 @@ export function createCharacter(input:Record<string,unknown>){
   const hand=mesh(sculptHand(),skin);hand.name="hand";hand.position.set(side*.49,1.40,.235);hand.scale.set(side*.92,1,.95);hand.rotation.z=side*.08;
   rigPart=side<0?5:6;
   const legPath=[[side*.172,1.50,-.018],[side*.182,1.34,-.018],[side*.185,1.09,.006],[side*.178,.84,.068],[side*.18,.67,.048],[side*.20,.49,-.014],[side*.207,.29,-.002]];
-  tube(legPath,(female&&values.bottomStyle.value==='skirt')?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],female&&values.bottomStyle.value==='skirt'?skin:bottom,.91);
+  tube(legPath,(female&&values.bottomStyle.value==='skirt')?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],female&&(female&&values.bottomStyle.value==='skirt')?skin:bottom,.91);
   ell(shoes,side*.21,.183,.08,.135,.092,.224);ell(white,side*.21,.115,.093,.139,.031,.23);ell(shoes,side*.21,.23,-.02,.104,.079,.112);
   for(let l=0;l<3;l++)ell(white,side*.21,.267,.08+l*.04,.049,.006,.008);
  }
