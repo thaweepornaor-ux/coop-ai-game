@@ -14,11 +14,11 @@ test('actual cropped assets are labelled as previews, not a composed avatar',()=
  assert.match(source,/กำลังปรับตำแหน่งเพื่อประกอบกับชุด/);
 });
 
-test('real PNG hair and pants previews are interactive wardrobe choices',()=>{
+test('hair choices remain interactive while reference-only shorts are not selectable',()=>{
  assert.match(source,/onClick=\{\(\) => change\('hairStyle',part\.value\)\}/);
- assert.match(source,/onClick=\{\(\) => change\('bottomStyle',part\.value\)\}/);
+ assert.doesNotMatch(source,/onClick=\{\(\) => change\('bottomStyle',part\.value\)\}/);
  assert.match(source,/aria-pressed=\{avatar\.hairStyle === part\.value\}/);
- assert.match(source,/aria-pressed=\{avatar\.bottomStyle === part\.value\}/);
+ assert.match(source,/ภาพอ้างอิง ยังไม่เปิดใช้/);
 });
 
 test('uploaded shirt and shoe thumbnails select valid wardrobe styles',()=>{
