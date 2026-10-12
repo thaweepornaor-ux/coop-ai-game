@@ -7,10 +7,9 @@ import { CHARACTERS, characterFor, type CharacterPreset } from '../../shared/cha
 const CATEGORIES: { label: string; short: string; style?: AvatarOptionKey; color: AvatarOptionKey; colorLabel: string; icon: string }[] = [
   { label: 'ตัวละคร', short: '01', style: 'bodyStyle', color: 'skinTone', colorLabel: 'โทนผิว', icon: 'body' },
   { label: 'ทรงผม', short: '02', style: 'hairStyle', color: 'hairColor', colorLabel: 'สีผม', icon: 'hair' },
-  { label: 'เสื้อ', short: '03', style: 'shirtStyle', color: 'shirtColor', colorLabel: 'สีเสื้อ', icon: 'shirt' },
-  { label: 'ท่อนล่าง', short: '04', style: 'bottomStyle', color: 'bottomColor', colorLabel: 'สีท่อนล่าง', icon: 'bottom' },
-  { label: 'รองเท้า', short: '05', color: 'shoeColor', colorLabel: 'สีรองเท้า', icon: 'shoe' },
-  { label: 'แว่นตา', short: '06', style: 'glassesStyle', color: 'glassesStyle', colorLabel: 'รูปแบบแว่น', icon: 'glasses' },
+  { label: 'เสื้อผ้า', short: '03', style: 'shirtStyle', color: 'shirtColor', colorLabel: 'สีเสื้อ', icon: 'shirt' },
+  { label: 'รองเท้า', short: '04', color: 'shoeColor', colorLabel: 'สีรองเท้า', icon: 'shoe' },
+  { label: 'แว่นตา', short: '05', style: 'glassesStyle', color: 'glassesStyle', colorLabel: 'รูปแบบแว่น', icon: 'glasses' },
 ];
 
 /** Selection icons for the front-facing character. */
@@ -61,6 +60,16 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
       {category.style && category.style !== 'bodyStyle' && <div className="wardrobe-tiles" aria-label={`เลือก${category.label}`}>
         {AVATAR_OPTIONS[category.style].map(option => <button type="button" key={option.value} className={`wardrobe-tile${avatar[category.style!] === option.value ? ' selected' : ''}`} aria-pressed={avatar[category.style!] === option.value} onClick={() => change(category.style!, option.value)}><ItemIcon kind={category.icon} value={option.value} color={color} /><span>{option.label}</span><span className="wardrobe-tile-check" aria-hidden="true">{avatar[category.style!] === option.value ? '✓' : ''}</span></button>)}
       </div>}
+      {category.style === 'shirtStyle' && <>
+        <div className="wardrobe-color-heading"><h4>ท่อนล่าง</h4><span>เลือกกางเกงหรือกระโปรง</span></div>
+        <div className="wardrobe-tiles" aria-label="เลือกกางเกงหรือกระโปรง">
+          {AVATAR_OPTIONS.bottomStyle.map(option => <button type="button" key={option.value} className={`wardrobe-tile${avatar.bottomStyle === option.value ? ' selected' : ''}`} aria-pressed={avatar.bottomStyle === option.value} onClick={() => change('bottomStyle', option.value)}><ItemIcon kind="bottom" value={option.value}/><span>{option.label}</span></button>)}
+        </div>
+        <div className="wardrobe-color-heading"><h4>สีท่อนล่าง</h4></div>
+        <div className="wardrobe-swatches" aria-label="สีท่อนล่าง">
+          {AVATAR_OPTIONS.bottomColor.map(option => <button type="button" key={option.value} className={`swatch-button${avatar.bottomColor === option.value ? ' selected' : ''}`} aria-label={`สีท่อนล่าง: ${option.label}`} aria-pressed={avatar.bottomColor === option.value} onClick={() => change('bottomColor', option.value)}><span className="swatch-color" style={{backgroundColor:option.color}}/><span className="swatch-label">{option.label}</span></button>)}
+        </div>
+      </>}
       {!category.style && <div className="wardrobe-item-preview"><ItemIcon kind="shoe" color={color} /><span>เลือกสีรองเท้าที่ใช่</span></div>}
       {category.color !== 'glassesStyle' && <div className="wardrobe-color-heading"><h4>{category.colorLabel}</h4><span>{selectedLabel}</span></div>}
       {category.color !== 'glassesStyle' && <div className="wardrobe-swatches" aria-label={category.colorLabel}>
