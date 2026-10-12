@@ -50,7 +50,7 @@ for(const route of routes){
    if(!response.ok||!contentType.includes('text/html'))throw Error('HTTP '+response.status+' '+contentType);
    const html=await response.text();
    if(!html.toLowerCase().includes('<html'))throw Error('Response is not an HTML document');
-   if(route==='/'&&!html.includes('ภารกิจ AI')&&!html.includes('เข้าร่วมภารกิจ'))throw Error('Expected game landing markers are missing');
+   if(route==='/'&&!html.includes('ประเมินความเข้าใจ AI'))throw Error('Expected game landing markers are missing');
    console.log('STAGING HTTP PASS '+route+' HTTP '+response.status);
    passed=true;break;
   }catch(e){last=e instanceof Error?e.message:String(e);if(attempt<6)await sleep(3000);}
