@@ -63,16 +63,18 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
         </div>
       </div>}
       {category.style === 'hairStyle' && PNG_PARTS.hair.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างทรงผม PNG ที่นำเข้าแล้ว">
-        {PNG_PARTS.hair.filter(part=>part.ready).map(part=><div key={part.src} className="wardrobe-tile" style={{cursor:'default'}}>
-          <img src={part.src} alt={part.label} width={72} height={72} style={{objectFit:'contain'}} />
-          <span>{part.label} · ภาพจริง</span>
-        </div>)}
+        {PNG_PARTS.hair.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.hairStyle === part.value ? ' selected' : ''}`} aria-pressed={avatar.hairStyle === part.value} onClick={() => change('hairStyle',part.value)}>
+          <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}} />
+          <span>{part.label} · ภาพต้นฉบับ</span>
+          <span className="wardrobe-tile-check" aria-hidden="true">{avatar.hairStyle === part.value ? '✓' : ''}</span>
+        </button>)}
       </div>}
       {category.style === 'shirtStyle' && PNG_PARTS.bottom.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างกางเกง PNG ที่นำเข้าแล้ว">
-        {PNG_PARTS.bottom.filter(part=>part.ready).map(part=><div key={part.src} className="wardrobe-tile" style={{cursor:'default'}}>
-          <img src={part.src} alt={part.label} width={72} height={72} style={{objectFit:'contain'}} />
-          <span>{part.label} · ภาพจริง</span>
-        </div>)}
+        {PNG_PARTS.bottom.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.bottomStyle === part.value ? ' selected' : ''}`} aria-pressed={avatar.bottomStyle === part.value} onClick={() => change('bottomStyle',part.value)}>
+          <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}} />
+          <span>{part.label} · ภาพต้นฉบับ</span>
+          <span className="wardrobe-tile-check" aria-hidden="true">{avatar.bottomStyle === part.value ? '✓' : ''}</span>
+        </button>)}
       </div>}
       {category.style && category.style !== 'bodyStyle' && <div className="wardrobe-tiles" aria-label={`เลือก${category.label}`}>
         {AVATAR_OPTIONS[category.style].map(option => <button type="button" key={option.value} className={`wardrobe-tile${avatar[category.style!] === option.value ? ' selected' : ''}`} aria-pressed={avatar[category.style!] === option.value} onClick={() => change(category.style!, option.value)}><ItemIcon kind={category.icon} value={option.value} color={color} /><span>{option.label}</span><span className="wardrobe-tile-check" aria-hidden="true">{avatar[category.style!] === option.value ? '✓' : ''}</span></button>)}
