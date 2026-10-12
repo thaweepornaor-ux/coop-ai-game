@@ -7,7 +7,7 @@ const categories=['bottom','shoes','top','face','hair'];
 const positions=Object.fromEntries(categories.map(k=>[k,{x:50,y:50,scale:40}]));
 const selected=Object.fromEntries(categories.map(k=>[k,PNG_PARTS[k].find(p=>p.ready).src]));
 // A synthetic complete set proves round trips; today's original mixed-gender pack is intentionally blocked.
-const testCatalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([category,parts])=>[category,parts.map(({gender,...rest})=>rest)]));
+const testCatalog=Object.fromEntries(Object.entries(PNG_PARTS).map(([category,parts])=>[category,parts.map(({gender,playable,...rest})=>rest)]));
 const validateForTest=input=>validateAssemblySnapshot(input,testCatalog);
 
 test('portable snapshot selects matching female face even if the saved one is male',()=>{
@@ -48,4 +48,10 @@ test('tampered JSON cannot select arbitrary URLs or unapproved files',()=>{
 test('mixed male shirt and female sneakers are rejected in production PNG alignment snapshots',()=>{
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions,selected}),/Unverified PNG layer: shoes/);
  assert.throws(()=>validateAssemblySnapshot({version:1,gender:'female',positions,selected}),/Unverified PNG layer: top/);
+});
+
+test('reference-only shorts cannot be used in an approved PNG snapshot',()=>{
+ const synthetic=Object.fromEntries(Object.entries(testCatalog).map(([category,parts])=>[category,parts.map(part=>({...part}))]));
+ synthetic.bottom[0].playable=false;
+ assert.throws(()=>validateAssemblySnapshot({version:1,gender:'male',positions,selected},synthetic),/Unverified PNG layer: bottom/);
 });
