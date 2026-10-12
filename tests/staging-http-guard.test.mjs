@@ -35,3 +35,13 @@ test('staging version verification requires exact commit and refuses old builds'
  assert.match(source,/manifest\?\.commit!==expectedSha/);
  assert.match(source,/Published game version does not match/);
 });
+
+test('release confirmation tolerates Cloudflare propagation without accepting stale commits',()=>{
+ const source=readFileSync(verifier,'utf8');
+ assert.match(source,/attempt<=20/);
+ assert.match(source,/requestUrl\.searchParams\.set\('release',expectedSha\)/);
+ assert.match(source,/requestUrl\.searchParams\.set\('check',String\(attempt\)\)/);
+ assert.match(source,/observed='\+observed\+' expected='\+expectedSha/);
+ assert.match(source,/if\(!releaseOk\)\{/);
+ assert.match(source,/process\.exit\(1\)/);
+});
