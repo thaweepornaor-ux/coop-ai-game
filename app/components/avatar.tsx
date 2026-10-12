@@ -15,15 +15,16 @@ type LoadedState='loading'|'ok'|'error';
 export function Avatar({options={},className}:AvatarProps){
  const v=options as Record<string,unknown>;
  const gender=v.bodyStyle==='female'?'female':'male';
+ const body=PNG_PARTS.body?.find(p=>p.value===gender&&p.ready&&p.aligned);
  const face=PNG_PARTS.face.find(p=>p.value===gender);
  const hair=PNG_PARTS.hair.find(p=>p.value===String(v.hairStyle));
  const top=PNG_PARTS.top.find(p=>(p.value==='overshirt'?'jacket':p.value)===String(v.shirtStyle)&&p.ready)||PNG_PARTS.top.find(p=>p.value===String(v.shirtStyle));
  const bottom=PNG_PARTS.bottom.find(p=>p.value===String(v.bottomStyle));
  const shoes=PNG_PARTS.shoes.find(p=>(p.value==='sneakers'?'white':p.value)===String(v.shoeColor));
  const eyewear=PNG_PARTS.glasses.find(p=>p.value===String(v.glassesStyle));
- const parts=[face,top,bottom,shoes,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
+ const parts=[body,face,top,bottom,shoes,...(v.hairStyle==='bald'?[]:[hair]),...(v.glassesStyle==='none'||!v.glassesStyle?[]:[eyewear])];
  // Do not compose thumbnail crops at arbitrary shared full-frame coordinates.
- const complete=avatarSelectionReadiness(v,PNG_PARTS,{hasBodyBase:false}).ready && parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
+ const complete=avatarSelectionReadiness(v,PNG_PARTS).ready && parts.every(p=>p&&p.ready===true&&p.aligned===true) && new Set(parts.map(p=>p?.src)).size===parts.length;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=complete&&parts.every(p=>p&&loaded[p.src]==='ok');
