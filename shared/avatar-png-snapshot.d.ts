@@ -9,4 +9,4 @@ export interface AvatarAssemblySnapshot {
 }
 export const PNG_ASSEMBLY_CATEGORIES:readonly AvatarAssemblyCategory[];
 export const PNG_ASSEMBLY_VERSION:1;
-export function validateAssemblySnapshot(input:unknown):AvatarAssemblySnapshot;
+export function validateAssemblySnapshot(input:unknown,catalog?:Record<AvatarAssemblyCategory,Array<{value:string;label?:string;src:string;ready:boolean;gender?:AvatarAssemblyGender}>>):AvatarAssemblySnapshot;
