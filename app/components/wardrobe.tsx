@@ -69,6 +69,18 @@ export function Wardrobe({ avatar, onChange }: { avatar: Record<string, string>;
           <span className="wardrobe-tile-check" aria-hidden="true">{avatar.hairStyle === part.value ? '✓' : ''}</span>
         </button>)}
       </div>}
+      {category.style === 'shirtStyle' && PNG_PARTS.top.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างเสื้อ PNG จริง">
+        {PNG_PARTS.top.filter(part=>part.ready).map(part=><div key={part.src} className="wardrobe-tile">
+          <img src={part.src} alt={part.label} width={72} height={72} style={{objectFit:'contain'}}/>
+          <span>{part.label} · ภาพตัวอย่าง ยังไม่ประกอบ</span>
+        </div>)}
+      </div>}
+      {category.color === 'shoeColor' && PNG_PARTS.shoes.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ภาพตัวอย่างรองเท้า PNG จริง">
+        {PNG_PARTS.shoes.filter(part=>part.ready).map(part=><div key={part.src} className="wardrobe-tile">
+          <img src={part.src} alt={part.label} width={72} height={72} style={{objectFit:'contain'}}/>
+          <span>{part.label} · ภาพตัวอย่าง ยังไม่ประกอบ</span>
+        </div>)}
+      </div>}
       {category.style === 'shirtStyle' && PNG_PARTS.bottom.some(part=>part.ready) && <div className="wardrobe-tiles" aria-label="ตัวอย่างกางเกง PNG ที่นำเข้าแล้ว">
         {PNG_PARTS.bottom.filter(part=>part.ready).map(part=><button type="button" key={part.src} className={`wardrobe-tile${avatar.bottomStyle === part.value ? ' selected' : ''}`} aria-pressed={avatar.bottomStyle === part.value} onClick={() => change('bottomStyle',part.value)}>
           <img src={part.src} alt="" width={72} height={72} style={{objectFit:'contain'}} />
