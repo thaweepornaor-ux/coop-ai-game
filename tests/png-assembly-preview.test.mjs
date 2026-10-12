@@ -101,3 +101,12 @@ test('cannot export apparently finished character if some gender-matched part is
  assert.match(lab,/if\(missing\.length>0\)throw new Error/);
  assert.match(lab,/\},\[gender\]\);/);
 });
+
+test('complete PNG export refuses hidden, translucent, broken, or missing layers',()=>{
+ assert.match(lab,/if\(hidden\.length>0\)throw new Error/);
+ assert.match(lab,/if\(opacity!==100\)throw new Error/);
+ assert.match(lab,/selectedParts\.some\(part=>!part\|\|broken\.includes\(part\.src\)\)/);
+ assert.match(lab,/if\(!part\)throw new Error/);
+ assert.match(lab,/if\(broken\.includes\(part\.src\)\)throw new Error/);
+ assert.doesNotMatch(lab,/if\(!part\|\|hidden\.includes\(category\)\|\|broken\.includes\(part\.src\)\)continue/);
+});
