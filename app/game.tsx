@@ -183,6 +183,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const reveal=snapshot?.room.phase==='reveal';
   const closed=snapshot?.room.phase==='closed'||(snapshot?.room.phase==='question'&&timer===0);
   const answered=snapshot?.players.filter(p=>p.answered).length||0;
+  const rankedPlayers=[...(snapshot?.players||[])].sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'th'));
 
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
@@ -253,9 +254,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         {reveal&&!isHost&&<div className={'own-result '+(ownResult?.status||'unanswered')} role="status"><strong>{ownResult?.status==='correct'?'ตอบถูก! เก่งมาก ✦':ownResult?.status==='incorrect'?'ข้อนี้ยังไม่ถูก ลองดูเฉลยกัน':'ข้อนี้ไม่ได้ตอบ ไม่เป็นไร เรียนรู้ไปด้วยกัน'}</strong><span>คะแนนตอนนี้ {ownResult?.score??own?.score??0} / 15</span><Avatar options={own?.avatar||avatar}/><p>รอผู้สอนเริ่มข้อถัดไป</p></div>}
         {reveal&&isHost&&<div className="host-controls"><span>อ่านเฉลยและคุยทบทวนได้เต็มที่</span><button className="button primary" disabled={!canInteract} onClick={()=>void send(snapshot.room.questionIndex===14?'finish':'next')}>{snapshot.room.questionIndex===14?'ดูสรุปคะแนน 🏆':'เริ่มข้อถัดไป →'}</button></div>}
       </div>
-      {isHost&&<aside className="card question-roster"><h2>{reveal?'ใครตอบเป็นอย่างไรบ้าง?':'ร่วมลุ้นไปด้วยกัน'}</h2>
+      {isHost&&<aside className="card question-roster"><h2>{reveal?'ผลคำตอบข้อนี้':'คะแนนสะสม'} {!reveal&&<span className="host-score-count">ส่งคำตอบแล้ว {answered} / {snapshot.players.length}</span>}</h2>
         {reveal?<div className="reveal-groups">{(['correct','incorrect','unanswered'] as const).map(status=><div className={'result-group '+status} key={status}><h3>{status==='correct'?'✓ ตอบถูก':status==='incorrect'?'↻ ตอบผิด':'— ไม่ได้ตอบ'} <span>{snapshot.results?.filter(r=>r.status===status).length||0} คน</span></h3>{snapshot.results?.filter(r=>r.status===status).map(r=><div className="result-person" key={r.playerId}><Avatar options={r.avatar}/><span>{r.name}<small>{r.choice==null?'ไม่ได้เลือก':('เลือก '+letters[r.choice])}</small></span><strong>{r.score} คะแนน</strong></div>)}</div>)}</div>
-        :<div className="roster">{snapshot.players.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small>{p.score} คะแนน · {p.answered?'ส่งแล้ว ✓':'กำลังคิด…'}</small></div>)}</div>}
+        :<div className="roster host-scored-roster">{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</small></div>)}</div>}
       </aside>}
     </section>}
 
