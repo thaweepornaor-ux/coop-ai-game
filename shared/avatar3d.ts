@@ -32,11 +32,14 @@ export function createCharacter(input:Record<string,unknown>){
  const preset=characterFor(input.presetId||input.bodyStyle);
  const values:Record<string,any>={};const effective:Record<string,unknown>={...preset,...input};
  for(const [key,list]of Object.entries(AVATAR_OPTIONS))values[key]=list.find((o:any)=>o.value===effective[key])||list[0];
- const root=new G.Group();root.rig=new G.CharacterRig();const female=input.bodyStyle?values.bodyStyle.value==='female':preset.gender==='female';
+ const root=new G.Group();root.rig=new G.CharacterRig();
+ // Stable, individually addressable mesh families for modular wardrobe work.
+ const partNames:Record<number,string>={0:'accessory',1:'head',2:'upper',3:'left-arm',4:'right-arm',5:'left-leg',6:'right-leg'};
+ const partCounts:Record<string,number>={};const female=input.bodyStyle?values.bodyStyle.value==='female':preset.gender==='female';
  const mat=(color:string,roughness=.84)=>new G.MeshStandardMaterial({color,roughness});
  const skin=mat(values.skinTone.color,.48),hair=mat(values.hairColor.color,.34),shirt=mat(values.shirtColor.color),bottom=mat(values.bottomColor.color),shoes=mat(values.shoeColor.color),hat=mat(values.hatColor.color),white=mat('#f5f2e9'),dark=mat('#242332'),lip=mat('#8f5651'),gold=mat('#ccb778',.3);
  const sphere=new G.SphereGeometry(1,24,18);let rigPart=0;
- const mesh=(g:G.BufferGeometry,m:G.Material)=>{const o=new G.Mesh(g,m);o.rigPart=rigPart;root.add(o);return o;};
+ const mesh=(g:G.BufferGeometry,m:G.Material)=>{const o=new G.Mesh(g,m);o.rigPart=rigPart;const family=partNames[rigPart]||'body';o.name=family+'-'+String(partCounts[family]=(partCounts[family]||0)+1).padStart(2,'0');root.add(o);return o;};
  const ell=(m:G.Material,x:number,y:number,z:number,a:number,b:number,c:number)=>{const o=mesh(sphere,m);o.position.set(x,y,z);o.scale.set(a,b,c);return o;};
  const face=(m:G.Mesh)=>{m.faceOverlay=true;return m;};
  const tube=(points:number[][],radii:number[],m:G.Material,depth=1)=>mesh(sweep(points,radii,depth),m);
@@ -69,7 +72,7 @@ export function createCharacter(input:Record<string,unknown>){
   const hand=mesh(sculptHand(),skin);hand.name="hand";hand.position.set(side*.49,1.40,.235);hand.scale.set(side*.92,1,.95);hand.rotation.z=side*.08;
   rigPart=side<0?5:6;
   const legPath=[[side*.172,1.50,-.018],[side*.182,1.34,-.018],[side*.185,1.09,.006],[side*.178,.84,.068],[side*.18,.67,.048],[side*.20,.49,-.014],[side*.207,.29,-.002]];
-  tube(legPath,(female&&values.bottomStyle.value==='skirt')?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],female&&(female&&values.bottomStyle.value==='skirt')?skin:bottom,.91);
+  tube(legPath,(female&&values.bottomStyle.value==='skirt')?[.159,.145,.126,.095,.102,.083,.061]:[.166,.157,.143,.121,.128,.112,.091],female&&values.bottomStyle.value==='skirt'?skin:bottom,.91);
   ell(shoes,side*.21,.183,.08,.135,.092,.224);ell(white,side*.21,.115,.093,.139,.031,.23);ell(shoes,side*.21,.23,-.02,.104,.079,.112);
   for(let l=0;l<3;l++)ell(white,side*.21,.267,.08+l*.04,.049,.006,.008);
  }
@@ -99,7 +102,8 @@ export function createCharacter(input:Record<string,unknown>){
   if(originalHair==='bun')ell(hair,0,2.67,-.38,.135,.13,.12);
   else if(h==='ponytail')tube([[0,2.99,-.35],[.03,2.72,-.43],[.07,2.4,-.38]],[.105,.105,.06],hair);
  }
- if((input.glasses === 'off' ? false : input.glasses === 'on' ? true : preset.glasses))for(const s of [-1,1]){const curve=surface((u,v)=>{const a=u*Math.PI*2,b=v*Math.PI*2;return[s*.15*fw+Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**(preset.glassesStyle==='square'?.38:1)*(.098+Math.cos(b)*.008),2.88+Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**(preset.glassesStyle==='square'?.38:1)*((preset.glassesStyle==='oval'?.088:.105)+Math.cos(b)*.008),.355+Math.sin(b)*.008];},24,6);mesh(curve,mat(({charcoal:'#303943',black:'#202b32',brown:'#654532',silver:'#b9bfc4',gold:'#b99a5a'} as Record<string,string>)[preset.glassesColor]||'#5a493d',.3));}if((input.glasses === 'off' ? false : input.glasses === 'on' ? true : preset.glasses))ell(mat('#5a493d'),0,2.9,.357,.055,.008,.009);
+ const wearGlasses=input.glasses==='off'?false:input.glasses==='on'?true:!!preset.glasses;
+ if(wearGlasses)for(const s of [-1,1]){const curve=surface((u,v)=>{const a=u*Math.PI*2,b=v*Math.PI*2;return[s*.15*fw+Math.sign(Math.cos(a))*Math.abs(Math.cos(a))**(preset.glassesStyle==='square'?.38:1)*(.098+Math.cos(b)*.008),2.88+Math.sign(Math.sin(a))*Math.abs(Math.sin(a))**(preset.glassesStyle==='square'?.38:1)*((preset.glassesStyle==='oval'?.088:.105)+Math.cos(b)*.008),.355+Math.sin(b)*.008];},24,6);mesh(curve,mat(({charcoal:'#303943',black:'#202b32',brown:'#654532',silver:'#b9bfc4',gold:'#b99a5a'} as Record<string,string>)[preset.glassesColor]||'#5a493d',.3));}if(wearGlasses)ell(mat('#5a493d'),0,2.9,.357,.055,.008,.009);
  if(values.hairColor.value==='saltpepper'||preset.age>=55)for(const side of [-1,1])tube([[side*.37,3.09,.01],[side*.39,2.96,.09]],[.023,.01],mat('#b8b8b2',.34));
  if(preset.facialHair)for(const s of [-1,1])ell(hair,s*.05,2.695,.324,.063,.013,.018);
  if(preset.age>=50)for(const s of [-1,1])face(ell(lip,s*.265,2.82,.263,.027,.005,.006));
