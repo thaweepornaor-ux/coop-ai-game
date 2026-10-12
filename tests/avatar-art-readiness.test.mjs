@@ -18,3 +18,22 @@ test('upload status alone does not imply pixel alignment',()=>{
  const incomplete={...PNG_PARTS,glasses:[{ready:true,aligned:false}]};
  assert.equal(avatarArtReadiness(incomplete,{hasBodyBase:true}).ready,false);
 });
+
+test('gender-aware readiness rejects opposite-gender garments even with aligned assets',()=>{
+ const parts=Object.fromEntries(['face','hair','top','bottom','shoes','glasses'].map(category=>[category,[{ready:true,aligned:true,src:'/test.png',gender:'male'}]]));
+ assert.equal(avatarArtReadiness(parts,{hasBodyBase:true,gender:'male'}).ready,true);
+ const female=avatarArtReadiness(parts,{hasBodyBase:true,gender:'female'});
+ assert.equal(female.ready,false);
+ assert.ok(female.missing.includes('top'));
+ assert.ok(female.missing.includes('shoes'));
+});
+test('non-playable reference shorts cannot certify a complete avatar',()=>{
+ const parts=Object.fromEntries(['face','hair','top','bottom','shoes','glasses'].map(category=>[category,[{ready:true,aligned:true,src:'/test.png'}]]));
+ parts.bottom[0].playable=false;
+ const result=avatarArtReadiness(parts,{hasBodyBase:true,gender:'male'});
+ assert.equal(result.ready,false);
+ assert.ok(result.missing.includes('bottom'));
+});
+test('invalid gender does not silently fall back to combined art catalog',()=>{
+ assert.throws(()=>avatarArtReadiness(PNG_PARTS,{gender:'other'}),/Invalid avatar gender/);
+});
