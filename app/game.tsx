@@ -263,7 +263,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <div className="inline-profile-actions"><button className="button secondary" type="button" onClick={()=>setEditingProfile(false)}>ยกเลิก</button><button className="button primary" disabled={!canInteract||!name.trim()} type="submit">{busy?'กำลังบันทึก…':'บันทึกตัวละครและชื่อ'}</button></div>
         </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · ข้อละ 15 วินาที</p>
           <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>เปลี่ยนชื่อ / ตัวละคร</button>
-          <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}}
+          <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
       <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอผู้เรียนสแกน QR Code ครับ</p>}</div>
     </section>}
