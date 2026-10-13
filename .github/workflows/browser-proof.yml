@@ -54,6 +54,8 @@ jobs:
         run: node --input-type=module -e "console.log(import.meta.resolve('vinext/server/app-router-entry'))"
       - name: Migrate disposable local D1
         run: corepack pnpm exec wrangler d1 migrations apply DB --local --config wrangler.ci.jsonc --persist-to .wrangler/ci-state
+      - name: Install original Q01–Q15 audio in isolated preview when uploaded
+        run: node scripts/install-recorded-voice.mjs
       - name: Build genuine App Router preview
         run: corepack pnpm exec vite build --config vite.ci.config.ts
       - name: Install reviewed browser runtime
