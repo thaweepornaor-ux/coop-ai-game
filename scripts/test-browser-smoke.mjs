@@ -353,7 +353,7 @@ async function realRoom(browser, browserName) {
       // Verify that the actual app invokes the Thai voice synthesizer.
       window.__narrationProof=[];
       Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
-        cancel(){},getVoices(){return [{lang:'th-TH',name:'Mock Thai Voice'}]},
+        cancel(){},getVoices(){return [];},
         speak(utterance){
           window.__narrationProof.push({text:utterance.text,lang:utterance.lang});
           setTimeout(()=>utterance.onstart?.(),0);
