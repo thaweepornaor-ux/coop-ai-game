@@ -7,7 +7,7 @@ const home=readFileSync(new URL('../app/page.tsx',import.meta.url),'utf8');
 const layout=readFileSync(new URL('../app/layout.tsx',import.meta.url),'utf8');
 test('instructor projector opens directly and creates private QR automatically',()=>{
  assert.match(home,/initialRole="host"/);
- assert.match(game,/initialRole==='host'&&!sessionRef\.current&&!busyRef\.current\)void send\('create'\)/);
+ assert.match(game,/initialRole==='host'&&!sessionRef\.current&&!busyRef\.current&&!openingFreshHost\.current\)void send\('create'\)/);
  assert.match(game,/QRCode\.toDataURL\(url/);
  assert.match(game,/simple-join-ticket/);
  assert.doesNotMatch(game,/สร้างห้องเกม →/);

@@ -26,6 +26,15 @@ const levelFeedback=(n:number)=>n<=5?'เริ่มจากงานร่า
 const safeRead=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
 const safeWrite=(key:string,value:string)=>{try{localStorage.setItem(key,value)}catch{}};
 const sessionKey=(role:Role)=>'coop-ai-game-session-'+role;
+const hostTabRoomKey='coop-ai-game-host-active-tab-room';
+const isSameHostReload=(savedRoom:string)=>{
+  try {
+    const kind=(performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming|undefined)?.type;
+    return kind==='reload'&&sessionStorage.getItem(hostTabRoomKey)===savedRoom;
+  } catch { return false }
+};
+const rememberHostTab=(room:string)=>{try{sessionStorage.setItem(hostTabRoomKey,room)}catch{}};
+const clearHostTab=()=>{try{sessionStorage.removeItem(hostTabRoomKey)}catch{}};
 const VOICE_TRACKS=15;
 function openVoiceStorage():Promise<IDBDatabase>{
  return new Promise((resolve,reject)=>{
@@ -84,6 +93,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [voiceTesting,setVoiceTesting]=useState(false);
   const voiceImported=useRef(false);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
+  const openingFreshHost=useRef(false);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
   const totalRemaining=snapshot?.room.deadline ? Math.max(0,Math.ceil((snapshot.room.deadline-(now+offset.current))/1000)):10;
@@ -254,8 +264,19 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const code=(query.get('room')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
     if(code)setRoomInput(code);
     if(initialRole!=='choose'){
-      try{const saved=JSON.parse(safeRead(sessionKey(initialRole))||'null') as Session|null;
-      if(saved&&saved.role===initialRole&&saved.token&&(!code||saved.room===code)){sessionRef.current=saved;setSession(saved)}}catch{}
+      try{
+        const saved=JSON.parse(safeRead(sessionKey(initialRole))||'null') as Session|null;
+        if(saved&&saved.role===initialRole&&saved.token&&(!code||saved.room===code)){
+          if(initialRole==='host'&&!isSameHostReload(saved.room)){
+            // Opening /host again is a NEW class, not a hidden restoration of
+            // previous students. An actual same-tab refresh stays resumable.
+            openingFreshHost.current=true;
+            void startFreshTeachingSession(saved);
+          }else{
+            sessionRef.current=saved;setSession(saved);
+          }
+        }
+      }catch{}
     }
     const previousName=safeRead('coop-ai-game-name');if(previousName)setName(previousName);
     try{const previousAvatar=JSON.parse(safeRead('coop-ai-game-avatar')||'null');if(previousAvatar&&typeof previousAvatar==='object')setAvatar(normalizeWardrobe(previousAvatar))}catch{}
@@ -272,7 +293,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
     // A single teaching session: create the instructor's private room automatically.
     // The room identifier is carried only in the QR link, never typed by learners.
-    if(initialRole==='host'&&!sessionRef.current&&!busyRef.current)void send('create');
+    if(initialRole==='host'&&!sessionRef.current&&!busyRef.current&&!openingFreshHost.current)void send('create');
     setSound(safeRead('coop-ai-game-sound')!=='off');
     setMotion(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     return()=>window.clearInterval(id);
@@ -289,7 +310,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         const response=await fetch('/api/game?room='+encodeURIComponent(session!.room),{headers:{Authorization:'Bearer '+session!.token},cache:'no-store',signal:request.signal});
         const data=await response.json() as ApiResponse;
         if(disposed||thisGeneration!==generation.current)return;
-        if(!response.ok){if(response.status===401||response.status===404){setError(session!.role==='host'?'การเชื่อมต่อเกมเดิมหมดอายุ กด “เริ่มเกมใหม่” เพื่อแสดง QR Code ใหม่ครับ':'ไม่สามารถกลับเข้าเกมนี้ได้ กรุณาสแกน QR Code ของผู้สอนอีกครั้งครับ');setShowRecovery(true)}throw new Error(data.error||'เชื่อมต่อไม่ได้')}
+        if(!response.ok){if(response.status===401||response.status===404){
+          // Another host opened a fresh class and retired this room.
+          // NEVER keep the prior students' pictures or scoreboard on screen.
+          snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
+          setError(session!.role==='host'
+            ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
+            :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
+          setShowRecovery(true);
+        }throw new Error(data.error||'เชื่อมต่อไม่ได้')}
         const state=(data.snapshot||data) as Snapshot;acceptState(state,started,Date.now());
       }catch{if(!disposed)setNetwork('offline')}
       finally{window.clearTimeout(timeout);if(!disposed)tick=window.setTimeout(poll,850)}
@@ -358,6 +387,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         }
         const value:Session={token:data.token,room:data.roomCode,role:data.role};
         sessionRef.current=value;setSession(value);safeWrite(sessionKey(data.role),JSON.stringify(value));
+        if(value.role==='host')rememberHostTab(value.room);
       }
       const state=data.snapshot||(data.room?data as Snapshot:undefined);
       if(state)acceptState(state,started,Date.now());
@@ -366,6 +396,48 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       if(action==='answer')setPendingChoice(null);
       return false;
     }finally{window.clearTimeout(timeout);busyRef.current=false;setBusy(false)}
+  }
+  async function startFreshTeachingSession(previous:Session){
+    // Fresh browser navigation must not silently resume prior people. Delete
+    // the previous room with a server-authorized host action, then display
+    // only the newly-created lobby and its new QR. Refreshing the same tab is
+    // intentionally treated differently to avoid losing a class mid-round.
+    if(busyRef.current)return;
+    busyRef.current=true;setBusy(true);setError('');
+    const controller=new AbortController();
+    const timeout=window.setTimeout(()=>controller.abort(),12000);
+    try{
+      let response=await fetch('/api/game',{
+        method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+previous.token},
+        body:JSON.stringify({action:'newroom',room:previous.room}),signal:controller.signal
+      });
+      // If another instructor tab already retired this room, its old token
+      // is invalid. Create a new empty lobby; do not restore stale players.
+      if(response.status===401||response.status===404){
+        response=await fetch('/api/game',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'create'}),signal:controller.signal
+        });
+      }
+      const data=await response.json() as ApiResponse;
+      if(!response.ok)throw new Error(data.error||'เปิดห้องใหม่ไม่สำเร็จ');
+      if(!data.token||!data.roomCode||data.role!=='host'||!data.snapshot||
+         data.snapshot.players.length!==0||data.snapshot.room.phase!=='lobby'||
+         data.roomCode===previous.room)throw new Error('ห้องใหม่ไม่ว่าง กรุณาลองเปิดเกมใหม่อีกครั้ง');
+      const fresh:Session={token:data.token,room:data.roomCode,role:'host'};
+      narrationKey.current='';setQr('');setJoinUrl('');
+      sessionRef.current=fresh;setSession(fresh);
+      safeWrite(sessionKey('host'),JSON.stringify(fresh));
+      rememberHostTab(fresh.room);
+      acceptState(data.snapshot,Date.now(),Date.now());
+    }catch(err){
+      // Never display the previous class as a "new" class after failure.
+      setNetwork('offline');
+      setError(err instanceof Error?err.message:'สร้างห้องใหม่ไม่สำเร็จ กรุณาลองอีกครั้ง');
+    }finally{
+      window.clearTimeout(timeout);
+      openingFreshHost.current=false;busyRef.current=false;setBusy(false);
+    }
   }
   function join(){
     const code=roomInput.toUpperCase().trim(),playerName=name.trim();
@@ -380,6 +452,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const oldInvitation='';
     const keepInvitation=false;
     generation.current++;try{localStorage.removeItem(sessionKey(role))}catch{}
+    if(role==='host')clearHostTab();
     sessionRef.current=null;snapshotRef.current=null;setSession(null);setSnapshot(null);setError('');setShowRecovery(false);setNetwork('connecting');
     setRoomInput(keepInvitation?oldInvitation:'');
     setPendingChoice(null);setEditingProfile(false);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
