@@ -11,13 +11,13 @@ test('cooperative AI quiz has exactly 15 numbered questions',()=>{
  assert.equal(questions.length,15);
  assert.deepEqual(questions.map(q=>q.number),Array.from({length:15},(_,i)=>i+1));
 });
-test('every question is answerable and has a 15-second timer',()=>{
+test('every question is answerable and has a 25-second post-narration timer',()=>{
  for(const q of questions){
   assert.ok(typeof q.question==='string'&&q.question.trim().length>3,'question '+q.number);
   assert.equal(q.options.length,3,'question '+q.number);
   assert.ok(q.options.every(x=>typeof x==='string'&&x.trim().length>0));
   assert.ok(Number.isInteger(q.answer)&&q.answer>=0&&q.answer<q.options.length);
-  assert.equal(q.timeLimitSeconds,15);
+  assert.equal(q.timeLimitSeconds,25);
   assert.ok(typeof q.explanation==='string'&&q.explanation.trim().length>0);
  }
 });
