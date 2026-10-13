@@ -1,5 +1,12 @@
 /** Pure game rules. This module does not depend on Cloudflare or browser APIs. */
-export const QUESTION_SECONDS = 15;
+export const QUESTION_SECONDS = 25;
+// ElevenLabs recording: timing of Q01–Q15 split at the repeated spoken
+// "คำถามข้อที่..." onset. The classroom answer clock begins after each
+// recording plus a small loading/synchronization grace period.
+export const NARRATION_DURATION_MS = [17480,17250,17840,16670,15840,16050,14430,17510,15370,16160,15970,15230,17070,18010,15250] as const;
+export const NARRATION_BUFFER_MS = 1400;
+export const answerWindowMs = (questionIndex:number)=>QUESTION_SECONDS*1000+
+  (NARRATION_DURATION_MS[questionIndex] ?? 0)+NARRATION_BUFFER_MS;
 export const QUESTION_COUNT = 15;
 export const GAME_LEVELS = ["นักสำรวจ AI", "นักต่อยอด AI", "นักรู้ทัน AI"] as const;
 

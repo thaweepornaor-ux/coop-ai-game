@@ -2,7 +2,7 @@ import { normalizeWardrobe } from "../../../shared/avatar-registry";
 import { env } from "cloudflare:workers";
 import {
   assertExpectedState, assertQuestions, GameError, makeSnapshot, normalizeRoomCode, planTransition,
-  QUESTION_SECONDS, sanitizeAvatar, sanitizeName,
+  QUESTION_SECONDS, answerWindowMs, sanitizeAvatar, sanitizeName,
   type Answer, type Caller, type ControlAction, type Player, type Room,
 } from "../../../server/game";
 import { QUESTIONS } from "../../../server/questions";
@@ -265,7 +265,7 @@ async function controlRoom(db: Database, code: string, tokenHash: string, state:
   assertExpectedState(state.room, body.roundId, body.questionIndex);
   const plan = planTransition(state.room, action, state.row.server_now);
   const update = db.prepare(`UPDATE rooms SET phase = ?, question_index = ?, round_id = round_id + ?,
-    deadline = ${plan.startTimer ? `${SQL_NOW} + ${QUESTION_SECONDS * 1000}` : "NULL"}, updated_at = ${SQL_NOW}
+    deadline = ${plan.startTimer ? `${SQL_NOW} + ${body.recordedNarration===true?answerWindowMs(plan.questionIndex):QUESTION_SECONDS*1000}` : "NULL"}, updated_at = ${SQL_NOW}
     WHERE code = ? AND host_token_hash = ? AND round_id = ? AND question_index = ? AND phase = ?`)
     .bind(plan.phase, plan.questionIndex, plan.incrementRound ? 1 : 0, code, tokenHash,
       state.room.roundId, state.room.questionIndex, state.room.phase);
