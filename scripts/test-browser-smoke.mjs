@@ -389,13 +389,20 @@ async function realRoom(browser, browserName) {
         await player.locator('.answer-grid button').first().click();
         await player.locator('.answer-status').filter({ hasText: 'ส่งคำตอบแล้ว' }).waitFor();
       } else {
-        await player.waitForFunction(() => document.querySelector('.countdown')?.firstChild?.textContent === '0', undefined, { timeout: 20_000 });
+        await player.waitForFunction(() => document.querySelector('.countdown .timer-value')?.textContent?.trim() === '0', undefined, { timeout: 20_000 });
         assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
         assert.equal(await player.locator('.explanation').count(), 0);
         assert.equal(await host.locator('.explanation').count(), 0);
         await question(host, 2); row.checks.push('Real fifteen-second deadline locks answers without revealing or advancing');
       }
-      if (number === 1) { await noOverflow(player, 'mobile active question'); await shot(player, browserName + '-question-player'); await shot(host, browserName + '-question-host'); }
+      if (number === 1) {
+        await noOverflow(player,'mobile active question');
+        const timerSize=await host.locator('.countdown').boundingBox();
+        assert.ok(timerSize && timerSize.width>=130 && timerSize.height>=130,'Projector countdown must be large and visible');
+        const titleSize=await host.locator('.question-card h1').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
+        assert.ok(titleSize>=35,'Projector question must have a prominently readable font');
+        await shot(player,browserName+'-question-player');await shot(host,browserName+'-question-host');
+      }
       await stage('reveal-' + number);
       await host.locator('.host-controls button').click();
       await host.locator('.explanation').waitFor(); await player.locator('.explanation').waitFor();
@@ -405,7 +412,48 @@ async function realRoom(browser, browserName) {
       if (answered && correctChoice === 0) expectedScore++;
       await player.locator('.own-result').filter({ hasText: 'คะแนนตอนนี้ ' + expectedScore + ' / 15' }).waitFor();
       assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
-      if (number === 1) { await noOverflow(host, 'desktop reveal'); await shot(host, browserName + '-reveal-host'); await shot(player, browserName + '-reveal-player'); }
+      if (number === 1) {
+        await noOverflow(host,'desktop reveal');
+        // Layout stress-test with twenty-five players without changing the actual room.
+        // Synthetic cloned cells are only a visual geometry probe, not fake API players.
+        await stage('projector-25-person-reveal-layout');
+        const actual=await host.locator('.reveal-tiles .reveal-person').count();
+        assert.equal(actual,1,'Actual backend still has exactly one enrolled test player');
+        await host.evaluate(()=>{
+          const grid=document.querySelector('.reveal-tiles');
+          const first=grid?.querySelector('.reveal-person');
+          if(!grid||!first)throw Error('Missing actual reveal board');
+          for(let i=1;i<25;i++){
+            const copy=first.cloneNode(true);
+            copy.dataset.synthetic='true';
+            copy.classList.toggle('correct',i%3===0);
+            copy.classList.toggle('incorrect',i%3===1);
+            copy.classList.toggle('unanswered',i%3===2);
+            copy.querySelector('.reveal-details strong').textContent='ผู้เรียนทดสอบ '+String(i+1).padStart(2,'0');
+            grid.appendChild(copy);
+          }
+        });
+        for(const vp of [{width:1280,height:720},{width:1920,height:1080}]){
+          await host.setViewportSize(vp);
+          const geometry=await host.evaluate(()=>{
+            const cards=[...document.querySelectorAll('.reveal-tiles .reveal-person')];
+            const g=document.querySelector('.reveal-tiles').getBoundingClientRect();
+            const viewport={width:innerWidth,height:innerHeight};
+            const outside=cards.map((c,i)=>({i,rect:c.getBoundingClientRect()})).filter(({rect})=>
+              rect.height<35||rect.width<110||rect.top<0||rect.bottom>viewport.height+1||rect.left<0||rect.right>viewport.width+1);
+            return {count:cards.length,outside:outside.map(x=>x.i),scrollOverflow:g.height>innerHeight,
+              pageOverflow:document.documentElement.scrollHeight>innerHeight+4,gridHeight:g.height,viewport};
+          });
+          assert.equal(geometry.count,25);
+          assert.deepEqual(geometry.outside,[], 'All twenty-five avatar cards must be in frame at '+vp.width+'x'+vp.height);
+          assert.equal(geometry.pageOverflow,false,'25 learners must not require projector page scrolling');
+          await shot(host,browserName+'-'+vp.width+'x'+vp.height+'-reveal-25-synthetic');
+        }
+        await host.evaluate(()=>document.querySelectorAll('[data-synthetic="true"]').forEach(el=>el.remove()));
+        await host.setViewportSize({width:1280,height:900});
+        row.checks.push('Synthetic visual geometry: 25 avatar/score results simultaneously in projector at 1280x720 and 1920x1080');
+        await shot(host,browserName+'-reveal-host');await shot(player,browserName+'-reveal-player');
+      }
       await host.locator('.host-controls button').click();
     }
     await stage('final-scoreboard');
