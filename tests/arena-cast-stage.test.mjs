@@ -42,3 +42,11 @@ test('quiz and mobile phases have distinct graphics and full motion accessibilit
     assert.ok(css.includes(marker),marker);
   }
 });
+
+test('25-avatar result board never hides names during its entrance motion',()=>{
+  assert.match(css,/@keyframes cast-reveal-readable\\s*\\{[\\s\\S]*?from\\{opacity:1;/);
+  assert.match(css,/\\.game-shell\\.motion-on \\.host-question\\.reveal-mode \\.reveal-person\\{/);
+  assert.match(css,/\\.reveal-person\\.unanswered\\{/);
+  assert.match(css,/\\.reveal-details strong\\{/);
+  assert.match(css,/\\.reveal-details small\\{/);
+});
