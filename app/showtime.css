@@ -881,7 +881,7 @@ body::before{
 }
 @media(min-width:901px){
   .game-shell .host-question:not(.reveal-mode) .question-card>h1{
-    font-size:clamp(1.9rem,2.45vw,2.82rem);line-height:1.23;
+    font-size:clamp(2.2rem,2.45vw,2.82rem);line-height:1.23;
     margin:5px 0 11px
   }
   .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{
