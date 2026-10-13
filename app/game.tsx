@@ -303,7 +303,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(!snapshot)return;
     narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
   }
-  const countdownNode=<div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/15)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':timer<=5?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':timer}</span><small>{reveal?'เฉลย':'วินาที'}</small></div>;
+  const countdownNode=<div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/25)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':narrationRemaining>0?'กำลังเปิดเสียงอ่านโจทย์': 'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':narrationRemaining>0?'🔊 กำลังพากย์':timer<=5?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':narrationRemaining>0?'♪':timer}</span><small>{reveal?'เฉลย':narrationRemaining>0?'ฟังโจทย์ก่อนเริ่มจับเวลา':'วินาที'}</small></div>;
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
     <header className="topbar">
