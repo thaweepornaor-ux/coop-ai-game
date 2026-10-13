@@ -76,7 +76,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
   const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
   const [projectorFullscreen,setProjectorFullscreen]=useState(false);
-  const [narrationEnabled,setNarrationEnabled]=useState(false),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
+  const [narrationEnabled,setNarrationEnabled]=useState(true),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
   const narrationKey=useRef('');
   const voiceTrack=useRef<HTMLAudioElement|null>(null);
   const voiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
@@ -110,6 +110,25 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
+    if(mode==='question'&&!voiceUrls.current[state.room.questionIndex]){
+      // No installation should ever cause a SILENT quiz. Speak Thai directly
+      // on the instructor's computer as an immediate built-in fallback.
+      if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){
+        setNarrationNotice('เครื่องนี้ไม่รองรับเสียงอ่านโจทย์ กรุณานำเข้า ZIP หรือเปิดใน Chrome/Edge');return false;
+      }
+      const q=state.question;
+      const spoken='คำถามข้อที่ '+q.number+'. '+q.question+'. ข้อ เอ. '+q.options[0]+'. ข้อ บี. '+q.options[1]+'. ข้อ ซี. '+q.options[2]+'.';
+      const utterance=new SpeechSynthesisUtterance(spoken);
+      utterance.lang='th-TH';utterance.rate=1.08;utterance.volume=1;utterance.pitch=1;
+      const thai=window.speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith('th'));
+      if(thai)utterance.voice=thai;
+      else setNarrationNotice('กำลังอ่านด้วยเสียงของเครื่อง หากออกเสียงไทยไม่ชัด กรุณานำเข้า ZIP เสียงพากย์จริง');
+      utterance.onstart=()=>setNarrationBusy(true);
+      utterance.onend=()=>setNarrationBusy(false);
+      utterance.onerror=()=>{setNarrationBusy(false);setNarrationNotice('เสียงไทยจากเบราว์เซอร์เริ่มไม่ได้ กรุณากด “อ่านซ้ำ” หรือนำเข้า ZIP')};
+      window.speechSynthesis.speak(utterance);
+      return true;
+    }
     if(mode==='question'){
       const qnum=state.room.questionIndex+1;
       const track=new Audio(voiceUrls.current[qnum-1]||'/voice/Q'+String(qnum).padStart(2,'0')+'.mp3');
@@ -186,11 +205,23 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }finally{setVoiceImporting(false);}
   }
   function testRecordedVoice(){
+    stopNarration();
     if(!voiceReady||!voiceUrls.current[0]){
-      setNarrationNotice('ยังไม่ได้ติดตั้งเสียงโจทย์ กรุณาเลือก ZIP เสียงพากย์ 15 ข้อก่อน');
+      if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){
+        setNarrationNotice('เครื่องนี้ไม่รองรับเสียงอ่านไทย กรุณาใช้ Chrome/Edge หรือนำเข้า ZIP เสียงพากย์');
+        return;
+      }
+      setNarrationNotice('กำลังทดลองเสียงภาษาไทยจากเครื่อง · หากไม่ดัง ให้ตรวจเสียงแท็บและลำโพง');
+      const utterance=new SpeechSynthesisUtterance('ทดสอบเสียงภาษาไทย เอไอ พร้อมอ่านโจทย์และตัวเลือก เอ บี ซี ครับ');
+      utterance.lang='th-TH';utterance.rate=1.08;utterance.volume=1;
+      const thai=window.speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith('th'));
+      if(thai)utterance.voice=thai;
+      utterance.onstart=()=>{setVoiceTesting(true);setNarrationBusy(true);};
+      utterance.onend=()=>{setVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('ทดสอบเสียงอ่านโจทย์จบแล้ว ✓ ถ้าไม่ได้ยิน ให้ตรวจระดับเสียงหรือใช้ ZIP เสียงจริง');};
+      utterance.onerror=()=>{setVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('เครื่องไม่สามารถพากย์ไทยได้ กรุณานำเข้า ZIP เสียงพากย์จริง');};
+      window.speechSynthesis.speak(utterance);
       return;
     }
-    stopNarration();
     setNarrationNotice('กำลังทดสอบเสียงข้อ 1 · หากไม่ได้ยิน ให้ตรวจระดับเสียงลำโพงและแท็บเบราว์เซอร์');
     const player=new Audio(voiceUrls.current[0]);
     player.volume=1;player.preload='auto';
@@ -310,7 +341,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(busyRef.current)return false;busyRef.current=true;unlockAudio();setBusy(true);setError('');
     // Call .play() inside the actual instructor click event so browsers don't
     // block autoplay after the asynchronous room API response.
-    if(sessionRef.current?.role==='host'&&narrationEnabled&&(action==='start'||action==='next')){
+    if(sessionRef.current?.role==='host'&&narrationEnabled&&voiceReady&&(action==='start'||action==='next')){
       const nextNumber=action==='start'?1:(snapshotRef.current?.room.questionIndex??0)+2;
       if(nextNumber>=1&&nextNumber<=15){
         if(voiceTrack.current)voiceTrack.current.pause();
@@ -327,7 +358,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const started=Date.now();const controller=new AbortController();const timeout=window.setTimeout(()=>controller.abort(),8000);
     try{
       const current=sessionRef.current;
-      const payload={action,...(current?{room:current.room,roundId:snapshot?.room.roundId,questionIndex:snapshot?.room.questionIndex}:{}),...((action==='start'||action==='next')?{recordedNarration:voiceReady&&narrationEnabled}:{}),...extra};
+      const payload={action,...(current?{room:current.room,roundId:snapshot?.room.roundId,questionIndex:snapshot?.room.questionIndex}:{}),...((action==='start'||action==='next')?{recordedNarration:narrationEnabled}:{}),...extra};
       const response=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(current?{Authorization:'Bearer '+current.token}:{})},body:JSON.stringify(payload),signal:controller.signal});
       const data=await response.json() as ApiResponse;
       if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return false;
@@ -419,7 +450,6 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const packedRoster=(snapshot?.players.length||0)>=12;
   function toggleNarration(){
     if(narrationEnabled){setNarrationEnabled(false);stopNarration();return;}
-    if(!voiceReady){setNarrationNotice('กรุณานำเข้า MP3 ให้ครบ 15 ข้อก่อนเปิดเสียงพากย์');return;}
     if(!snapshot)return;
     const currentMode=snapshot.room.phase==='reveal'?'reveal':'question';
     if(narrateSnapshot(snapshot,currentMode)){
@@ -441,7 +471,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>
           {voiceImporting?'กำลังติดตั้งเสียง…':voiceReady?'🎙 เสียงโจทย์พร้อม ✓':'🎙 ใส่ ZIP เสียงโจทย์'}
         </label>}
-        {role==='host'&&voiceReady&&<button type="button" className="icon-button voice-test-header" onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังทดสอบ…':'▶ ทดสอบเสียง'}</button>}
+        {role==='host'&&<button type="button" className="icon-button voice-test-header" onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังทดสอบ…':'▶ ทดสอบเสียง'}</button>}
         {role==='host'&&<button className="icon-button fullscreen-toggle" type="button" aria-pressed={projectorFullscreen} onClick={()=>void toggleProjectorFullscreen()}>{projectorFullscreen?'↙ ออกจากเต็มจอ':'⛶ เต็มจอโปรเจคเตอร์'}</button>}
         <button className="icon-button" type="button" aria-label={sound?'ปิดเสียงเอฟเฟกต์':'เปิดเสียงเอฟเฟกต์'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เอฟเฟกต์เปิด':'♪ เอฟเฟกต์ปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
@@ -487,11 +517,11 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     {session&&snapshot&&snapshot.room.phase==='lobby'&&<section className={'lobby '+(isHost?'host-lobby':'player-lobby')}>
       <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'ประเมินความเข้าใจ AI':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>{isHost&&<><p className="showcase-subtitle">เกมประเมินความเข้าใจ AI แบบตอบไว · เล่นพร้อมกันบนมือถือ</p><div className="stage-stat-line" aria-label="กติกาเกม"><span>◆ 15 คำถาม</span><span>◷ ฟังจบแล้วตอบ 25 วินาที</span><span>★ ตอบถูก 1 คะแนน</span></div></>}
         {isHost&&<div className={'voice-setup-panel '+(voiceReady?'ready':'need-voice')} role="group" aria-label="ตั้งค่าเสียงอ่านโจทย์">
-          <div className="voice-setup-copy"><strong>{voiceReady?'🎙 เสียงอ่านโจทย์พร้อมใช้งาน':'🔈 ยังไม่มีเสียงอ่านโจทย์'}</strong><span>{voiceReady?'ติดตั้งครบ 15 ข้อแล้ว เริ่มเกมจะเล่นเสียงให้อัตโนมัติ':'กดนำเข้า ZIP เสียงพากย์ไฟล์เดียว จากนั้นกดทดลองฟัง'}</span></div>
+          <div className="voice-setup-copy"><strong>{voiceReady?'🎙 เสียงพากย์จากไฟล์พร้อมใช้งาน':'🔊 อ่านโจทย์ด้วยเสียงภาษาไทยจากเครื่อง'}</strong><span>{voiceReady?'ติดตั้งครบ 15 ข้อแล้ว เริ่มเกมจะเล่นเสียงให้อัตโนมัติ':'ใช้เสียงอ่านไทยได้เลย หรือเลือก ZIP หากต้องการเสียง ElevenLabs ที่ส่งมา'}</span></div>
           <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{voiceImporting?'กำลังติดตั้ง…':voiceReady?'เปลี่ยนชุดเสียง ZIP':'🎙 เลือก ZIP เสียงโจทย์'}</label>
-          <button type="button" className="voice-setup-test" disabled={!voiceReady||voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองฟังข้อ 1'}</button>
+          <button type="button" className="voice-setup-test" disabled={voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองเสียงอ่าน'}</button>
         </div>}
-        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'(ไม่มีเสียงโจทย์)'} →</button></>
+        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'พร้อมเสียงอ่านภาษาไทย'} →</button></>
         :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
           <h2>แก้ไขตัวละครและชื่อ</h2>
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
@@ -506,7 +536,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')+(isHost&&denseQuestion&&!reveal?' dense-question':'')+(isHost&&packedRoster&&!reveal?' packed-roster':'')}>
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
-        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงพากย์เปิด':'🔇 เปิดเสียงพากย์'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">🔊 กำลังอ่านโจทย์…</span>}</div>:countdownNode}</div>
+        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงอ่านเปิด':'🔇 เปิดเสียงอ่าน'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">🔊 กำลังอ่านโจทย์…</span>}</div>:countdownNode}</div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
         <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
         <div className="answer-grid">{snapshot.question?.options.map((option,i)=>{
