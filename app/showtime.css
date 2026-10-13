@@ -433,9 +433,6 @@ body::before{
 
 /* Preserve ALL 25 reveal cards: take the footer off the active projection frame. */
 .game-shell:has(.host-question.reveal-mode) .session-footer{display:none}
-.game-shell:has(.host-question.reveal-mode) .reveal-tiles:has(.reveal-person:nth-child(21)){
- grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr))
-}
 .game-shell:has(.host-question.reveal-mode) .reveal-person .reveal-avatar{
  aspect-ratio:3/4;align-self:center;justify-self:center;min-width:0
 }
