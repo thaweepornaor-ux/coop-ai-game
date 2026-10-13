@@ -161,7 +161,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             voiceImported.current=true;
             voiceUrls.current=index.names.map((name:string)=>'/voice/'+name);
             setVoiceReady(true);setNarrationEnabled(true);
-            setNarrationNotice('เสียงพากย์ต้นฉบับของคุณติดตั้งบนเว็บไซต์แล้ว ครบ 15 ข้อ ✓');
+            // The toolbar already confirms that all 15 recorded tracks are ready.
+            // Avoid a persistent toast stealing precious projector space during questions.
+            setNarrationNotice('');
             return;
           }
         }
@@ -625,7 +627,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             <span className="live-answer-count">{answered}<small>ตอบแล้ว</small></span>
           </div>
           <div className="answer-meter" role="progressbar" aria-label="สัดส่วนผู้เล่นที่ส่งคำตอบ" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={snapshot.players.length} style={{'--answer-percent':(snapshot.players.length?Math.round(answered/snapshot.players.length*100):0)+'%'} as React.CSSProperties}><span/></div>
-          <p className="live-score-hint">{answered===snapshot.players.length?'ผู้เรียนส่งคำตอบครบแล้ว ✨':'กำลังรอคำตอบจากผู้เรียน'}</p>
+          <p className="live-score-hint">{(rankedPlayers[0]?.score??0)>0?'✦ คะแนนนำขณะนี้: '+rankedPlayers.filter(p=>p.score===rankedPlayers[0]?.score).map(p=>p.name).slice(0,2).join(' / ')+(rankedPlayers.filter(p=>p.score===rankedPlayers[0]?.score).length>2?' และคนอื่น':'')+' · '+rankedPlayers[0]?.score+'/15':answered===snapshot.players.length?'ผู้เรียนส่งคำตอบครบแล้ว ✨':'กำลังรอคำตอบจากผู้เรียน'}</p>
         </div>}
         {!reveal&&snapshot.players.length>0&&snapshot.players.length<=3&&<div className="score-spotlight" aria-label="ผู้เล่นบนเวที">
           {rankedPlayers.slice(0,3).map((player,index)=><div className="spotlight-person" key={player.id}>
@@ -643,14 +645,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           </div>
           <div className="reveal-tiles" role="list" aria-label="ผลคำตอบผู้เรียนทั้งหมด">
             {([...snapshot.results||[]].sort((a,b)=>({correct:0,incorrect:1,unanswered:2}[a.status]-{correct:0,incorrect:1,unanswered:2}[b.status]))).map(r=>
-              <div className={'reveal-person '+r.status} role="listitem" key={r.playerId} title={r.name+' · '+(r.status==='correct'?'ตอบถูก':r.status==='incorrect'?'ตอบผิด':'ไม่ได้ตอบ')}>
+              <div className={'reveal-person '+r.status} data-answer-status={r.status} role="listitem" key={r.playerId} title={r.name+' · '+(r.status==='correct'?'ตอบถูก':r.status==='incorrect'?'ตอบผิด':'ไม่ได้ตอบ')}>
                 <div className="reveal-avatar"><Avatar options={r.avatar} motion={motion}/></div>
                 <div className="reveal-details"><strong>{r.name}</strong><small>{r.status==='correct'?'✓ ตอบถูก':r.status==='incorrect'?'✕ ตอบผิด':'– ไม่ได้ตอบ'} {r.choice==null?'':' · '+letters[r.choice]}</small></div>
                 <b className="reveal-points">{r.score}<span>/15</span></b>
               </div>)}
           </div>
         </div>
-        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')+(packedRoster?' packed-players':'')} style={packedRoster?{'--packed-rows':Math.ceil(snapshot.players.length/3)} as React.CSSProperties:undefined} role="list" aria-label={'คะแนนและสถานะผู้เรียน '+snapshot.players.length+' คน'}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id} role="listitem" title={p.name+' · '+p.score+' คะแนน · '+(p.answered?'ตอบแล้ว':'ยังไม่ตอบ')}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b><span className="packed-answer-state" aria-label={p.answered?'ตอบแล้ว':'ยังไม่ตอบ'}>{p.answered?'✓':'•'}</span><span className="roster-verbose-state"> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</span></small></div>)}</div>}
+        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')+(packedRoster?' packed-players':'')} style={packedRoster?{'--packed-rows':Math.ceil(snapshot.players.length/3),'--cast-rows':Math.ceil(snapshot.players.length/5)} as React.CSSProperties:undefined} role="list" aria-label={'คะแนนและสถานะผู้เรียน '+snapshot.players.length+' คน'}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')+(p.score>0&&p.score===rankedPlayers[0]?.score?' cast-leader':'')} key={p.id} role="listitem" title={p.name+' · '+p.score+' คะแนน · '+(p.answered?'ตอบแล้ว':'ยังไม่ตอบ')}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b><span className="packed-answer-state" aria-label={p.answered?'ตอบแล้ว':'ยังไม่ตอบ'}>{p.answered?'✓':'•'}</span><span className="roster-verbose-state"> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</span></small></div>)}</div>}
       </aside>}
     </section>}
 
