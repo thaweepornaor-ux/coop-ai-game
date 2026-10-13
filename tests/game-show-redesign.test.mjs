@@ -76,19 +76,19 @@ test('25-player presenter switches to compact no-scroll grid without changing th
  assert.match(css,/\.host-scored-roster\.packed-players/);
 });
 
-test('Thai presenter narration reads all question choices and the revealed explanation, on opt-in only',()=>{
+test('Presenter plays each real MP3 and only the revealed explanation uses TTS',()=>{
+ assert.match(game,/new Audio\('\/voice\/Q'/);
+ assert.match(game,/voiceTrack=useRef<HTMLAudioElement\|null>/);
+ assert.match(game,/track\.onplaying/);
+ assert.match(game,/track\.onended/);
+ assert.match(game,/track\.onerror/);
  assert.match(game,/SpeechSynthesisUtterance/);
- assert.match(game,/speechSynthesis\.cancel\(\)/);
  assert.match(game,/utterance\.lang='th-TH'/);
- assert.match(game,/utterance\.rate=1\.18/);
- assert.match(game,/q\.options\[0\]/);
- assert.match(game,/q\.options\[1\]/);
- assert.match(game,/q\.options\[2\]/);
- assert.match(game,/state\.explanation\|\|''/);
  assert.match(game,/narrationEnabled,setNarrationEnabled/);
  assert.match(game,/narrationKey\.current===key/);
  assert.match(game,/aria-pressed=\{narrationEnabled\}/);
  assert.match(game,/if\(narrationEnabled\)/);
+ assert.match(game,/const letters=\['A','B','C'\]/);
 });
 
 test('finished leaderboard uses bounded avatar frames and visible presenter reset',()=>{
