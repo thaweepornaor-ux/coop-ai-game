@@ -389,6 +389,19 @@ async function realRoom(browser, browserName) {
         await player.locator('.answer-grid button').first().click();
         await player.locator('.answer-status').filter({ hasText: 'ส่งคำตอบแล้ว' }).waitFor();
       } else {
+        await stage('last-five-seconds-projector-visual');
+        await host.locator('.countdown.urgent').waitFor({timeout:18000});
+        const flash=await host.locator('.countdown.urgent').evaluate(el=>{
+          const style=getComputedStyle(el);
+          return {width:el.getBoundingClientRect().width,
+            name:style.animationName,color:style.color,
+            label:el.querySelector('.timer-kicker')?.textContent};
+        });
+        assert.ok(flash.width>=130,'Last-five-seconds countdown remains large');
+        assert.ok(flash.name.includes('arena-last-five'),'Last five seconds should visibly pulse in motion-enabled mode');
+        assert.match(flash.label,/เร็วเข้า/);
+        await shot(host,browserName+'-urgent-five-seconds');
+        row.checks.push('Large red flashing countdown on the instructor projector during the final five seconds');
         await player.waitForFunction(() => document.querySelector('.countdown .timer-value')?.textContent?.trim() === '0', undefined, { timeout: 20_000 });
         assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
         assert.equal(await player.locator('.explanation').count(), 0);
