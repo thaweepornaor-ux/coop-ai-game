@@ -592,7 +592,7 @@ async function realTwentyFive(browser,browserName){
          r.width<110||r.height<35||r.left<0||r.right>innerWidth+1||r.top<0||r.bottom>innerHeight+1);
        const clipped=cards.map((x,i)=>({i,parent:x.closest('.reveal-tiles'),rect:x.getBoundingClientRect()}))
          .filter(({parent,rect})=>{const p=parent.getBoundingClientRect();return rect.top<p.top-1||rect.bottom>p.bottom+1});
-       return {count:cards.length,outside:outside.map(x=>x.i),clipped:clipped.map(x=>x.i),
+       return {count:cards.length,outside:outside.map(x=>x.i),clipped:clipped.map(x=>({index:x.i,excessBottomPx:Math.round((x.rect.bottom-x.parent.getBoundingClientRect().bottom)*100)/100})),
          viewport,pageScroll:document.documentElement.scrollHeight>innerHeight+4};
      });
      assert.equal(dimensions.count,25);
