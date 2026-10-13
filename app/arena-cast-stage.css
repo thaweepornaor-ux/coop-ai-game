@@ -200,6 +200,33 @@
 .game-shell .host-question.reveal-mode .reveal-summary>span{
   box-shadow:inset 0 1px #ffffff25
 }
+
+/* 25-person answer reveal must remain readable from the very first animation frame.
+   Earlier entrance animation faded tiles to 25% opacity; the projector screenshot
+   captured names and status as nearly invisible. Keep movement, eliminate fading. */
+@keyframes cast-reveal-readable{
+  from{opacity:1;transform:scale(.985)}
+  to{opacity:1;transform:scale(1)}
+}
+.game-shell.motion-on .host-question.reveal-mode .reveal-person{
+  opacity:1;animation:cast-reveal-readable .24s ease-out both
+}
+.game-shell .host-question.reveal-mode .reveal-person.unanswered{
+  opacity:1;
+  background:linear-gradient(123deg,#365d98,#484a91);
+  border:1px solid #a5c8ff
+}
+.game-shell .host-question.reveal-mode .reveal-person .reveal-details strong{
+  color:#fff;text-shadow:0 1px 3px #18317d;font-weight:900
+}
+.game-shell .host-question.reveal-mode .reveal-person .reveal-details small{
+  color:#e0efff;opacity:1
+}
+.game-shell .host-question.reveal-mode .reveal-person .reveal-points{
+  color:#fff;opacity:1
+}
+.game-shell.motion-off .host-question.reveal-mode .reveal-person{animation:none!important}
+
 /* Score final: the podium should feel like a stage, not a table-only report. */
 .game-shell .results-page .finish-heading{
   isolation:isolate;overflow:hidden;
