@@ -73,3 +73,17 @@ test('trainer tools are available only in the presenter view',()=>{
  assert.match(game,/<div className="brand">/);
  assert.match(game,/session&&isHost&&<footer/);
 });
+
+test('restart is a new server-side classroom, not a same-room reset preserving characters',()=>{
+ const api=readFileSync(new URL('../app/api/game/route.ts',import.meta.url),'utf8');
+ assert.match(api,/async function startFreshRoom\(/);
+ assert.match(api,/if\(caller\.role!=="host"\)/);
+ assert.match(api,/INSERT OR IGNORE INTO rooms/);
+ assert.match(api,/DELETE FROM rooms WHERE code=\? AND host_token_hash=\?/);
+ assert.match(api,/if \(body\.action === "newroom"\) return await startFreshRoom/);
+ assert.match(game,/void send\('newroom'\)/);
+ assert.match(game,/เริ่มเกมใหม่ \(ห้องว่าง\)/);
+ assert.match(game,/ผู้เรียนต้องสแกน QR Code ใหม่/);
+ assert.match(game,/ยืนยัน สร้างห้องว่างใหม่/);
+ assert.doesNotMatch(game,/void send\('reset'\)/);
+});
