@@ -27,7 +27,7 @@ test('all 25 learner cards fit five by five while keeping 25 people, titles and 
 test('visual score leader and answer statuses do not change any scoring calculations',()=>{
   assert.match(game,/cast-leader/);
   assert.match(game,/p\.score>0&&p\.score===rankedPlayers\[0\]\?\.score/);
-  assert.match(game,/rankedPlayers\.filter\(p=>p\.score===rankedPlayers\[0\]\.score\)/);
+  assert.match(game,/rankedPlayers\.filter\(p=>p\.score===rankedPlayers\[0\]\?\.score\)/);
   assert.match(game,/data-answer-status=\{r\.status\}/);
   assert.match(css,/\.mini-player\.cast-leader/);
   assert.match(css,/\.mini-player\.answered/);
