@@ -90,3 +90,18 @@ test('Thai presenter narration reads all question choices and the revealed expla
  assert.match(game,/aria-pressed=\{narrationEnabled\}/);
  assert.match(game,/if\(narrationEnabled\)/);
 });
+
+test('finished leaderboard uses bounded avatar frames and visible presenter reset',()=>{
+ assert.match(game,/className="podium compact-podium"/);
+ assert.match(game,/className="result-podium-avatar"/);
+ assert.match(game,/className="result-personal-avatar"/);
+ assert.match(game,/className="result-score-avatar"/);
+ assert.match(game,/className="result-host-actions"/);
+ assert.match(game,/className="button primary result-reset-button"/);
+ assert.match(game,/isHost&&!finished&&<button className="button ghost"/);
+ assert.match(css,/COMPACT RESULT STAGE/);
+ assert.match(css,/\.results-page \.compact-podium\{/);
+ assert.match(css,/\.results-page \.podium-person>\.result-podium-avatar\{/);
+ assert.match(css,/\.results-page \.score-player>\.result-score-avatar\{/);
+ assert.match(css,/\.results-page \[class\*="result-"\]\[class\*="-avatar"\] svg\{/);
+});
