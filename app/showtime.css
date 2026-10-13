@@ -1367,3 +1367,19 @@ body::before{
 @media(prefers-reduced-motion:reduce){
   .game-shell .host-lobby .roster-panel .mini-player:hover{transition:none}
 }
+
+
+/* Always-accessible instructor restart, including full projector presentation. */
+.game-shell .restart-host-top{
+  flex:none;min-height:40px;padding:7px 13px;border-radius:11px;
+  color:#fff;font-size:clamp(.75rem,.9vw,.9rem);font-weight:950;
+  background:linear-gradient(115deg,#bd3f80,#ed5763);
+  border:1px solid #ffb6bb;
+  box-shadow:0 0 17px #f1538b59,inset 0 1px 0 #fff5;
+}
+.game-shell .restart-host-top:disabled{opacity:.55;box-shadow:none}
+.game-shell .topbar .preferences{min-width:0;max-width:100%;flex-wrap:wrap;align-items:center}
+@media(max-width:700px){
+  .game-shell .topbar{flex-wrap:wrap}
+  .game-shell .restart-host-top{min-height:35px;padding:6px 9px}
+}
