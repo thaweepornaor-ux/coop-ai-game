@@ -9,21 +9,21 @@ const questions=readFileSync(new URL('../server/questions.ts',import.meta.url),'
 const source=rules.match(/export const NARRATION_DURATION_MS = (\[[^\]]+\])/);
 const duration=source?JSON.parse(source[1]):[];
 
-test('Each real recorded narration reserves the full 25-second answer window',()=>{
- assert.match(rules,/export const QUESTION_SECONDS = 25/);
+test('Each real recorded narration reserves the full 10-second answer window',()=>{
+ assert.match(rules,/export const QUESTION_SECONDS = 10/);
  assert.equal(duration.length,15);
  assert.ok(duration.every(x=>x>=14000&&x<19000));
  assert.match(rules,/NARRATION_BUFFER_MS = 1400/);
  assert.match(rules,/QUESTION_SECONDS\*1000\+/);
  assert.match(route,/answerWindowMs\(plan.questionIndex\)/);
- assert.equal((questions.match(/"timeLimitSeconds": 25/g)||[]).length,15);
+ assert.equal((questions.match(/"timeLimitSeconds": 10/g)||[]).length,15);
 });
 
 test('Presenter uses real MP3 for questions while revealing answers separately',()=>{
  assert.ok(game.includes("new Audio(voiceUrls.current["));
  assert.match(game,/\.mp3'\)/);
  assert.match(game,/const letters=\['A','B','C'\]/);
- assert.match(game,/const timer=Math.min\(25,totalRemaining\)/);
+ assert.match(game,/const timer=Math.min\(10,totalRemaining\)/);
  assert.match(game,/const narrationRemaining=/);
  assert.match(game,/narrationRemaining>0\?'🔊 กำลังพากย์'/);
  assert.match(game,/track.onended=/);
@@ -41,4 +41,22 @@ test('Instructor can load and retain a complete local MP3 voice pack without a s
  assert.match(game,/voiceReady&&narrationEnabled/);
  assert.match(game,/recordedNarration:voiceReady&&narrationEnabled/);
  assert.match(route,/body\.recordedNarration===true\?answerWindowMs\(plan.questionIndex\):QUESTION_SECONDS\*1000/);
+});
+
+test('Narration stays intact and the synchronized answer clock starts at 10 seconds only after each recording',()=>{
+ assert.equal(duration.length,15);
+ const totalDuration=duration.reduce((sum,ms)=>sum+ms,0);
+ assert.ok(totalDuration>230000&&totalDuration<270000,'Keep all original 15 MP3 timing values');
+ for(let i=0;i<15;i++){
+  const fullRound=duration[i]+1400+10_000;
+  const last10=fullRound-duration[i]-1400;
+  assert.equal(last10,10_000,'Question '+(i+1)+' must leave precisely 10 seconds after narration');
+ }
+ assert.match(game,/Math.max\(0,totalRemaining-10\)/);
+ assert.match(game,/timer\/10/);
+ assert.match(game,/ฟังจบแล้วตอบ 10 วินาที/);
+ assert.match(game,/หลังฟังโจทย์มีเวลาตอบ 10 วินาที/);
+ assert.match(game,/จากนั้นมีเวลาตอบเต็ม 10 วินาที/);
+ assert.match(route,/answerWindowMs\(plan.questionIndex\)/);
+ assert.match(route,/QUESTION_SECONDS\*1000/);
 });

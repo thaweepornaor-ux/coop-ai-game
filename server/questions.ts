@@ -10,7 +10,7 @@ export const QUESTIONS = [
     ],
     "answer": 1,
     "explanation": "AI อาจสร้างเลขข้อหรือข้อความอ้างอิงที่ไม่มีจริง ต้องตรวจเอกสารต้นฉบับและฉบับที่ใช้บังคับก่อนตัดสินใจ",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 2,
@@ -23,7 +23,7 @@ export const QUESTIONS = [
     ],
     "answer": 0,
     "explanation": "การกำหนดแหล่งข้อมูลและสั่งให้ระบุสิ่งที่ไม่พบ ลดการแต่งข้อเท็จจริงที่ไม่มีในต้นฉบับ",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 3,
@@ -36,7 +36,7 @@ export const QUESTIONS = [
     ],
     "answer": 2,
     "explanation": "คำสั่งอย่างเดียวไม่ได้ให้ AI ควบคุมเว็บไซต์ ต้องมีเครื่องมือเชื่อมต่อ สิทธิ์ และขั้นตอนอนุญาตที่เหมาะสม",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 4,
@@ -49,7 +49,7 @@ export const QUESTIONS = [
     ],
     "answer": 2,
     "explanation": "ข้อมูลส่วนบุคคลต้องผ่านนโยบายองค์กรและการควบคุมสิทธิ์ พร้อมลดข้อมูลที่ระบุตัวตนก่อนส่ง",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 5,
@@ -62,7 +62,7 @@ export const QUESTIONS = [
     ],
     "answer": 0,
     "explanation": "แหล่งอ้างอิงของ AI อาจผิดหรือไม่มีอยู่จริง ตรวจชื่อเอกสาร ผู้เผยแพร่ และเนื้อหาจริงก่อนใช้",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 6,
@@ -75,7 +75,7 @@ export const QUESTIONS = [
     ],
     "answer": 1,
     "explanation": "เสียงสามารถปลอมด้วย AI ได้ การยืนยันตัวตนผ่านช่องทางที่รู้จักและเป็นอิสระช่วยลดความเสี่ยง",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 7,
@@ -88,7 +88,7 @@ export const QUESTIONS = [
     ],
     "answer": 2,
     "explanation": "ข้อมูลกฎหมายอาจเปลี่ยนหลังช่วงข้อมูลฝึก และแม้ AI ค้นเว็บได้ก็ต้องตรวจประกาศฉบับปัจจุบัน",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 8,
@@ -101,7 +101,7 @@ export const QUESTIONS = [
     ],
     "answer": 1,
     "explanation": "ข้อความในไฟล์หรือหน้าเว็บเป็นข้อมูลประกอบ ไม่ใช่คำสั่งที่มีอำนาจเหนือผู้ใช้ ต้องระวัง Prompt Injection",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 9,
@@ -114,7 +114,7 @@ export const QUESTIONS = [
     ],
     "answer": 0,
     "explanation": "AI อาจสะท้อนอคติของข้อมูลหรือกระบวนการ ต้องตรวจเหตุผล เกณฑ์ที่ถูกต้อง และผลกระทบต่อผู้เกี่ยวข้อง",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 10,
@@ -127,7 +127,7 @@ export const QUESTIONS = [
     ],
     "answer": 2,
     "explanation": "การส่งข้อความจำนวนมากเป็นการกระทำจริงที่ย้อนกลับยาก ต้องตรวจผลกระทบ ผู้รับ และสิทธิ์อนุมัติ",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 11,
@@ -140,7 +140,7 @@ export const QUESTIONS = [
     ],
     "answer": 1,
     "explanation": "โมเดลอาจคำนวณคลาดเคลื่อน ควรตรวจด้วยเครื่องคิดเลขหรือสูตรที่ทดสอบแล้วจากข้อมูลชุดเดียวกัน",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 12,
@@ -153,7 +153,7 @@ export const QUESTIONS = [
     ],
     "answer": 0,
     "explanation": "เมื่อข้อเท็จจริงสำคัญยังไม่ทราบ ควรทำเครื่องหมายรอยืนยันหรือขอข้อมูลเพิ่ม ไม่ให้ AI เดา",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 13,
@@ -166,7 +166,7 @@ export const QUESTIONS = [
     ],
     "answer": 2,
     "explanation": "ต้องทดสอบสูตรด้วยข้อมูลตัวอย่าง รวมกรณีขอบเขต และตรวจเงื่อนไขกับระเบียบก่อนใช้กับข้อมูลจริง",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 14,
@@ -179,7 +179,7 @@ export const QUESTIONS = [
     ],
     "answer": 0,
     "explanation": "AI ตัดสินจากข้อมูลที่เห็นเท่านั้น ภาพที่ไม่ครอบคลุมไม่สามารถยืนยันความปลอดภัยของพื้นที่ได้",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   },
   {
     "number": 15,
@@ -192,6 +192,6 @@ export const QUESTIONS = [
     ],
     "answer": 1,
     "explanation": "AI ช่วยประมวลผลและร่างข้อเสนอ แต่ความรับผิดชอบและอำนาจตัดสินใจเป็นของบุคคลที่ได้รับมอบหมายตามระเบียบ",
-    "timeLimitSeconds": 25
+    "timeLimitSeconds": 10
   }
 ] as const;
