@@ -243,6 +243,22 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
       await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
       row.checks.push({hostEntry:await noOverflow(page,label+' host')});
+      // Recover a genuinely unusable saved instructor session with one tap.
+      // This runs in the disposable D1 preview, not the public staging site.
+      if(browserName==='chromium'){
+        await stage('expired-instructor-session-recovery');
+        await page.evaluate(()=>{
+          localStorage.setItem('coop-ai-game-session-host',JSON.stringify({
+            role:'host',room:'ZZZZZZ',token:'a'.repeat(64)
+          }));
+        });
+        await page.reload({waitUntil:'domcontentloaded'});
+        await page.getByRole('button',{name:'เริ่มเกมใหม่',exact:true}).waitFor({timeout:15000});
+        await page.getByRole('button',{name:'เริ่มเกมใหม่',exact:true}).click();
+        await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
+        assert.notEqual((await page.locator('.room-code').textContent()).trim(),'ZZZZZZ');
+        row.checks.push({expiredInstructorRecovered:true});
+      }
     }
     await stage('player-entry-hydration');
     await page.goto(preview.origin+'/play?room=ABC234',{waitUntil:'domcontentloaded'});
