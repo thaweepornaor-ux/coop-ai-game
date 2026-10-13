@@ -61,6 +61,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   },[]);
   const narrateSnapshot=useCallback((state:Snapshot,mode:'question'|'reveal')=>{
     if(typeof window==='undefined'||!state.question)return false;
+    // The instructor START/NEXT click unlocks playback synchronously;
+    // receiving the server snapshot must not play this file a second time.
+    const playingNumber=state.room.questionIndex+1;
+    if(mode==='question'&&voiceTrack.current?.src.endsWith('/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3')&&!voiceTrack.current.paused)return true;
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
@@ -196,6 +200,21 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   useEffect(()=>{if(snapshot&&snapshot.room.phase!=='lobby')setEditingProfile(false)},[snapshot?.room.phase]);
   async function send(action:string,extra:Record<string,unknown>={}){
     if(busyRef.current)return false;busyRef.current=true;unlockAudio();setBusy(true);setError('');
+    // Call .play() inside the actual instructor click event so browsers don't
+    // block autoplay after the asynchronous room API response.
+    if(sessionRef.current?.role==='host'&&narrationEnabled&&(action==='start'||action==='next')){
+      const nextNumber=action==='start'?1:(snapshotRef.current?.room.questionIndex??0)+2;
+      if(nextNumber>=1&&nextNumber<=15){
+        if(voiceTrack.current)voiceTrack.current.pause();
+        const recording=new Audio('/voice/Q'+String(nextNumber).padStart(2,'0')+'.mp3');
+        recording.preload='auto';
+        recording.onplaying=()=>setNarrationBusy(true);
+        recording.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===recording)voiceTrack.current=null;};
+        recording.onerror=()=>setNarrationNotice('ไม่พบไฟล์เสียง Q'+String(nextNumber).padStart(2,'0')+'.mp3');
+        voiceTrack.current=recording;
+        void recording.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่ออนุญาตการเล่นเสียง'));
+      }
+    }
     const requestGeneration=generation.current,requestSession=sessionRef.current;
     const started=Date.now();const controller=new AbortController();const timeout=window.setTimeout(()=>controller.abort(),8000);
     try{
