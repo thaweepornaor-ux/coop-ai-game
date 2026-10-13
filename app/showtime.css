@@ -902,8 +902,9 @@ body::before{
   }
   .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{font-size:1.46rem}
   .game-shell .host-question:not(.reveal-mode) .answer{
-    font-size:clamp(1.06rem,1.33vw,1.52rem);line-height:1.2
+    font-size:clamp(1.35rem,1.75vw,1.7rem);line-height:1.2
   }
+  .game-shell .host-question.dense-question:not(.reveal-mode) .answer{font-size:clamp(1.15rem,1.52vw,1.46rem)}
   .game-shell .host-question:not(.reveal-mode) .question-roster{padding:9px}
   .game-shell .live-score-stage{padding:7px 9px 5px;margin-bottom:6px}
   .game-shell .live-score-stats{gap:5px}

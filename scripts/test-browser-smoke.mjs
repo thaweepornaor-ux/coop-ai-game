@@ -217,7 +217,8 @@ async function checkProjectorQuestionFit(page,label) {
       controlsVisible:action.bottom<=frame.bottom+1&&action.bottom<=innerHeight+2,
       titleInCard:t.top>=frame.top-1&&t.bottom<=frame.bottom+1,
       pageOverflow:document.documentElement.scrollHeight>innerHeight+4,
-      timerInFrame:clock.width>=130&&clock.left>=0&&clock.right<=innerWidth+1&&clock.bottom<=innerHeight+1
+      timerInFrame:clock.width>=130&&clock.left>=0&&clock.right<=innerWidth+1&&clock.bottom<=innerHeight+1,
+      optionReadable:innerHeight>790||parseFloat(getComputedStyle(buttons[0]).fontSize)>=(card.parentElement.classList.contains('dense-question')?18:21)
     };
   });
   assert.equal(sample.missing,false,label+' needs all question, answer and timer elements');
