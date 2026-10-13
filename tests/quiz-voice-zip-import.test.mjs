@@ -49,5 +49,5 @@ test('Instructor sees unmistakable spoken-audio ZIP and preview controls, separa
  assert.match(app,/▶ ทดลองเสียงอ่าน/);
  assert.match(app,/voice-setup-panel/);
  assert.match(app,/เอฟเฟกต์เปิด/);
- assert.match(app,/voiceReady&&narrationEnabled/);
+ assert.match(app,/recordedNarration:narrationEnabled/);
 });
