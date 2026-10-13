@@ -113,6 +113,45 @@
     color:var(--cast-gold);text-shadow:0 0 7px rgba(255,234,135,.9)
   }
 }
+
+/* Short projector seats twenty-five readable people into one screen:
+   portrait is cropped deliberately to face/upper body, not squashed to a tiny full body.
+   1080p keeps the full-height character portraits. */
+@media(min-width:1121px) and (max-height:790px){
+  .game-shell .host-scored-roster.packed-players .mini-player{
+    grid-template-rows:minmax(0,1fr) auto auto;
+    gap:0;padding:1px 2px 2px;border-radius:9px
+  }
+  .game-shell .host-scored-roster.packed-players .mini-player>div{
+    width:min(100%,55px);max-width:55px;height:100%;max-height:100%;
+    overflow:hidden;align-self:stretch
+  }
+  .game-shell .host-scored-roster.packed-players .mini-player>div svg{
+    transform:translateY(2%) scale(1.5);
+    transform-origin:50% 28%;
+    overflow:visible;
+  }
+  .game-shell .host-scored-roster.packed-players .mini-player strong{
+    font-size:clamp(.69rem,.9vw,.79rem);
+    line-height:1.08;letter-spacing:-.045em;
+    white-space:nowrap;text-overflow:ellipsis;
+  }
+  .game-shell .host-scored-roster.packed-players .mini-player small{
+    font-size:.63rem;line-height:1.04;padding:0 3px
+  }
+  .game-shell .host-question.packed-roster:not(.reveal-mode) .question-roster{
+    padding:6px
+  }
+  .game-shell .host-question.packed-roster:not(.reveal-mode) .live-score-hint{
+    line-height:1.13
+  }
+}
+@media(min-width:1121px) and (min-height:791px){
+  .game-shell .host-scored-roster.packed-players .mini-player>div svg{
+    transform:none
+  }
+}
+
 /* Keep the original 3-column grid for narrow projector sizes (<1121px).
    A 5-column grid there would truncate Thai names and shrink hit targets. */
 .game-shell .host-question:not(.reveal-mode) .live-score-stage{
