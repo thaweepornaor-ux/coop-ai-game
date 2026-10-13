@@ -139,15 +139,34 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   useEffect(()=>{
     if(role!=='host')return;
     let cancelled=false;
-    void loadVoicePack().then(files=>{
-      if(cancelled||voiceImported.current||files.some(x=>!x))return;
-      voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)});
-      voiceUrls.current=files.map(file=>URL.createObjectURL(file!));
-      setVoiceReady(true);setNarrationEnabled(true);
-    }).catch(()=>{});
+    // Prefer the user's original Q01–Q15 recordings, bundled into the Worker.
+    // No ZIP import or upload step for instructors is needed on a published site.
+    void (async()=>{
+      try{
+        const res=await fetch('/voice/manifest.json',{cache:'no-store'});
+        if(res.ok){
+          const index=await res.json();
+          if(index?.source==='official-user-recordings-2026-10-13'&&index?.questionCount===15&&Array.isArray(index.names)&&index.names.length===15){
+            if(cancelled||voiceImported.current)return;
+            voiceImported.current=true;
+            voiceUrls.current=index.names.map((name:string)=>'/voice/'+name);
+            setVoiceReady(true);setNarrationEnabled(true);
+            setNarrationNotice('เสียงพากย์ต้นฉบับของคุณติดตั้งบนเว็บไซต์แล้ว ครบ 15 ข้อ ✓');
+            return;
+          }
+        }
+      }catch{}
+      try{
+        const files=await loadVoicePack();
+        if(cancelled||voiceImported.current||files.some(x=>!x))return;
+        voiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)});
+        voiceUrls.current=files.map(file=>URL.createObjectURL(file!));
+        setVoiceReady(true);setNarrationEnabled(true);
+      }catch{}
+    })();
     return ()=>{cancelled=true;};
   },[role]);
-  useEffect(()=>()=>{voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)})},[]);
+  useEffect(()=>()=>{voiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)})},[]);
   async function importVoicePack(files:File[]){
     const matched=new Map(files.map(file=>[file.name.toUpperCase(),file]));
     const ordered=Array.from({length:VOICE_TRACKS},(_,i)=>matched.get('Q'+String(i+1).padStart(2,'0')+'.MP3'));
@@ -162,7 +181,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     setVoiceImporting(true);setNarrationNotice('');
     voiceImported.current=true;
     if(voiceTrack.current)voiceTrack.current.pause();
-    voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)});
+    voiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)});
     voiceUrls.current=mp3.map(file=>URL.createObjectURL(file));
     setVoiceReady(true);setNarrationEnabled(true);
     try{await saveVoicePack(mp3);setNarrationNotice('นำเข้าเสียงพากย์ครบ 15 ข้อแล้ว ใช้ซ้ำได้เมื่อเปิดเกมบนเครื่องนี้');}
