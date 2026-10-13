@@ -104,7 +104,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     // receiving the server snapshot must not play this file a second time.
     const playingNumber=state.room.questionIndex+1;
     const wantedSource=voiceUrls.current[playingNumber-1]||'/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3';
-    if(mode==='question'&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href&&!voiceTrack.current.paused)return true;
+    if(mode==='question'&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href)return true;
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
