@@ -681,6 +681,22 @@ async function realTwentyFive(browser,browserName){
    }
    await host.waitForFunction(()=>document.querySelectorAll('.host-lobby .mini-player').length===25,null,{timeout:18000});
    assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
+   // All lobby names must sit entirely below their character frame.
+   const characters=await host.evaluate(()=>[...document.querySelectorAll('.host-lobby .roster-panel .mini-player')].map((card,i)=>{
+     const avatar=card.querySelector('div[role="img"]')?.getBoundingClientRect();
+     const name=card.querySelector('strong')?.getBoundingClientRect();
+     const outer=card.getBoundingClientRect();
+     return {i,gap:(name?.top??0)-(avatar?.bottom??0),
+       bottom:outer.bottom-(name?.bottom??0),nameWidth:name?.width||0,cardWidth:outer.width};
+   }));
+   assert.equal(characters.length,25);
+   for(const character of characters){
+     assert.ok(character.gap>=3,'Name must not overlap avatar: '+JSON.stringify(character));
+     assert.ok(character.bottom>=5,'Name must not touch card border: '+JSON.stringify(character));
+     assert.ok(character.nameWidth<=character.cardWidth+1);
+   }
+   row.checks.push('All 25 lobby names sit visibly below the portraits, away from the card border');
+
    row.checks.push('Twenty-five actual authenticated players joined disposable D1 with 20 distinct character IDs');
    await shot(host,browserName+'-25-real-lobby');
    await stage('begin-game-with-25-players');
