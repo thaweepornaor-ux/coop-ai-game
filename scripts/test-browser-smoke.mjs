@@ -659,6 +659,43 @@ async function realRoom(browser, browserName) {
     await player.getByRole('button',{name:'กลับไปสแกน QR ใหม่'}).waitFor({timeout:18000});
     assert.deepEqual(await player.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-avatar')||'null')),persisted);
     row.checks.push('New Game control visible on host; confirmed reset rotates QR/token, shows ZERO players and revokes old room');
+    await stage('host-reopen-must-clear-previous-classroom');
+    // A normal refresh during a live class is safe: the same tab can recover.
+    // A fresh visit/new tab is NOT the same class and must retire all attendees.
+    const enrolled=await host.request.post(preview.origin+'/api/game',{
+      data:{action:'join',room:freshHost.room,name:'นักเรียนค้างทดสอบ',
+        avatar:{presetId:'M01',bodyStyle:'male'}}
+    });
+    assert.equal(enrolled.status(),201,'Set up a real player for reopen regression');
+    const enrolledBody=await enrolled.json();
+    assert.ok(enrolledBody.token);
+    await host.waitForFunction(()=>document.querySelector('.roster-panel')?.textContent.includes('นักเรียนค้างทดสอบ'),null,{timeout:10000});
+    await host.reload({waitUntil:'domcontentloaded'});
+    await host.locator('.host-lobby').waitFor({timeout:15000});
+    assert.equal((await host.locator('.room-code').textContent()).trim(),freshHost.room,
+      'Refreshing a classroom must NOT silently wipe its active players');
+    assert.equal(await host.locator('.host-lobby .roster-panel .mini-player').count(),1,
+      'Same-tab reload must resume the CURRENT classroom');
+    const secondHost=await createPage(hostContext);
+    await secondHost.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
+    await secondHost.locator('.host-lobby .qr img').waitFor({timeout:20000});
+    const opened=await secondHost.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null'));
+    assert.ok(opened?.token&&opened?.room);
+    assert.notEqual(opened.room,freshHost.room,'New instructor visit must get a new QR');
+    assert.equal(await secondHost.locator('.host-lobby .roster-panel .mini-player').count(),0,
+      'New instructor visit must not show previous student avatars');
+    assert.match(await secondHost.locator('.roster-panel').innerText(),/0 คน/);
+    const retiredFresh=await host.request.get(preview.origin+'/api/game?room='+freshHost.room,{
+      headers:{Authorization:'Bearer '+enrolledBody.token}
+    });
+    assert.equal(retiredFresh.status(),404,'Previously joined students cannot stay inside a newly opened game');
+    const latest=await secondHost.request.get(preview.origin+'/api/game?room='+opened.room,{
+      headers:{Authorization:'Bearer '+opened.token}
+    });
+    assert.equal(latest.status(),200);
+    const latestRoom=await latest.json();
+    assert.equal(latestRoom.players.length,0,'The new class database roster must be empty');
+    row.checks.push('Reopening the instructor in a new tab revokes old QR/students; refreshing the same tab safely resumes current class');
   });
 }
 
