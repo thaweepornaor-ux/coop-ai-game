@@ -419,7 +419,7 @@ async function realRoom(browser, browserName) {
       host.waitForEvent('download',{timeout:15000}),
       host.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).click()
     ]);
-    assert.match(download.suggestedFilename(),/^AI-Assessment-Results-\\d{4}-\\d{2}-\\d{2}\\.csv$/);
+    assert.match(download.suggestedFilename(),/^AI-Assessment-Results-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]csv$/);
     row.checks.push('Instructor can export final score CSV, but learner cannot');
     for (const size of sizes) {
       await player.setViewportSize({ width: size.width, height: size.height });
