@@ -20,7 +20,7 @@ test('Each real recorded narration reserves the full 25-second answer window',()
 });
 
 test('Presenter uses real MP3 for questions while revealing answers separately',()=>{
- assert.match(game,/new Audio\('\/voice\/Q'/);
+ assert.match(game,/new Audio\\(voiceUrls\\.current\\[/);
  assert.match(game,/\.mp3'\)/);
  assert.match(game,/const letters=\['A','B','C'\]/);
  assert.match(game,/const timer=Math.min\(25,totalRemaining\)/);
