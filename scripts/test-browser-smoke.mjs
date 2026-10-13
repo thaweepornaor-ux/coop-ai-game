@@ -526,6 +526,46 @@ async function realRoom(browser, browserName) {
     await player.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
     assert.equal((await player.locator('.personal-finish .big-score').innerText()).replace(/\s/g, ''), expectedScore + '/15');
     assert.equal(await player.locator('.score-row.me').count(), 1); row.score = expectedScore;
+    // Regression: avatars must not grow to viewport height or cover the scoreboard.
+    for(const [page,role] of [[host,'host'],[player,'learner']]){
+      for(const viewport of [{width:1280,height:720},{width:1920,height:1080},{width:390,height:844},{width:320,height:720}]){
+        await page.setViewportSize(viewport);
+        const layout=await page.evaluate(()=>{
+          const shapes=(selector)=>[...document.querySelectorAll(selector)].map(el=>{
+            const rect=el.getBoundingClientRect();
+            const svg=el.querySelector('svg')?.getBoundingClientRect();
+            const card=el.closest('.podium-person,.score-row,.personal-finish')?.getBoundingClientRect();
+            return {width:rect.width,height:rect.height,
+              svgWidth:svg?.width||0,svgHeight:svg?.height||0,
+              cardHeight:card?.height||0,
+              contained:!svg||(svg.width<=rect.width+2&&svg.height<=rect.height+2)};
+          });
+          return {winners:shapes('.result-podium-avatar'),
+            rows:shapes('.result-score-avatar'),self:shapes('.result-personal-avatar'),
+            restartButtons:document.querySelectorAll('.result-host-actions .result-reset-button').length};
+        });
+        assert.ok(layout.winners.length>0,'At least one compact podium entry');
+        assert.ok(layout.rows.length>0,'At least one ranked table entry');
+        for(const item of layout.winners){
+          assert.ok(item.width<=63&&item.height<=91&&item.cardHeight<=125&&item.contained,
+            'Podium portrait is bounded '+role+' '+viewport.width+' '+JSON.stringify(item));
+        }
+        for(const item of layout.rows){
+          assert.ok(item.width<=43&&item.height<=57&&item.contained,
+            'Scoreboard portrait is bounded '+role+' '+viewport.width+' '+JSON.stringify(item));
+        }
+        for(const item of layout.self){
+          assert.ok(item.width<=74&&item.height<=100&&item.contained,
+            'Self portrait is bounded '+role+' '+viewport.width+' '+JSON.stringify(item));
+        }
+        assert.equal(layout.restartButtons,role==='host'?1:0,'Only trainer gets visible reset button');
+        if(viewport.width===1280)await shot(page,browserName+'-'+role+'-compact-final-1280x720');
+      }
+    }
+    await host.setViewportSize({width:1280,height:900});
+    await player.setViewportSize({width:390,height:844});
+    row.checks.push('No giant podium, personal, or table avatars in 720p/1080p/mobile final screens');
+
     await stage('teacher-export-scores');
     assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).count(),0,'Learners cannot use the teacher CSV export');
     const [download]=await Promise.all([
