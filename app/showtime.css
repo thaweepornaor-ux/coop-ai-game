@@ -786,7 +786,7 @@ body::before{
   font-weight:750;margin:4px 0 0;line-height:1.2}
 .game-shell .score-spotlight{
   display:grid;min-height:0;flex:1;gap:8px;
-  grid-template-rows:repeat(auto-fit,minmax(0,1fr));
+  grid-auto-rows:minmax(0,1fr);
   padding:3px 1px 10px;overflow:hidden
 }
 .game-shell .spotlight-person{
