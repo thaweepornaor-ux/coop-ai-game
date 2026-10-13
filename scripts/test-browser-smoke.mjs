@@ -624,7 +624,16 @@ async function realRoom(browser, browserName) {
     await host.getByRole('button',{name:'ยังไม่เริ่มใหม่',exact:true}).click();
     await host.getByRole('table',{name:'คะแนนผู้เล่นทั้งหมด',exact:true}).waitFor();
     await host.locator('.new-game-top').click();
-    await host.getByRole('button',{name:'ยืนยัน สร้างห้องใหม่',exact:true}).click();
+    const [newRoomReply]=await Promise.all([
+      host.waitForResponse(res=>new URL(res.url()).pathname==='/api/game'
+        &&res.request().method()==='POST'&&res.request().postDataJSON()?.action==='newroom',{timeout:15000}),
+      host.getByRole('button',{name:'ยืนยัน สร้างห้องใหม่',exact:true}).click(),
+    ]);
+    const newRoomBody=await newRoomReply.json();
+    assert.equal(newRoomReply.status(),201,'Server rejected New Game: '+JSON.stringify({
+      status:newRoomReply.status(),error:newRoomBody.error,code:newRoomBody.code
+    }));
+    assert.equal(newRoomBody.snapshot?.players?.length,0,'Backend must return an empty new classroom');
     await host.locator('.host-lobby').waitFor({timeout:16000});
     await host.waitForFunction(old=>{
       const saved=JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null');
