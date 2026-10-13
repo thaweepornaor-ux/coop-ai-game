@@ -1036,3 +1036,165 @@ body::before{
 @media(prefers-reduced-motion:reduce){
   .game-shell .narrate-button{transition:none}
 }
+
+
+/* COMPACT RESULT STAGE — fix the giant character overflow seen on the final
+   leaderboard. Each Avatar now sits inside a finite, explicit-size frame.
+   Never allow the SVG's intrinsic or percentage height to set card geometry. */
+.game-shell .results-page{
+  width:100%;max-width:1600px;margin:0 auto;min-width:0;gap:12px
+}
+.game-shell .results-page .finish-heading{
+  padding:clamp(15px,1.7vw,26px);text-align:center;min-width:0;
+  border:1px solid #6b9fea;
+  background:
+    radial-gradient(ellipse 34% 80% at 16% 12%,#1c9bc36a,transparent 80%),
+    radial-gradient(ellipse 38% 90% at 92% 94%,#a34de069,transparent 75%),
+    linear-gradient(125deg,#143b73,#1f2463 65%,#432168)
+}
+.game-shell .results-page .finish-heading h1{
+  font-size:clamp(1.5rem,2.5vw,2.65rem);line-height:1.26;
+  margin:7px 0;overflow-wrap:anywhere
+}
+.game-shell .results-page .finish-heading>p{
+  font-size:clamp(.8rem,1vw,.95rem);line-height:1.4;
+  color:#dceaff;margin:5px auto 12px
+}
+.game-shell .results-page .finish-heading .eyebrow{
+  display:block;font-size:.78rem;letter-spacing:.12em;color:#9ef9ec
+}
+.game-shell .results-page .compact-podium{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;gap:12px;max-width:980px;
+  width:100%;min-height:0;height:auto;margin:12px auto 0
+}
+.game-shell .results-page .podium-person{
+  width:auto;min-width:0;min-height:0;height:118px;order:initial;
+  display:flex;flex-direction:row;align-items:center;gap:11px;
+  padding:10px 12px;overflow:hidden;
+  border:1px solid #75b8ef;border-radius:16px;
+  background:linear-gradient(130deg,#235a91,#313878);
+  box-shadow:inset 0 1px 0 #ffffff5b,0 9px 23px #010e325e
+}
+.game-shell .results-page .podium-person.rank-1{
+  order:initial;min-height:0;height:118px;
+  background:linear-gradient(135deg,#795c27,#a37625 48%,#523d7c);
+  border-color:#ffe17e;box-shadow:inset 0 1px 0 #ffffff75,0 0 24px #ffd5675c
+}
+.game-shell .results-page .podium-person.rank-2{order:initial}
+.game-shell .results-page .podium-person.rank-3{order:initial}
+.game-shell .results-page .podium-person>.result-rank{
+  top:5px;left:7px;font-size:.63rem;
+  background:#121e4bc9;color:#fff2c1;border:1px solid #ffe6a06b;
+  border-radius:7px;padding:2px 5px;line-height:1.2;z-index:2
+}
+.game-shell .results-page .podium-person>.result-podium-avatar{
+  position:relative;flex:0 0 61px;align-self:center;
+  display:block;width:61px!important;min-width:61px;max-width:61px!important;
+  height:89px!important;min-height:89px;max-height:89px;
+  margin:0!important;overflow:hidden;isolation:isolate;
+  border-radius:12px;background:radial-gradient(ellipse,#71c7fa4f,transparent 78%)
+}
+.game-shell .results-page .podium-person>.result-podium-detail{
+  flex:1;min-width:0;max-width:none!important;text-align:left;margin:0!important;
+  overflow:hidden
+}
+.game-shell .results-page .result-podium-detail h2{
+  font-size:clamp(.78rem,1.1vw,1.15rem);
+  margin:0 0 4px;line-height:1.2;color:#fff!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+}
+.game-shell .results-page .result-podium-detail>strong{
+  display:block;font-size:clamp(1.4rem,2.1vw,2.2rem);
+  line-height:1.15;color:#ffeb9a!important;text-shadow:0 0 17px #ffe08b8c
+}
+.game-shell .results-page .result-podium-detail>strong small{
+  font-size:.54em;font-weight:800;color:#e2eaff
+}
+.game-shell .results-page [class*="result-"][class*="-avatar"]>div[role="img"]{
+  position:relative!important;width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;min-width:0;min-height:0;
+  overflow:hidden;display:grid;place-items:center
+}
+.game-shell .results-page [class*="result-"][class*="-avatar"] svg{
+  display:block;width:100%!important;height:100%!important;
+  max-width:100%!important;max-height:100%!important;
+  overflow:hidden!important;object-fit:contain
+}
+.game-shell .results-page .personal-finish{
+  max-width:430px;min-height:0;margin:10px auto;gap:12px;
+  padding:8px 12px;border:1px solid #85b8ff6a;
+  background:#0d2f6094;border-radius:14px
+}
+.game-shell .results-page .personal-finish>.result-personal-avatar{
+  flex:0 0 72px;width:72px!important;height:98px!important;
+  max-width:72px!important;min-width:72px;
+  min-height:98px;max-height:98px;margin:0;overflow:hidden
+}
+.game-shell .results-page .personal-finish>div:last-child{
+  min-width:0;flex:1
+}
+.game-shell .results-page .personal-finish h2{
+  margin:0;font-size:1.1rem;overflow-wrap:anywhere
+}
+.game-shell .results-page .personal-finish .big-score{
+  display:block;font-size:clamp(1.6rem,2vw,2.2rem);line-height:1.3
+}
+.game-shell .results-page .personal-finish p{margin:4px 0;font-size:.78rem;line-height:1.35}
+.game-shell .results-page .result-host-actions{
+  display:flex;justify-content:center;align-items:center;
+  gap:9px;flex-wrap:wrap;margin:11px 0
+}
+.game-shell .results-page .result-host-actions .button{
+  min-height:42px;padding:9px 17px;font-size:clamp(.86rem,1vw,1rem);
+}
+.game-shell .results-page .result-reset-button{
+  color:#073541;background:linear-gradient(110deg,#5dfff2,#9bf7bb);
+  border:1px solid #d1ffef;
+  box-shadow:0 0 23px #4efce88b,0 5px 13px #01213d72
+}
+.game-shell .results-page .scoreboard{padding:clamp(12px,1.5vw,22px);min-width:0}
+.game-shell .results-page .scoreboard-heading{margin-bottom:10px}
+.game-shell .results-page .score-table{margin:9px 0;min-width:0}
+.game-shell .results-page .score-row{
+  min-height:65px;padding:5px 12px;
+  grid-template-columns:50px minmax(0,1fr) 88px 135px;gap:9px;
+}
+.game-shell .results-page .score-player{min-width:0;gap:10px}
+.game-shell .results-page .score-player>.result-score-avatar{
+  flex:0 0 40px;width:40px!important;min-width:40px;
+  max-width:40px!important;height:55px!important;min-height:55px;
+  max-height:55px;overflow:hidden;border-radius:8px;
+  background:radial-gradient(ellipse,#4c86c96f,#1b3e654d)
+}
+.game-shell .results-page .score-player>span:last-child{min-width:0}
+.game-shell .results-page .score-player strong{line-height:1.3;overflow-wrap:anywhere}
+.game-shell .results-page .score-value{font-size:1.2rem}
+@media(max-width:700px){
+  .game-shell .results-page .compact-podium{
+    grid-template-columns:1fr;max-width:520px;gap:7px
+  }
+  .game-shell .results-page .podium-person,
+  .game-shell .results-page .podium-person.rank-1{height:92px;padding:5px 10px}
+  .game-shell .results-page .podium-person>.result-podium-avatar{
+    flex-basis:48px;width:48px!important;min-width:48px;height:73px!important;
+    min-height:73px;max-height:73px;max-width:48px!important
+  }
+  .game-shell .results-page .score-row{
+    grid-template-columns:34px minmax(0,1fr) 60px;gap:5px;
+    min-height:56px;padding:6px
+  }
+  .game-shell .results-page .score-row>*:last-child{display:none}
+  .game-shell .results-page .score-player>.result-score-avatar{
+    width:31px!important;min-width:31px;max-width:31px!important;
+    height:43px!important;min-height:43px;max-height:43px
+  }
+  .game-shell .results-page .score-player{gap:6px}
+  .game-shell .results-page .score-player strong{font-size:.8rem}
+  .game-shell .results-page .score-player small{font-size:.64rem}
+  .game-shell .results-page .score-value{font-size:1.03rem}
+}
+@media(max-width:370px){
+  .game-shell .results-page .finish-heading{padding:12px 9px}
+  .game-shell .results-page .result-host-actions .button{width:100%}
+}
