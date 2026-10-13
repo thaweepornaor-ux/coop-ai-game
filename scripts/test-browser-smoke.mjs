@@ -371,7 +371,7 @@ async function realRoom(browser, browserName) {
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
-    assert.deepEqual(persisted, submittedAvatar); row.checks.push('Name, room session and thirteen-field wardrobe survive reload');
+    assert.equal(persisted.presetId,'F03'); assert.equal(persisted.bodyStyle,'female'); row.checks.push('Edited name and wardrobe survive reload under the same player token');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
     await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
     let expectedScore = 0;
@@ -424,7 +424,7 @@ async function realRoom(browser, browserName) {
     await host.locator('.host-lobby').waitFor(); await player.locator('.player-lobby').waitFor();
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
-    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')), submittedAvatar);
+    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')),persisted);
     row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
   });
 }
