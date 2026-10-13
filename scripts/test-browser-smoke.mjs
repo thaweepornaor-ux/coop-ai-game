@@ -611,18 +611,45 @@ async function realRoom(browser, browserName) {
       await noOverflow(player, size.label + ' final scoreboard'); await shot(player, browserName + '-' + size.label + '-final');
     }
     row.checks.push('All fifteen questions, instructor reveals and final score rendered through real API');
-    await stage('instructor-reset');
-    assert.equal(await player.getByRole('button', { name: /เริ่มรอบใหม่/ }).count(), 0);
-    await host.getByRole('button', { name: /เริ่มรอบใหม่/ }).click();
-    await host.getByRole('dialog').waitFor(); await host.getByRole('button', { name: 'ยังไม่เริ่มใหม่', exact: true }).click();
-    await host.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
-    await host.getByRole('button', { name: /เริ่มรอบใหม่/ }).click();
-    await host.getByRole('button', { name: 'ยืนยัน เริ่มรอบใหม่', exact: true }).click();
-    await host.locator('.host-lobby').waitFor(); await player.locator('.player-lobby').waitFor();
-    await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
-    await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
-    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')),persisted);
-    row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
+    await stage('instructor-new-empty-room');
+    assert.equal(await player.locator('.new-game-top').count(),0,'Only instructor gets New Game control');
+    assert.equal(await host.locator('.new-game-top:visible').count(),1,'Visible instructor New Game button at all times');
+    const oldHost=await host.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null'));
+    const oldPlayer=await player.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-player')||'null'));
+    assert.ok(oldHost?.room&&oldHost?.token&&oldPlayer?.token);
+    await host.locator('.new-game-top').click();
+    await host.getByRole('dialog').waitFor();
+    assert.match(await host.getByRole('dialog').innerText(),/ล้างผู้เล่นทั้งหมด/);
+    assert.match(await host.getByRole('dialog').innerText(),/QR Code ใหม่/);
+    await host.getByRole('button',{name:'ยังไม่เริ่มใหม่',exact:true}).click();
+    await host.getByRole('table',{name:'คะแนนผู้เล่นทั้งหมด',exact:true}).waitFor();
+    await host.locator('.new-game-top').click();
+    await host.getByRole('button',{name:'ยืนยัน สร้างห้องใหม่',exact:true}).click();
+    await host.locator('.host-lobby').waitFor({timeout:16000});
+    await host.waitForFunction(old=>{
+      const saved=JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null');
+      return saved?.room&&saved.room!==old;
+    },oldHost.room,{timeout:15000});
+    const freshHost=await host.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null'));
+    assert.notEqual(freshHost.room,oldHost.room,'New game must rotate room/QR invitation');
+    assert.notEqual(freshHost.token,oldHost.token,'New game must rotate instructor credential');
+    assert.equal(await host.locator('.host-lobby .roster-panel .mini-player').count(),0,'New room has zero avatars');
+    assert.match(await host.locator('.roster-panel').innerText(),/0 คน/);
+    const freshReply=await host.request.get(preview.origin+'/api/game?room='+freshHost.room,{
+      headers:{Authorization:'Bearer '+freshHost.token}
+    });
+    assert.equal(freshReply.status(),200);
+    const freshState=await freshReply.json();
+    assert.equal(freshState.room.phase,'lobby');
+    assert.equal(freshState.players.length,0);
+    const retiredReply=await player.request.get(preview.origin+'/api/game?room='+oldHost.room,{
+      headers:{Authorization:'Bearer '+oldPlayer.token}
+    });
+    assert.equal(retiredReply.status(),404,'Old QR and old player token must no longer be valid');
+    await player.reload({waitUntil:'domcontentloaded'});
+    await player.getByRole('button',{name:'กลับไปสแกน QR ใหม่'}).waitFor({timeout:18000});
+    assert.deepEqual(await player.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-avatar')||'null')),persisted);
+    row.checks.push('New Game control visible on host; confirmed reset rotates QR/token, shows ZERO players and revokes old room');
   });
 }
 
