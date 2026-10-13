@@ -236,8 +236,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
   }
   function restartHost(){
-    // A saved instructor credential can expire between training days.
-    // Release only this browser's stale session before opening a fresh QR invitation.
+    // Recovery for an already-invalid credential opens a separate empty room.
     leave();
     void send('create');
   }
@@ -301,6 +300,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     <header className="topbar">
       <div className="brand"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></div>
       <div className="preferences">
+        {session&&isHost&&<button className="icon-button restart-host-top" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่</button>}
         {role==='host'&&<button className="icon-button fullscreen-toggle" type="button" aria-pressed={projectorFullscreen} onClick={()=>void toggleProjectorFullscreen()}>{projectorFullscreen?'↙ ออกจากเต็มจอ':'⛶ เต็มจอโปรเจคเตอร์'}</button>}
         <button className="icon-button" type="button" aria-label={sound?'ปิดเสียง':'เปิดเสียง'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เสียงเปิด':'♪ เสียงปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
@@ -413,7 +413,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {session&&snapshot&&finished&&<section className="results-page">
       <div className="card finish-heading enter"><div className="eyebrow">สรุปผลการประเมิน</div><h1>ทุกไอเดียมีพลัง <em>นี่คือทีมของเรา</em></h1><p>ผลคะแนนสะท้อนความเข้าใจพื้นฐาน AI ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
-        {isHost&&<div className="result-host-actions"><button className="button primary result-reset-button" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button><button className="button secondary" type="button" onClick={downloadResults}>↓ ดาวน์โหลดคะแนน CSV</button></div>}
+        {isHost&&<div className="result-host-actions"><button className="button primary result-reset-button" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่ (ห้องว่าง)</button><button className="button secondary" type="button" onClick={downloadResults}>↓ ดาวน์โหลดคะแนน CSV</button></div>}
         <div className="result-level-overview" aria-label="เกณฑ์ระดับความเข้าใจ AI และจำนวนผู้เรียนแต่ละระดับ">
           <div className="result-level-summary tier-explorer"><strong>นักสำรวจ AI</strong><span>0–5 คะแนน · {snapshot.leaderboard?.filter(p=>p.score<=5).length||0} คน</span></div>
           <div className="result-level-summary tier-builder"><strong>นักต่อยอด AI</strong><span>6–10 คะแนน · {snapshot.leaderboard?.filter(p=>p.score>=6&&p.score<=10).length||0} คน</span></div>
@@ -426,8 +426,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">ระดับคำนวณจากจำนวนคำตอบถูกเต็ม 15 คะแนน ไม่ใช่การรับรองความเชี่ยวชาญ · คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&isHost&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&!finished&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
+    {session&&isHost&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&!finished&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่ (ห้องว่าง)</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
-    {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
+    {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มเกมใหม่และล้างรายชื่อผู้เล่น?</h2><p>ระบบจะสร้างห้องใหม่พร้อม QR Code ใหม่ และลบผู้เล่น ตัวละคร คะแนน และคำตอบจากห้องเดิมทั้งหมด<br/><strong>ผู้เรียนต้องสแกน QR Code ใหม่เพื่อเข้าร่วมอีกครั้ง</strong><br/>หากต้องการเก็บคะแนน กรุณาดาวน์โหลด CSV ก่อนยืนยัน</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('newroom')}}>ยืนยัน สร้างห้องว่างใหม่</button></div></section></div>}
   </main>;
 }

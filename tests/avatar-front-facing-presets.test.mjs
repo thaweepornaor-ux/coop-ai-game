@@ -36,3 +36,24 @@ test('visibly different hair presets no longer collapse into aliased silhouettes
    styled+' must look different from '+previousAlias);
  }
 });
+
+test('SVG character fallback has curved anti-clipped, per-wardrobe material depth',()=>{
+  const one=renderAvatar({bodyStyle:'female',presetId:'F03',shirtColor:'blue',skinTone:'warm',hairColor:'brown'});
+  const two=renderAvatar({bodyStyle:'female',presetId:'F03',shirtColor:'red',skinTone:'warm',hairColor:'brown'});
+  assert.match(one,/shape-rendering:geometricPrecision/);
+  assert.match(one,/<linearGradient id="a[0-9a-z]+-skin"/);
+  assert.match(one,/<linearGradient id="a[0-9a-z]+-shirt"/);
+  assert.match(one,/<linearGradient id="a[0-9a-z]+-hair"/);
+  assert.match(one,/fill="url\(#a[0-9a-z]+-shirt\)"/);
+  assert.match(one,/fill="url\(#a[0-9a-z]+-skin\)"/);
+  assert.match(one,/fill="url\(#a[0-9a-z]+-hair\)"/);
+  assert.notEqual(one,two,'Outfit colors must keep independent gradient IDs and materials');
+  for(const gender of ['male','female']){
+    for(let i=1;i<=10;i++){
+      const portrait=renderAvatar({bodyStyle:gender,presetId:(gender==='male'?'M':'F')+String(i).padStart(2,'0')});
+      assert.ok(portrait.startsWith('<svg'),'Each preset remains valid SVG');
+      assert.ok(portrait.includes('<defs>')&&portrait.includes('</svg>'),'Every character includes complete vector material definitions');
+      assert.ok(!portrait.includes('NaN'),'No malformed face or body geometry');
+    }
+  }
+});

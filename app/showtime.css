@@ -1297,3 +1297,89 @@ body::before{
   .game-shell .results-page .result-level-summary strong{font-size:.75rem}
   .game-shell .results-page .result-level-summary span{font-size:.65rem}
 }
+
+
+/* LOBBY CHARACTER FRAMING — names never touch the bottom border, including
+   20–25-person classroom cards. Portraits keep their 3:4 aspect ratio. */
+.game-shell .host-lobby .roster-panel .mini-player{
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:7px;min-height:169px;height:auto;overflow:hidden;isolation:isolate;
+  padding:9px 6px 11px;
+  border-radius:15px;
+  background:radial-gradient(circle at 50% 19%,#438fcd69,transparent 75%),
+    linear-gradient(150deg,#1b4c78,#212852);
+  border:1px solid #64bcf4;
+  box-shadow:inset 0 1px 0 #ffffff3c,0 7px 19px #020d3673
+}
+.game-shell .host-lobby .roster-panel .mini-player>div[role="img"]{
+  flex:0 0 116px;width:min(100%,95px)!important;max-width:95px!important;
+  height:116px!important;min-height:116px;max-height:116px!important;
+  margin:0 auto!important;
+  overflow:hidden;border-radius:12px;
+  background:radial-gradient(ellipse 80% 80% at 50% 35%,#66aef255,transparent 85%);
+  box-shadow:inset 0 0 14px #d8ecff0f
+}
+.game-shell .host-lobby .roster-panel .mini-player>strong{
+  display:block;flex:none;position:static;z-index:1;
+  width:100%;min-width:0;min-height:26px;
+  font-size:clamp(.76rem,.83vw,.92rem);font-weight:900;
+  line-height:1.2;text-align:center;
+  padding:6px 3px 4px;margin:0;
+  border-top:1px solid #68b9f271;
+  color:#fff;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+  text-shadow:0 1px 5px #0009
+}
+.game-shell .host-lobby .roster-panel .mini-player>div[role="img"] svg,
+.game-shell .player-lobby .waiting-avatar svg,
+.game-shell .quick-character-portrait svg{
+  filter:drop-shadow(0 5px 5px #061a3d6e);
+  transform:translateZ(0)
+}
+.game-shell .host-lobby .roster-panel .roster{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  align-content:start;gap:8px;overflow-y:auto;overflow-x:hidden;
+  padding:4px 8px 12px
+}
+.game-shell .host-lobby .roster-panel .mini-player:hover{
+  border-color:#aeebff;box-shadow:0 0 22px #33c7ff59,inset 0 1px 0 #ffffff52
+}
+@media(max-width:1050px){
+  .game-shell .host-lobby .roster-panel .roster{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(max-width:900px){
+  .game-shell .host-lobby .roster-panel .roster{
+    grid-template-columns:repeat(4,minmax(0,1fr))
+  }
+}
+@media(max-width:570px){
+  .game-shell .host-lobby .roster-panel .roster{
+    grid-template-columns:repeat(3,minmax(0,1fr))
+  }
+}
+@media(max-width:390px){
+  .game-shell .host-lobby .roster-panel .roster{
+    grid-template-columns:repeat(2,minmax(0,1fr))
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell .host-lobby .roster-panel .mini-player:hover{transition:none}
+}
+
+
+/* Always-accessible instructor restart, including full projector presentation. */
+.game-shell .restart-host-top{
+  flex:none;min-height:40px;padding:7px 13px;border-radius:11px;
+  color:#fff;font-size:clamp(.75rem,.9vw,.9rem);font-weight:950;
+  background:linear-gradient(115deg,#bd3f80,#ed5763);
+  border:1px solid #ffb6bb;
+  box-shadow:0 0 17px #f1538b59,inset 0 1px 0 #fff5;
+}
+.game-shell .restart-host-top:disabled{opacity:.55;box-shadow:none}
+.game-shell .topbar .preferences{min-width:0;max-width:100%;flex-wrap:wrap;align-items:center}
+@media(max-width:700px){
+  .game-shell .topbar{flex-wrap:wrap}
+  .game-shell .restart-host-top{min-height:35px;padding:6px 9px}
+}

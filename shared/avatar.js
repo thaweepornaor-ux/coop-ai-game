@@ -81,6 +81,13 @@ const select = (input, key) => AVATAR_OPTIONS[key].find((item) => item.value ===
   || AVATAR_OPTIONS[key].find((item) => item.value === DEFAULTS[key]);
 const shade = (hex, ratio = 0.83) => '#' + [1, 3, 5].map((start) =>
   Math.round(parseInt(hex.slice(start, start + 2), 16) * ratio).toString(16).padStart(2, '0')).join('');
+/** Softer material light catches for the SVG fallback without changing wardrobe options. */
+const tint = (hex, amount=0.18) => '#' + [1,3,5].map(start=>{
+  const v=parseInt(hex.slice(start,start+2),16);
+  return Math.round(v+(255-v)*amount).toString(16).padStart(2,'0');
+}).join('');
+const avatarId = value => 'a'+[...JSON.stringify(value)].reduce((n,ch)=>Math.imul(n^ch.charCodeAt(0),16777619)>>>0,2166136261).toString(36);
+
 
 function backHair(style, color) {
   if (style === 'shoulder' || style === 'wavy') return `<path d="M52 60Q48 28 80 28Q111 28 108 60L113 111Q97 116 80 104Q63 116 47 111Z" fill="${color}"/><path d="M50 86Q57 82 50 97M110 86Q103 82 110 97" stroke="${shade(color)}" stroke-width="3" fill="none"/>`;
@@ -143,6 +150,38 @@ export function renderAvatar(options = {}) {
   const bottomColor = selected.bottomColor.color;
   const shoeColor = selected.shoeColor.color;
   const female = selected.bodyStyle.value === 'female';
+  // Unique by selected palette and shape: safely coexist across 25 independent SVGs.
+  const artId=avatarId(Object.fromEntries(Object.entries(selected).map(([key,value])=>[key,value.value])));
+  const materialDefs=`<defs>
+    <linearGradient id="${artId}-skin" x1="0%" y1="8%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="${tint(skin,.23)}"/>
+      <stop offset="47%" stop-color="${skin}"/>
+      <stop offset="100%" stop-color="${shade(skin,.84)}"/>
+    </linearGradient>
+    <linearGradient id="${artId}-shirt" x1="5%" y1="0%" x2="95%" y2="100%">
+      <stop offset="0%" stop-color="${tint(shirtColor,.28)}"/>
+      <stop offset="50%" stop-color="${shirtColor}"/>
+      <stop offset="100%" stop-color="${shade(shirtColor,.69)}"/>
+    </linearGradient>
+    <linearGradient id="${artId}-pants" x1="8%" y1="5%" x2="85%" y2="95%">
+      <stop offset="0%" stop-color="${tint(bottomColor,.19)}"/>
+      <stop offset="100%" stop-color="${shade(bottomColor,.74)}"/>
+    </linearGradient>
+    <linearGradient id="${artId}-hair" x1="0%" y1="0%" x2="100%" y2="95%">
+      <stop offset="0%" stop-color="${tint(hairColor,.26)}"/>
+      <stop offset="54%" stop-color="${hairColor}"/>
+      <stop offset="100%" stop-color="${shade(hairColor,.66)}"/>
+    </linearGradient>
+    <linearGradient id="${artId}-shoes" x1="15%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="${tint(shoeColor,.18)}"/>
+      <stop offset="100%" stop-color="${shade(shoeColor,.64)}"/>
+    </linearGradient>
+    <radialGradient id="${artId}-cheeks">
+      <stop offset="0%" stop-color="#EE948D" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#EE948D" stop-opacity="0"/>
+    </radialGradient>
+  </defs>`;
+
   // Face geometry is derived from the approved 20 preset IDs, never arbitrary markup.
   const match = typeof input.presetId === 'string' ? /^(M|F)(0[1-9]|10)$/.exec(input.presetId) : null;
   const faceIndex = match && (match[1] === (female ? 'F' : 'M')) ? Number(match[2]) - 1 : 0;
@@ -154,11 +193,19 @@ export function renderAvatar(options = {}) {
   const noseTip = [71,70,73,72,71.5,70.5,72,73.5,72.5,74][faceIndex];
   const smileDepth = [6,4,5,7,6.5,4.5,5.5,7.5,4.5,6][faceIndex];
   const shirtPath = female
-    ? 'M68 94Q80 99 92 94L105 99L114 113L104 120L99 109L98 126L102 145Q80 152 58 145L62 126L61 109L56 120L46 113L55 99Z'
-    : 'M66 94Q80 99 94 94L108 99L117 113L106 120L102 111L104 146Q80 152 56 146L58 111L54 120L43 113L52 99Z';
+    ? 'M68 94Q80 99 92 94Q106 96 111 104Q117 111 113 115Q110 119 104 121Q100 117 99 109L98 126L102 145Q80 151 58 145L62 126L61 109Q60 117 56 121Q50 119 47 115Q43 111 49 104Q54 96 68 94Z'
+    : 'M66 94Q80 99 94 94Q110 97 115 105Q119 112 115 116Q111 119 106 121L102 111L104 146Q80 151 56 146L58 111L54 121Q49 119 45 116Q41 112 46 105Q51 97 66 94Z';
   const bottom = selected.bottomStyle.value === 'skirt'
     ? `<g fill="${skin}"><path d="M61 172H75L74 191H62Z"/><path d="M85 172H99L98 191H86Z"/></g><path d="M60 143Q80 149 100 143L111 178Q81 188 49 178Z" fill="${bottomColor}"/><path d="M60 145Q80 151 100 145" fill="none" stroke="${shade(bottomColor)}" stroke-width="4"/><path d="M66 154L62 176M80 155V180M94 154L99 176" stroke="${shade(bottomColor)}" stroke-width="2" opacity=".5"/><path d="M50 178Q80 187 110 178" fill="none" stroke="${shade(bottomColor)}" stroke-width="2"/>`
     : `<path d="M57 143Q80 149 103 143L101 187Q94 191 84 187L82 162H78L76 187Q68 191 59 187Z" fill="${bottomColor}"/><path d="M58 145Q80 151 102 145" fill="none" stroke="${shade(bottomColor)}" stroke-width="4"/><path d="M80 151V161M64 157L65 180M96 157L95 180" stroke="${shade(bottomColor)}" stroke-width="2" stroke-linecap="round"/><path d="M59 185Q68 189 77 185M84 185Q93 189 101 185" fill="none" stroke="${shade(bottomColor)}" stroke-width="3"/>`;
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:visible"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".12"/>${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="${skin}"><path d="M50 108Q45 108 44 118L38 143Q36 150 41 153Q47 154 49 147L56 119Z"/><path d="M110 108Q115 108 116 118L122 143Q124 150 119 153Q113 154 111 147L104 119Z"/></g><path d="M43 138L41 148M117 138L119 148" stroke="${skinShade}" stroke-width="2" stroke-linecap="round"/><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path d="${shirtPath}" fill="${shirtColor}"/><path d="M46 113L55 118M105 118L114 113" stroke="${shade(shirtColor)}" stroke-width="2" stroke-linecap="round"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}<g fill="${skin}"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path d="M65 56Q69 54 73 56M87 56Q91 54 95 56" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/><g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g><g fill="#D57468" opacity=".26"><ellipse cx="64" cy="72" rx="5" ry="2.8"/><ellipse cx="96" cy="72" rx="5" ry="2.8"/></g><path d="M73 78Q80 ${78+smileDepth} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:hidden;shape-rendering:geometricPrecision;stroke-linecap:round;stroke-linejoin:round"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".12"/>${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="${skin}"><path d="M50 108Q45 108 44 118L38 143Q36 150 41 153Q47 154 49 147L56 119Z"/><path d="M110 108Q115 108 116 118L122 143Q124 150 119 153Q113 154 111 147L104 119Z"/></g><path d="M43 138L41 148M117 138L119 148" stroke="${skinShade}" stroke-width="2" stroke-linecap="round"/><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path d="${shirtPath}" fill="${shirtColor}"/><path d="M46 113L55 118M105 118L114 113" stroke="${shade(shirtColor)}" stroke-width="2" stroke-linecap="round"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}<g fill="${skin}"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path d="M65 56Q69 54 73 56M87 56Q91 54 95 56" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/><g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g><g fill="#D57468" opacity=".26"><ellipse cx="64" cy="72" rx="5" ry="2.8"/><ellipse cx="96" cy="72" rx="5" ry="2.8"/></g><path d="M73 78Q80 ${78+smileDepth} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
+  // Keep geometry and selectable clothes untouched while replacing harsh flat
+  // surfaces with shaded, aligned SVG paint. All material IDs are deterministic.
+  return svg.replace('<ellipse cx="80" cy="209"',materialDefs+'<ellipse cx="80" cy="209"')
+    .replaceAll('fill="'+skin+'"','fill="url(#'+artId+'-skin)"')
+    .replaceAll('fill="'+hairColor+'"','fill="url(#'+artId+'-hair)"')
+    .replaceAll('fill="'+shirtColor+'"','fill="url(#'+artId+'-shirt)"')
+    .replaceAll('fill="'+bottomColor+'"','fill="url(#'+artId+'-pants)"')
+    .replaceAll('fill="'+shoeColor+'"','fill="url(#'+artId+'-shoes)"');
 }
