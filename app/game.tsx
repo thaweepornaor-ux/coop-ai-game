@@ -352,6 +352,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return false;
       if(!response.ok){if(data.snapshot)acceptState(data.snapshot,started,Date.now());throw new Error(data.error||'ทำรายการไม่สำเร็จ')}
       if(data.token&&data.roomCode&&data.role){
+        if(action==='newroom'){
+          stopNarration();narrationKey.current='';
+          setQr('');setJoinUrl('');setPendingChoice(null);setShowRecovery(false);setNetwork('connecting');
+        }
         const value:Session={token:data.token,room:data.roomCode,role:data.role};
         sessionRef.current=value;setSession(value);safeWrite(sessionKey(data.role),JSON.stringify(value));
       }
@@ -456,6 +460,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     <header className="topbar">
       <div className="brand"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></div>
       <div className="preferences">
+        {isHost&&<button type="button" className="icon-button new-game-top" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่</button>}
         {role==='host'&&<label className={'icon-button voice-pack-import '+(voiceReady?'ready':'')} title="เลือก ZIP เสียงพากย์ได้โดยตรง หรือเลือก MP3 ทั้ง 15 ไฟล์">
           <input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>
           {voiceImporting?'กำลังติดตั้งเสียง…':voiceReady?'🎙 เสียงโจทย์พร้อม ✓':'🎙 ใส่ ZIP เสียงโจทย์'}
@@ -578,7 +583,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {session&&snapshot&&finished&&<section className="results-page">
       <div className="card finish-heading enter"><div className="eyebrow">สรุปผลการประเมิน</div><h1>ทุกไอเดียมีพลัง <em>นี่คือทีมของเรา</em></h1><p>ผลคะแนนสะท้อนความเข้าใจพื้นฐาน AI ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
-        {isHost&&<div className="result-host-actions"><button className="button primary result-reset-button" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button><button className="button secondary" type="button" onClick={downloadResults}>↓ ดาวน์โหลดคะแนน CSV</button></div>}
+        {isHost&&<div className="result-host-actions"><button className="button primary result-reset-button" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่</button><button className="button secondary" type="button" onClick={downloadResults}>↓ ดาวน์โหลดคะแนน CSV</button></div>}
         <div className="result-level-overview" aria-label="เกณฑ์ระดับความเข้าใจ AI และจำนวนผู้เรียนแต่ละระดับ">
           <div className="result-level-summary tier-explorer"><strong>นักสำรวจ AI</strong><span>0–5 คะแนน · {snapshot.leaderboard?.filter(p=>p.score<=5).length||0} คน</span></div>
           <div className="result-level-summary tier-builder"><strong>นักต่อยอด AI</strong><span>6–10 คะแนน · {snapshot.leaderboard?.filter(p=>p.score>=6&&p.score<=10).length||0} คน</span></div>
@@ -591,8 +596,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">ระดับคำนวณจากจำนวนคำตอบถูกเต็ม 15 คะแนน ไม่ใช่การรับรองความเชี่ยวชาญ · คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&isHost&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&!finished&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
+    {session&&isHost&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&!finished&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
-    {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
+    {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มเกมใหม่และล้างผู้เล่นทั้งหมด?</h2><p>จะสร้างห้องว่างและ QR Code ใหม่ พร้อมลบรายชื่อ ตัวละคร คะแนน และคำตอบของห้องเดิม<br/><strong>ผู้เรียนทุกคนต้องสแกน QR Code ใหม่</strong><br/>หากต้องการเก็บผลคะแนน ให้ดาวน์โหลด CSV ก่อนยืนยัน</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('newroom')}}>ยืนยัน สร้างห้องใหม่</button></div></section></div>}
   </main>;
 }
