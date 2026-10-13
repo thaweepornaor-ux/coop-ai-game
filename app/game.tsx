@@ -7,6 +7,7 @@ import { normalizeWardrobe } from '../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
 import { SimpleWardrobe } from './components/simple-wardrobe';
 import { scoreCsv } from '../shared/score-export.js';
+import { unpackQuizVoiceZip } from '../shared/quiz-voice-zip.js';
 import { LOGO_SRC, COOPERATIVE_NAME } from '../shared/brand';
 
 type Role='choose'|'host'|'player';
@@ -80,6 +81,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const voiceTrack=useRef<HTMLAudioElement|null>(null);
   const voiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
   const [voiceReady,setVoiceReady]=useState(false),[voiceImporting,setVoiceImporting]=useState(false);
+  const [voiceTesting,setVoiceTesting]=useState(false);
   const voiceImported=useRef(false);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
@@ -166,6 +168,37 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     try{await saveVoicePack(mp3);setNarrationNotice('นำเข้าเสียงพากย์ครบ 15 ข้อแล้ว ใช้ซ้ำได้เมื่อเปิดเกมบนเครื่องนี้');}
     catch{setNarrationNotice('นำเข้าเสียงครบ 15 ข้อแล้ว แต่เบราว์เซอร์บันทึกถาวรไม่ได้ กรุณานำเข้าใหม่เมื่อเปิดเกมครั้งหน้า');}
     finally{setVoiceImporting(false);}
+  }
+
+  async function importVoiceSelection(chosen:File[]){
+    if(!chosen.length)return;
+    if(chosen.length!==1||!chosen[0].name.toLowerCase().endsWith('.zip')){
+      await importVoicePack(chosen);
+      return;
+    }
+    setVoiceImporting(true);
+    setNarrationNotice('กำลังแตก ZIP และตรวจเสียงพากย์ 15 ข้อ…');
+    try{
+      const extracted=await unpackQuizVoiceZip(chosen[0]) as File[];
+      await importVoicePack(extracted);
+    }catch(cause){
+      setNarrationNotice(cause instanceof Error?cause.message:'อ่าน ZIP ไม่ได้ กรุณาลองอีกครั้ง');
+    }finally{setVoiceImporting(false);}
+  }
+  function testRecordedVoice(){
+    if(!voiceReady||!voiceUrls.current[0]){
+      setNarrationNotice('ยังไม่ได้ติดตั้งเสียงโจทย์ กรุณาเลือก ZIP เสียงพากย์ 15 ข้อก่อน');
+      return;
+    }
+    stopNarration();
+    setNarrationNotice('กำลังทดสอบเสียงข้อ 1 · หากไม่ได้ยิน ให้ตรวจระดับเสียงลำโพงและแท็บเบราว์เซอร์');
+    const player=new Audio(voiceUrls.current[0]);
+    player.volume=1;player.preload='auto';
+    player.onplaying=()=>{setVoiceTesting(true);setNarrationBusy(true);};
+    player.onended=()=>{setVoiceTesting(false);setNarrationBusy(false);voiceTrack.current=null;setNarrationNotice('ทดสอบเสียง Q01 สำเร็จ ✓ เสียงพร้อมเริ่มเกม');};
+    player.onerror=()=>{setVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('ไฟล์ Q01 เล่นไม่ได้ กรุณานำเข้า ZIP ใหม่');};
+    voiceTrack.current=player;
+    void player.play().catch(()=>{setVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('เปิดเสียงไม่สำเร็จ ตรวจว่าปิดเสียงแท็บหรือลำโพงไว้หรือไม่ แล้วกดทดสอบอีกครั้ง');});
   }
 
   const beep=useCallback((frequency=550,duration=.09)=>{
@@ -404,12 +437,13 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     <header className="topbar">
       <div className="brand"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></div>
       <div className="preferences">
-        {role==='host'&&<label className={'icon-button voice-pack-import '+(voiceReady?'ready':'')} title="นำเข้าเสียงจริง Q01 ถึง Q15 จาก ZIP ที่แตกไฟล์แล้ว">
-          <input type="file" accept=".mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoicePack(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>
-          {voiceImporting?'กำลังนำเข้าเสียง…':voiceReady?'🎙 เสียงพากย์ 15 ข้อพร้อม ✓':'🎙 นำเข้าเสียง 15 ข้อ'}
+        {role==='host'&&<label className={'icon-button voice-pack-import '+(voiceReady?'ready':'')} title="เลือก ZIP เสียงพากย์ได้โดยตรง หรือเลือก MP3 ทั้ง 15 ไฟล์">
+          <input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>
+          {voiceImporting?'กำลังติดตั้งเสียง…':voiceReady?'🎙 เสียงโจทย์พร้อม ✓':'🎙 ใส่ ZIP เสียงโจทย์'}
         </label>}
+        {role==='host'&&voiceReady&&<button type="button" className="icon-button voice-test-header" onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังทดสอบ…':'▶ ทดสอบเสียง'}</button>}
         {role==='host'&&<button className="icon-button fullscreen-toggle" type="button" aria-pressed={projectorFullscreen} onClick={()=>void toggleProjectorFullscreen()}>{projectorFullscreen?'↙ ออกจากเต็มจอ':'⛶ เต็มจอโปรเจคเตอร์'}</button>}
-        <button className="icon-button" type="button" aria-label={sound?'ปิดเสียง':'เปิดเสียง'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เสียงเปิด':'♪ เสียงปิด'}</button>
+        <button className="icon-button" type="button" aria-label={sound?'ปิดเสียงเอฟเฟกต์':'เปิดเสียงเอฟเฟกต์'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เอฟเฟกต์เปิด':'♪ เอฟเฟกต์ปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
       </div>
     </header>
@@ -452,7 +486,12 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     </section>)}
     {session&&snapshot&&snapshot.room.phase==='lobby'&&<section className={'lobby '+(isHost?'host-lobby':'player-lobby')}>
       <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'ประเมินความเข้าใจ AI':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>{isHost&&<><p className="showcase-subtitle">เกมประเมินความเข้าใจ AI แบบตอบไว · เล่นพร้อมกันบนมือถือ</p><div className="stage-stat-line" aria-label="กติกาเกม"><span>◆ 15 คำถาม</span><span>◷ ฟังจบแล้วตอบ 25 วินาที</span><span>★ ตอบถูก 1 คะแนน</span></div></>}
-        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน →</button></>
+        {isHost&&<div className={'voice-setup-panel '+(voiceReady?'ready':'need-voice')} role="group" aria-label="ตั้งค่าเสียงอ่านโจทย์">
+          <div className="voice-setup-copy"><strong>{voiceReady?'🎙 เสียงอ่านโจทย์พร้อมใช้งาน':'🔈 ยังไม่มีเสียงอ่านโจทย์'}</strong><span>{voiceReady?'ติดตั้งครบ 15 ข้อแล้ว เริ่มเกมจะเล่นเสียงให้อัตโนมัติ':'กดนำเข้า ZIP เสียงพากย์ไฟล์เดียว จากนั้นกดทดลองฟัง'}</span></div>
+          <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{voiceImporting?'กำลังติดตั้ง…':voiceReady?'เปลี่ยนชุดเสียง ZIP':'🎙 เลือก ZIP เสียงโจทย์'}</label>
+          <button type="button" className="voice-setup-test" disabled={!voiceReady||voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองฟังข้อ 1'}</button>
+        </div>}
+        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'(ไม่มีเสียงโจทย์)'} →</button></>
         :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
           <h2>แก้ไขตัวละครและชื่อ</h2>
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
