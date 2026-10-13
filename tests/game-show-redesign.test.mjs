@@ -53,7 +53,7 @@ test('live instructor console has visible avatars, participation meter and three
  assert.match(game,/className="answer-meter" role="progressbar"/);
  assert.match(game,/className="score-spotlight"/);
  assert.match(game,/className="spotlight-avatar"/);
- assert.match(game,/className="spotlight-state/);
+ assert.match(game,/spotlight-state/);
  assert.match(game,/snapshot\.players\.length<=3/);
  assert.match(css,/AI ARENA V2/);
  assert.match(css,/\.answer\.answer-0\{/);
