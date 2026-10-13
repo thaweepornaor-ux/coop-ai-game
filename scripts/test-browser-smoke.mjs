@@ -282,11 +282,11 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
           }));
         });
         await page.reload({waitUntil:'domcontentloaded'});
-        await page.getByRole('button',{name:'เริ่มเกมใหม่',exact:true}).waitFor({timeout:15000});
-        await page.getByRole('button',{name:'เริ่มเกมใหม่',exact:true}).click();
         await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
         assert.notEqual((await page.locator('.room-code').textContent()).trim(),'ZZZZZZ');
-        row.checks.push({expiredInstructorRecovered:true});
+        assert.equal(await page.locator('.host-lobby .roster-panel .mini-player').count(),0,
+          'Expired saved instructor credential must recover to a brand-new empty class automatically');
+        row.checks.push({expiredInstructorRecoveredAutomatically:true});
       }
     }
     await stage('player-entry-hydration');
