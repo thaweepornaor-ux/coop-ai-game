@@ -310,7 +310,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         const response=await fetch('/api/game?room='+encodeURIComponent(session!.room),{headers:{Authorization:'Bearer '+session!.token},cache:'no-store',signal:request.signal});
         const data=await response.json() as ApiResponse;
         if(disposed||thisGeneration!==generation.current)return;
-        if(!response.ok){if(response.status===401||response.status===404){setError(session!.role==='host'?'การเชื่อมต่อเกมเดิมหมดอายุ กด “เริ่มเกมใหม่” เพื่อแสดง QR Code ใหม่ครับ':'ไม่สามารถกลับเข้าเกมนี้ได้ กรุณาสแกน QR Code ของผู้สอนอีกครั้งครับ');setShowRecovery(true)}throw new Error(data.error||'เชื่อมต่อไม่ได้')}
+        if(!response.ok){if(response.status===401||response.status===404){
+          // Another host opened a fresh class and retired this room.
+          // NEVER keep the prior students' pictures or scoreboard on screen.
+          snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
+          setError(session!.role==='host'
+            ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
+            :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
+          setShowRecovery(true);
+        }throw new Error(data.error||'เชื่อมต่อไม่ได้')}
         const state=(data.snapshot||data) as Snapshot;acceptState(state,started,Date.now());
       }catch{if(!disposed)setNetwork('offline')}
       finally{window.clearTimeout(timeout);if(!disposed)tick=window.setTimeout(poll,850)}
