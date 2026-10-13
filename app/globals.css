@@ -288,3 +288,17 @@ html,body{max-width:100%;overflow-x:clip}
  .scoreboard-heading{align-items:stretch}
  .export-results{width:100%}
 }
+
+
+/* Connectivity should be unmistakable during a timed classroom assessment. */
+.connection.offline{background:#fff1d8;color:#814a12;border:1px solid #f1cf8f;font-weight:800}
+.connection.offline i{background:#d77b20;width:10px;height:10px;flex:none}
+.connection.connecting{background:#eaf0f8;color:#4a6179;border:1px solid #d5e3f2}
+.connection button{margin-left:auto;min-height:35px;padding:4px 12px;border:1px solid #bb8b51;border-radius:9px;background:#fff7e9;font-weight:800}
+@media(min-width:1100px){
+ :fullscreen .question-card h1{font-size:clamp(2rem,2.9vw,3.2rem);line-height:1.45}
+ :fullscreen .question-card .answer{font-size:clamp(1.2rem,1.6vw,1.7rem);min-height:92px}
+ :fullscreen .question-roster{font-size:1.05rem}
+ :fullscreen .host-score-count{font-size:.95rem}
+ :fullscreen .simple-join-ticket .qr{max-width:390px}
+}
