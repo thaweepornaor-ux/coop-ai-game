@@ -897,10 +897,10 @@ body::before{
 }
 @media(min-width:901px) and (max-height:790px){
   .game-shell .host-question:not(.reveal-mode) .question-card>h1{
-    font-size:clamp(1.45rem,1.85vw,2.26rem);
-    line-height:1.21;margin:3px 0 7px
+    font-size:clamp(1.84rem,2.1vw,2.4rem);
+    line-height:1.2;margin:3px 0 7px
   }
-  .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{font-size:1.25rem}
+  .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{font-size:1.46rem}
   .game-shell .host-question:not(.reveal-mode) .answer{
     font-size:clamp(1.06rem,1.33vw,1.52rem);line-height:1.2
   }
