@@ -77,7 +77,7 @@ test('25-player presenter switches to compact no-scroll grid without changing th
 });
 
 test('Presenter plays each real MP3 and only the revealed explanation uses TTS',()=>{
- assert.match(game,/new Audio\\(voiceUrls\\.current\\[/);
+ assert.ok(game.includes("new Audio(voiceUrls.current["));
  assert.match(game,/voiceTrack=useRef<HTMLAudioElement\|null>/);
  assert.match(game,/track\.onplaying/);
  assert.match(game,/track\.onended/);
