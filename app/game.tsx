@@ -25,6 +25,42 @@ const levelFeedback=(n:number)=>n<=5?'เริ่มจากงานร่า
 const safeRead=(key:string)=>{try{return localStorage.getItem(key)}catch{return null}};
 const safeWrite=(key:string,value:string)=>{try{localStorage.setItem(key,value)}catch{}};
 const sessionKey=(role:Role)=>'coop-ai-game-session-'+role;
+const VOICE_TRACKS=15;
+function openVoiceStorage():Promise<IDBDatabase>{
+ return new Promise((resolve,reject)=>{
+   if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB not available'));return;}
+   const req=indexedDB.open('coop-ai-quiz-recorded-voice',1);
+   req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks');};
+   req.onerror=()=>reject(req.error);
+   req.onsuccess=()=>resolve(req.result);
+ });
+}
+async function saveVoicePack(tracks:File[]):Promise<void>{
+ const db=await openVoiceStorage();
+ try{
+  await new Promise<void>((resolve,reject)=>{
+   const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks');
+   tracks.forEach((file,index)=>store.put(file,'Q'+String(index+1).padStart(2,'0')+'.mp3'));
+   tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ }finally{db.close();}
+}
+async function loadVoicePack():Promise<(Blob|null)[]>{
+ const db=await openVoiceStorage();
+ try{
+  return await new Promise((resolve,reject)=>{
+   const tx=db.transaction('tracks','readonly'),store=tx.objectStore('tracks');
+   const tracks:(Blob|null)[]=Array(VOICE_TRACKS).fill(null);
+   for(let i=0;i<VOICE_TRACKS;i++){
+    const req=store.get('Q'+String(i+1).padStart(2,'0')+'.mp3');
+    req.onsuccess=()=>{tracks[i]=req.result instanceof Blob?req.result:null;};
+   }
+   tx.oncomplete=()=>resolve(tracks);
+   tx.onerror=()=>reject(tx.error);
+  });
+ }finally{db.close();}
+}
+
 
 function ArenaLights({celebrate=false}:{celebrate?:boolean}) {
  return <div className="arena-lighting" aria-hidden="true"><div className="spotlight spotlight-left"/><div className="spotlight spotlight-right"/><div className="arena-grid"/><div className="studio-sparkles">{Array.from({length:14},(_,i)=><i className="studio-sparkle" key={i} style={{left:((i*37+7)%94+3)+'%',top:((i*53+11)%88+6)+'%',width:(4+i%3*2)+'px',height:(4+i%3*2)+'px',animationDelay:-(i*.7)+'s',animationDuration:(4.8+i%5*1.2)+'s'}}/>)}</div>{celebrate&&<div className="confetti-burst">{Array.from({length:16},(_,i)=><i key={i} style={{left:(8+i*6)+'%',animationDelay:(i%4)*.15+'s',background:i%3===0?'#cbe997':i%3===1?'#46dbb5':'#e7c46a'}}/>)}</div>}</div>;
@@ -42,6 +78,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [narrationEnabled,setNarrationEnabled]=useState(initialRole==='host'),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
   const narrationKey=useRef('');
   const voiceTrack=useRef<HTMLAudioElement|null>(null);
+  const voiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
+  const [voiceReady,setVoiceReady]=useState(false),[voiceImporting,setVoiceImporting]=useState(false);
+  const voiceImported=useRef(false);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
@@ -64,13 +103,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     // The instructor START/NEXT click unlocks playback synchronously;
     // receiving the server snapshot must not play this file a second time.
     const playingNumber=state.room.questionIndex+1;
-    if(mode==='question'&&voiceTrack.current?.src.endsWith('/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3')&&!voiceTrack.current.paused)return true;
+    const wantedSource=voiceUrls.current[playingNumber-1]||'/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3';
+    if(mode==='question'&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href&&!voiceTrack.current.paused)return true;
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
     if(mode==='question'){
       const qnum=state.room.questionIndex+1;
-      const track=new Audio('/voice/Q'+String(qnum).padStart(2,'0')+'.mp3');
+      const track=new Audio(voiceUrls.current[qnum-1]||'/voice/Q'+String(qnum).padStart(2,'0')+'.mp3');
       track.preload='auto';track.volume=1;
       track.onplaying=()=>setNarrationBusy(true);
       track.onended=()=>{setNarrationBusy(false);voiceTrack.current=null;};
@@ -92,6 +132,41 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     window.speechSynthesis.speak(utterance);
     return true;
   },[]);
+
+
+  useEffect(()=>{
+    if(role!=='host')return;
+    let cancelled=false;
+    void loadVoicePack().then(files=>{
+      if(cancelled||voiceImported.current||files.some(x=>!x))return;
+      voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)});
+      voiceUrls.current=files.map(file=>URL.createObjectURL(file!));
+      setVoiceReady(true);
+    }).catch(()=>{});
+    return ()=>{cancelled=true;};
+  },[role]);
+  useEffect(()=>()=>{voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)})},[]);
+  async function importVoicePack(files:File[]){
+    const matched=new Map(files.map(file=>[file.name.toUpperCase(),file]));
+    const ordered=Array.from({length:VOICE_TRACKS},(_,i)=>matched.get('Q'+String(i+1).padStart(2,'0')+'.MP3'));
+    if(ordered.some(file=>!file)){
+      setNarrationNotice('กรุณาเลือกไฟล์ MP3 ครบ Q01.mp3 ถึง Q15.mp3 หลังแตก ZIP แล้ว');
+      return;
+    }
+    const mp3=ordered as File[];
+    if(mp3.some(file=>file.size<1000||file.size>15_000_000)){
+      setNarrationNotice('พบไฟล์เสียงที่ไม่ถูกต้อง กรุณาตรวจสอบไฟล์ MP3');return;
+    }
+    setVoiceImporting(true);setNarrationNotice('');
+    voiceImported.current=true;
+    if(voiceTrack.current)voiceTrack.current.pause();
+    voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)});
+    voiceUrls.current=mp3.map(file=>URL.createObjectURL(file));
+    setVoiceReady(true);setNarrationEnabled(true);
+    try{await saveVoicePack(mp3);setNarrationNotice('นำเข้าเสียงพากย์ครบ 15 ข้อแล้ว ใช้ซ้ำได้เมื่อเปิดเกมบนเครื่องนี้');}
+    catch{setNarrationNotice('นำเข้าเสียงครบ 15 ข้อแล้ว แต่เบราว์เซอร์บันทึกถาวรไม่ได้ กรุณานำเข้าใหม่เมื่อเปิดเกมครั้งหน้า');}
+    finally{setVoiceImporting(false);}
+  }
 
   const beep=useCallback((frequency=550,duration=.09)=>{
     if(!sound||!audio.current||audio.current.state!=='running')return;
@@ -206,7 +281,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       const nextNumber=action==='start'?1:(snapshotRef.current?.room.questionIndex??0)+2;
       if(nextNumber>=1&&nextNumber<=15){
         if(voiceTrack.current)voiceTrack.current.pause();
-        const recording=new Audio('/voice/Q'+String(nextNumber).padStart(2,'0')+'.mp3');
+        const recording=new Audio(voiceUrls.current[nextNumber-1]||'/voice/Q'+String(nextNumber).padStart(2,'0')+'.mp3');
         recording.preload='auto';
         recording.onplaying=()=>setNarrationBusy(true);
         recording.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===recording)voiceTrack.current=null;};
@@ -328,6 +403,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     <header className="topbar">
       <div className="brand"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></div>
       <div className="preferences">
+        {role==='host'&&<label className={'icon-button voice-pack-import '+(voiceReady?'ready':'')} title="นำเข้าเสียงจริง Q01 ถึง Q15 จาก ZIP ที่แตกไฟล์แล้ว">
+          <input type="file" accept=".mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoicePack(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>
+          {voiceImporting?'กำลังนำเข้าเสียง…':voiceReady?'🎙 เสียงพากย์ 15 ข้อพร้อม ✓':'🎙 นำเข้าเสียง 15 ข้อ'}
+        </label>}
         {role==='host'&&<button className="icon-button fullscreen-toggle" type="button" aria-pressed={projectorFullscreen} onClick={()=>void toggleProjectorFullscreen()}>{projectorFullscreen?'↙ ออกจากเต็มจอ':'⛶ เต็มจอโปรเจคเตอร์'}</button>}
         <button className="icon-button" type="button" aria-label={sound?'ปิดเสียง':'เปิดเสียง'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เสียงเปิด':'♪ เสียงปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
