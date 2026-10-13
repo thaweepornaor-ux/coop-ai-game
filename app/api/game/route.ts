@@ -117,7 +117,7 @@ async function readState(db: Database, code: string): Promise<StoredState> {
       WHERE r.code = ? ORDER BY a.question_index, a.player_id`).bind(code),
   ]);
   const row = queries[0].results[0] as unknown as RoomRow | undefined;
-  if (!row) throw new GameError("ROOM_NOT_FOUND", "ไม่พบห้องเกมนี้ ตรวจรหัสห้องอีกครั้งครับ", 404);
+  if (!row) throw new GameError("ROOM_NOT_FOUND", "QR Code นี้หมดอายุแล้ว กรุณาขอให้ผู้สอนแสดง QR Code ใหม่ครับ", 404);
   const playerRows = queries[1].results as unknown as PlayerRow[];
   const answerRows = queries[2].results as unknown as AnswerRow[];
   return {
@@ -200,7 +200,7 @@ async function joinRoom(db: Database, body: Record<string, unknown>): Promise<Re
   const inserted = await db.prepare(`INSERT INTO players (id, room_code, token_hash, name, avatar_json, created_at)
     SELECT ?, code, ?, ?, ?, ${SQL_NOW} FROM rooms WHERE code = ? AND created_at > ${SQL_NOW}-86400000 AND (SELECT COUNT(*) FROM players WHERE room_code = ?) < 300`)
     .bind(id, tokenHash, name, JSON.stringify(avatar), code, code).run();
-  if ((inserted.meta.changes ?? 0) !== 1) throw new GameError("ROOM_NOT_FOUND", "ไม่พบห้องเกมนี้ ตรวจรหัสห้องอีกครั้งครับ", 404);
+  if ((inserted.meta.changes ?? 0) !== 1) throw new GameError("ROOM_NOT_FOUND", "QR Code นี้หมดอายุแล้ว กรุณาขอให้ผู้สอนแสดง QR Code ใหม่ครับ", 404);
   const { state, caller } = await authenticatedState(db, code, tokenHash);
   return json({ roomCode: code, token, role: "player", playerId: id, snapshot: snapshot(state, caller) }, 201);
 }
