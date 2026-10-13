@@ -37,6 +37,12 @@ async function install(){
     hashes.push(name+':'+hash.slice(0,12));
   }
   const size=(await stat(archive)).size;
+  await writeFile(resolve(root,'manifest.json'),JSON.stringify({
+    source:'official-user-recordings-2026-10-13',
+    questionCount:15,
+    names:Array.from({length:15},(_,i)=>'Q'+String(i+1).padStart(2,'0')+'.mp3'),
+    hashes,
+  },null,2));
   console.log('Installed 15 ORIGINAL voice tracks from '+size+' byte archive; '+hashes.join(' '));
 }
 await install();
