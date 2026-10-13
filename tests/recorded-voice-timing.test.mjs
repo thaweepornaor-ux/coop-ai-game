@@ -30,3 +30,15 @@ test('Presenter uses real MP3 for questions while revealing answers separately',
  assert.match(game,/track.onerror=/);
  assert.match(game,/SpeechSynthesisUtterance/);
 });
+
+test('Instructor can load and retain a complete local MP3 voice pack without a server binary dependency',()=>{
+ assert.match(game,/indexedDB\.open\('coop-ai-quiz-recorded-voice',1\)/);
+ assert.match(game,/saveVoicePack\(mp3\)/);
+ assert.match(game,/loadVoicePack\(\)/);
+ assert.match(game,/voiceUrls\.current=mp3\.map\(file=>URL\.createObjectURL\(file\)\)/);
+ assert.match(game,/role==='host'&&<label className=/);
+ assert.match(game,/Q01\.mp3 ถึง Q15\.mp3/);
+ assert.match(game,/voiceReady&&narrationEnabled/);
+ assert.match(game,/recordedNarration:voiceReady&&narrationEnabled/);
+ assert.match(route,/body\.recordedNarration===true\?answerWindowMs\(plan.questionIndex\):QUESTION_SECONDS\*1000/);
+});
