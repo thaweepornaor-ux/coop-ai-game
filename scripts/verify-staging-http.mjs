@@ -70,7 +70,7 @@ if(!voiceIndex.ok)throw new Error('STAGING VOICE FAIL: 15-track manifest missing
 const voiceManifest=await voiceIndex.json();
 if(voiceManifest.source!=='official-user-recordings-2026-10-13'||voiceManifest.questionCount!==15||voiceManifest.names?.length!==15)throw new Error('STAGING VOICE FAIL: wrong or incomplete recording pack');
 for(const name of voiceManifest.names){
- if(!/^Q(0[1-9]|1[0-5])\\.mp3$/.test(name))throw new Error('STAGING VOICE FAIL: illegal filename '+name);
+ if(!/^Q(0[1-9]|1[0-5])[.]mp3$/.test(name))throw new Error('STAGING VOICE FAIL: illegal filename '+name);
  const response=await fetch(new URL('/voice/'+name,base),{method:'GET',signal:AbortSignal.timeout(12000),redirect:'error'});
  if(!response.ok)throw new Error('STAGING VOICE FAIL '+name+': HTTP '+response.status);
  const bytes=new Uint8Array(await response.arrayBuffer());
