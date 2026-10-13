@@ -43,10 +43,11 @@ test('quiz and mobile phases have distinct graphics and full motion accessibilit
   }
 });
 
-test('25-avatar result board never hides names during its entrance motion',()=>{
-  assert.match(css,/@keyframes cast-reveal-readable\\s*\\{[\\s\\S]*?from\\{opacity:1;/);
-  assert.match(css,/\\.game-shell\\.motion-on \\.host-question\\.reveal-mode \\.reveal-person\\{/);
-  assert.match(css,/\\.reveal-person\\.unanswered\\{/);
-  assert.match(css,/\\.reveal-details strong\\{/);
-  assert.match(css,/\\.reveal-details small\\{/);
+test('25-avatar result board never hides names during entrance',()=>{
+  for(const token of [
+    '@keyframes cast-reveal-readable','from{opacity:1;transform:scale(.985)}',
+    '.game-shell.motion-on .host-question.reveal-mode .reveal-person',
+    '.game-shell .host-question.reveal-mode .reveal-person.unanswered',
+    '.reveal-details strong','.reveal-details small',
+  ]) assert.ok(css.includes(token),'Missing readable reveal safeguard: '+token);
 });
