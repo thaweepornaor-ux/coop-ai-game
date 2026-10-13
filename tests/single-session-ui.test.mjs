@@ -32,7 +32,7 @@ test('face picker offers ten male and ten female images and writes the selected 
 test('name, QR and legacy scoring are preserved under the simpler flow',()=>{
  assert.match(game,/name:playerName,avatar/);
  assert.match(game,/send\('reveal'\)/);
- assert.match(game,/timer\/15/);
+ assert.match(game,/timer\/25/);
  assert.match(game,/snapshot\.leaderboard/);
  assert.match(layout,/ประเมินความเข้าใจ AI/);
 });
