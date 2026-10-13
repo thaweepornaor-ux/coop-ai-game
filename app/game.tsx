@@ -291,7 +291,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอผู้เรียนสแกน QR Code ครับ</p>}</div>
     </section>}
 
-    {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')}>
+    {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')}>
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
         <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span><div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/15)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':timer<=5?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':timer}</span><small>{reveal?'เฉลย':'วินาที'}</small></div></div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
@@ -308,7 +308,22 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         {reveal&&isHost&&<div className="host-controls"><span>อ่านเฉลยและคุยทบทวนได้เต็มที่</span><button className="button primary" disabled={!canInteract} onClick={()=>void send(snapshot.room.questionIndex===14?'finish':'next')}>{snapshot.room.questionIndex===14?'ดูสรุปคะแนน 🏆':'เริ่มข้อถัดไป →'}</button></div>}
       </div>
       {isHost&&<aside className="card question-roster"><h2>{reveal?'ผลคำตอบข้อนี้':'คะแนนสะสม'} {!reveal&&<span className="host-score-count">ส่งคำตอบแล้ว {answered} / {snapshot.players.length}</span>}</h2>
-        {reveal?<div className="reveal-groups">{(['correct','incorrect','unanswered'] as const).map(status=><div className={'result-group '+status} key={status}><h3>{status==='correct'?'✓ ตอบถูก':status==='incorrect'?'↻ ตอบผิด':'— ไม่ได้ตอบ'} <span>{snapshot.results?.filter(r=>r.status===status).length||0} คน</span></h3>{snapshot.results?.filter(r=>r.status===status).map(r=><div className="result-person" key={r.playerId}><Avatar options={r.avatar}/><span>{r.name}<small>{r.choice==null?'ไม่ได้เลือก':('เลือก '+letters[r.choice])}</small></span><strong>{r.score} คะแนน</strong></div>)}</div>)}</div>
+        {reveal?<div className="reveal-board">
+          <div className="reveal-summary" aria-label="จำนวนผู้เรียนในแต่ละผลคำตอบ">
+            <span className="summary-correct">✓ ตอบถูก <b>{snapshot.results?.filter(r=>r.status==='correct').length||0}</b></span>
+            <span className="summary-incorrect">✕ ตอบผิด <b>{snapshot.results?.filter(r=>r.status==='incorrect').length||0}</b></span>
+            <span className="summary-unanswered">– ไม่ได้ตอบ <b>{snapshot.results?.filter(r=>r.status==='unanswered').length||0}</b></span>
+            <span className="summary-total">ทั้งหมด {snapshot.results?.length||0} คน</span>
+          </div>
+          <div className="reveal-tiles" role="list" aria-label="ผลคำตอบผู้เรียนทั้งหมด">
+            {([...snapshot.results||[]].sort((a,b)=>({correct:0,incorrect:1,unanswered:2}[a.status]-{correct:0,incorrect:1,unanswered:2}[b.status]))).map(r=>
+              <div className={'reveal-person '+r.status} role="listitem" key={r.playerId} title={r.name+' · '+(r.status==='correct'?'ตอบถูก':r.status==='incorrect'?'ตอบผิด':'ไม่ได้ตอบ')}>
+                <div className="reveal-avatar"><Avatar options={r.avatar} motion={motion}/></div>
+                <div className="reveal-details"><strong>{r.name}</strong><small>{r.status==='correct'?'✓ ตอบถูก':r.status==='incorrect'?'✕ ตอบผิด':'– ไม่ได้ตอบ'} {r.choice==null?'':' · '+letters[r.choice]}</small></div>
+                <b className="reveal-points">{r.score}<span>/15</span></b>
+              </div>)}
+          </div>
+        </div>
         :<div className="roster host-scored-roster">{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</small></div>)}</div>}
       </aside>}
     </section>}
