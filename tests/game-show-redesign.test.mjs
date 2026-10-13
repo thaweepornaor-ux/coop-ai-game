@@ -31,3 +31,19 @@ test('all 25 learner result pictures are compact and available in the projector 
  assert.match(css,/grid-template-rows:repeat\(5,minmax\(0,1fr\)\)/);
  assert.match(css,/\.session-footer\{display:none\}/);
 });
+
+test('showtime projector keeps its countdown outside the question and protects long Thai text',()=>{
+ assert.match(game,/const countdownNode=/);
+ assert.match(game,/!isHost&&countdownNode/);
+ assert.match(game,/className="projector-timer-wrap"/);
+ assert.match(game,/className=\{'question-layout '/);
+ assert.match(game,/denseQuestion=questionLength>115\|\|longestOption>90/);
+ assert.match(css,/PROJECTOR FIT \+ COLORWAVE/);
+ assert.match(css,/grid-template-rows:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/\.host-question\.dense-question:not\(\.reveal-mode\)/);
+ assert.match(css,/\.answer\.answer-0/);
+ assert.match(css,/\.answer\.answer-1/);
+ assert.match(css,/\.answer\.answer-2/);
+ assert.match(css,/arena-light-sweep/);
+ assert.match(css,/motion-off \.host-question/);
+});
