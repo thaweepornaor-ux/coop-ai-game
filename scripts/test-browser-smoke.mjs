@@ -348,11 +348,32 @@ async function realRoom(browser, browserName) {
     const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
     const playerContext = await createContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
     const host = await createPage(hostContext); const player = await createPage(playerContext);
+    await host.addInitScript(()=>{
+      // Stand in for OS speech drivers (CI runners do not have Thai speakers).
+      // Verify that the actual app invokes the Thai voice synthesizer.
+      window.__narrationProof=[];
+      Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
+        cancel(){},getVoices(){return [];},
+        speak(utterance){
+          window.__narrationProof.push({text:utterance.text,lang:utterance.lang});
+          setTimeout(()=>utterance.onstart?.(),0);
+          setTimeout(()=>utterance.onend?.(),20);
+        }
+      }});
+    });
     await stage('host-create-real-room');
     await host.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
     await host.locator('.host-lobby .qr img').waitFor({timeout:20000}); await online(host);
     assert.equal(await host.locator('header .brand').evaluate(el=>el.tagName),'DIV','Header must not navigate away from a live game');
     assert.equal(await host.getByRole('button',{name:/เต็มจอโปรเจคเตอร์/}).count(),1,'Instructor has a projector full-screen control');
+    // Even with NO ZIP installed, the trainer should be able to test and use
+    // Thai narration. The header FX mute is not the voice-read control.
+    await host.getByRole('button',{name:/ทดลองเสียงอ่าน/}).first().click();
+    await host.waitForFunction(()=>window.__narrationProof?.some(x=>x.text.includes('ทดสอบเสียงภาษาไทย')),{},{timeout:10000});
+    assert.equal(await host.locator('.voice-setup-panel').count(),1);
+    assert.equal(await host.locator('.voice-setup-test:disabled').count(),0);
+    row.checks.push('A new teacher can test Thai spoken narration immediately WITHOUT uploading a ZIP');
+
     const room = (await host.locator('.room-code').textContent()).trim(); assert.match(room, /^[A-Z0-9]{6}$/);
     await host.getByRole('img', { name: 'QR สำหรับผู้เล่นเข้าห้อง', exact: true }).waitFor();
     const urlInput = host.getByLabel('ลิงก์ผู้เล่น', { exact: true });
@@ -407,6 +428,9 @@ async function realRoom(browser, browserName) {
     assert.equal(persisted.presetId,'F03'); assert.equal(persisted.bodyStyle,'female'); row.checks.push('Edited name and wardrobe survive reload under the same player token');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
     await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
+    await host.waitForFunction(()=>window.__narrationProof?.some(x=>x.text.includes('คำถามข้อที่ 1.')),{},{timeout:15000});
+    row.checks.push('Start Game speaks the full Q01 and three options in Thai, without importing a voice pack');
+
     let expectedScore = 0;
     for (let number = 1; number <= 15; number++) {
       await stage('question-' + number);
