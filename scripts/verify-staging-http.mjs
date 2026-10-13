@@ -63,4 +63,18 @@ for(const route of routes){
  }
  if(!passed){console.error('STAGING HTTP FAIL '+route+': '+last);process.exit(1);}
 }
-console.log('Staging HTTP smoke passed for all four game routes.');
+// Verify the teacher's actual recorded audio has been published as first-party
+// media assets, not just a UI claiming the voice pack is ready.
+const voiceIndex=await fetch(new URL('/voice/manifest.json',base),{signal:AbortSignal.timeout(12000),redirect:'error'});
+if(!voiceIndex.ok)throw new Error('STAGING VOICE FAIL: 15-track manifest missing (HTTP '+voiceIndex.status+')');
+const voiceManifest=await voiceIndex.json();
+if(voiceManifest.source!=='official-user-recordings-2026-10-13'||voiceManifest.questionCount!==15||voiceManifest.names?.length!==15)throw new Error('STAGING VOICE FAIL: wrong or incomplete recording pack');
+for(const name of voiceManifest.names){
+ if(!/^Q(0[1-9]|1[0-5])\\.mp3$/.test(name))throw new Error('STAGING VOICE FAIL: illegal filename '+name);
+ const response=await fetch(new URL('/voice/'+name,base),{method:'GET',signal:AbortSignal.timeout(12000),redirect:'error'});
+ if(!response.ok)throw new Error('STAGING VOICE FAIL '+name+': HTTP '+response.status);
+ const bytes=new Uint8Array(await response.arrayBuffer());
+ if(bytes.length<50_000||!(bytes[0]===0x49&&bytes[1]===0x44&&bytes[2]===0x33)&&bytes[0]!==0xff)throw new Error('STAGING VOICE FAIL '+name+': invalid MP3 payload');
+ console.log('STAGING AUDIO PASS '+name+' '+bytes.length+' bytes');
+}
+console.log('Staging HTTP smoke and ALL 15 genuine recorded question audios passed.');
