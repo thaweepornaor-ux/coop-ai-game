@@ -695,7 +695,11 @@ async function realRoom(browser, browserName) {
     assert.equal(latest.status(),200);
     const latestRoom=await latest.json();
     assert.equal(latestRoom.players.length,0,'The new class database roster must be empty');
-    row.checks.push('Reopening the instructor in a new tab revokes old QR/students; refreshing the same tab safely resumes current class');
+    await host.waitForFunction(()=>document.querySelector('.host-lobby .roster-panel .mini-player')===null,
+      null,{timeout:12000});
+    assert.equal(await host.locator('.host-lobby .mini-player').count(),0,
+      'Previous instructor tab must remove stale player portraits when the new classroom retires its token');
+    row.checks.push('Reopening instructor in a new tab revokes QR/students and wipes stale old-tab roster; same-tab refresh safely resumes current class');
   });
 }
 
