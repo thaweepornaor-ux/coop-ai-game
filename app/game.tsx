@@ -161,7 +161,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             voiceImported.current=true;
             voiceUrls.current=index.names.map((name:string)=>'/voice/'+name);
             setVoiceReady(true);setNarrationEnabled(true);
-            setNarrationNotice('เสียงพากย์ต้นฉบับของคุณติดตั้งบนเว็บไซต์แล้ว ครบ 15 ข้อ ✓');
+            // The toolbar already confirms that all 15 recorded tracks are ready.
+            // Avoid a persistent toast stealing precious projector space during questions.
+            setNarrationNotice('');
             return;
           }
         }
