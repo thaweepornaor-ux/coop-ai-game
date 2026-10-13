@@ -207,7 +207,22 @@ async function newEmptyRoom(db: Database, state: StoredState, tokenHash: string,
          current.room.phase!==old.phase)throw new GameError("STALE_STATE","สถานะห้องเดิมเปลี่ยนไปแล้ว กรุณาลองใหม่",409);
       continue;
     }
-    if(deleted!==1)throw new GameError("STALE_STATE","เริ่มเกมใหม่ไม่สำเร็จ กรุณาลองใหม่",409);
+    if(deleted!==1){
+      // D1 may report zero affected rows for a cascade/batched DELETE.
+      // Inspect actual storage before treating it as a failed reset.
+      const remaining=await db.prepare("SELECT code FROM rooms WHERE code=?").bind(old.code).first();
+      if(remaining){
+        await db.prepare("DELETE FROM rooms WHERE code=? AND host_token_hash=?")
+          .bind(old.code,tokenHash).run();
+      }
+    }
+    const retired=await db.prepare("SELECT code FROM rooms WHERE code=?").bind(old.code).first();
+    if(retired){
+      await db.prepare("DELETE FROM rooms WHERE code=? AND host_token_hash=?").bind(newCode,newHash).run();
+      throw new GameError("STALE_STATE","ล้างห้องเก่าไม่สำเร็จ กรุณาลองใหม่",409);
+    }
+    const oldPlayers=await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code=?").bind(old.code).first<{count:number}>();
+    if(Number(oldPlayers?.count||0)!==0)throw new GameError("STALE_STATE","ข้อมูลผู้เล่นเก่ายังไม่ถูกล้าง กรุณาลองใหม่",409);
     const fresh=await readState(db,newCode);
     if(fresh.players.length!==0||fresh.room.phase!=="lobby")throw new GameError("ROOM_NOT_READY","ห้องใหม่ยังไม่พร้อม",503);
     return json({roomCode:newCode,token,role:"host",snapshot:snapshot(fresh,{role:"host"})},201);
