@@ -6,6 +6,7 @@ import { Avatar, AVATAR_OPTIONS } from './components/avatar';
 import { normalizeWardrobe } from '../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
 import { SimpleWardrobe } from './components/simple-wardrobe';
+import { scoreCsv } from '../shared/score-export.js';
 import { LOGO_SRC, COOPERATIVE_NAME } from '../shared/brand';
 
 type Role='choose'|'host'|'player';
@@ -36,6 +37,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [now,setNow]=useState(Date.now()),[qr,setQr]=useState(''),[joinUrl,setJoinUrl]=useState('');
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
   const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
+  const [projectorFullscreen,setProjectorFullscreen]=useState(false);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
@@ -137,6 +139,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
   },[timer,timeOpen,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,beep]);
   useEffect(()=>{setPendingChoice(null)},[snapshot?.room.roundId,snapshot?.room.questionIndex]);
+  useEffect(()=>{const sync=()=>setProjectorFullscreen(Boolean(document.fullscreenElement));document.addEventListener('fullscreenchange',sync);return()=>document.removeEventListener('fullscreenchange',sync)},[]);
   useEffect(()=>{if(snapshot&&snapshot.room.phase!=='lobby')setEditingProfile(false)},[snapshot?.room.phase]);
   async function send(action:string,extra:Record<string,unknown>={}){
     if(busyRef.current)return false;busyRef.current=true;unlockAudio();setBusy(true);setError('');
@@ -192,6 +195,25 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     leave();
     void send('create');
   }
+  async function toggleProjectorFullscreen(){
+    if(role!=='host')return;
+    try{
+      if(document.fullscreenElement)await document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+      else setError('เบราว์เซอร์นี้ไม่รองรับโหมดเต็มจอ กด F11 บนคอมพิวเตอร์แทนได้ครับ');
+    }catch{setError('เปิดเต็มจอไม่ได้ กด F11 บนคอมพิวเตอร์เพื่อขยายหน้าจอแทนได้ครับ')}
+  }
+  function downloadResults(){
+    if(!isHost||!finished||!snapshot?.leaderboard)return;
+    const blob=new Blob([scoreCsv(snapshot.leaderboard)],{type:'text/csv;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const anchor=document.createElement('a');
+    const date=new Date();
+    const datePart=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+    anchor.href=url;anchor.download='AI-Assessment-Results-'+datePart+'.csv';
+    document.body.appendChild(anchor);anchor.click();anchor.remove();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
   async function copyJoin(){
     try{await navigator.clipboard.writeText(joinUrl);setCopied(true);window.setTimeout(()=>setCopied(false),2000)}
     catch{setError('คัดลอกลิงก์ไม่ได้ แต่ผู้เรียนยังสแกน QR Code ได้ตามปกติครับ')}
@@ -211,8 +233,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
     <header className="topbar">
-      <a className="brand" href="/"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></a>
+      <div className="brand"><Image src={LOGO_SRC} width={58} height={61} sizes="58px" priority alt={'โลโก้ '+COOPERATIVE_NAME}/><span><small>{COOPERATIVE_NAME}</small><strong>ประเมินความเข้าใจ AI</strong></span></div>
       <div className="preferences">
+        {role==='host'&&<button className="icon-button fullscreen-toggle" type="button" aria-pressed={projectorFullscreen} onClick={()=>void toggleProjectorFullscreen()}>{projectorFullscreen?'↙ ออกจากเต็มจอ':'⛶ เต็มจอโปรเจคเตอร์'}</button>}
         <button className="icon-button" type="button" aria-label={sound?'ปิดเสียง':'เปิดเสียง'} aria-pressed={sound} onClick={()=>{unlockAudio();setSound(v=>{safeWrite('coop-ai-game-sound',v?'off':'on');return !v})}}>{sound?'♪ เสียงเปิด':'♪ เสียงปิด'}</button>
         <button className="icon-button" type="button" aria-label="เปิดหรือปิดการเคลื่อนไหว" aria-pressed={motion} onClick={()=>setMotion(v=>!v)}>{motion?'✦ เอฟเฟกต์เปิด':'✦ เอฟเฟกต์ปิด'}</button>
       </div>
@@ -295,11 +318,11 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         {!isHost&&own&&<div className="personal-finish"><Avatar options={own.avatar}/><div><h2>{own.name}</h2><strong className="big-score">{own.score}<small> / 15</small></strong><div className="level-badge">{level(own.score)}</div><p className="level-feedback">{levelFeedback(own.score)}</p></div></div>}
         {<div className="podium">{snapshot.leaderboard?.filter(p=>p.rank<=3).slice(0,3).map(p=><div className={'podium-person rank-'+p.rank} key={p.id}><span>{String(p.rank).padStart(2,'0')}</span><Avatar options={p.avatar}/><h2>{p.name}</h2><strong>{p.score} / 15</strong></div>)}</div>}
       </div>
-      <div className="card scoreboard"><h2>คะแนนทุกคน <span>{snapshot.players.length} คน</span></h2><div className="score-table" role="table" aria-label="คะแนนผู้เล่นทั้งหมด"><div className="score-row table-heading" role="row"><span>อันดับ</span><span>ผู้เล่น</span><span>คะแนน</span><span>ระดับ</span></div>{snapshot.leaderboard?.map(p=><div className={'score-row '+(p.id===snapshot.caller.playerId?'me':'')} role="row" key={p.id}><strong role="cell">{p.rank}</strong><span className="score-player" role="cell"><Avatar options={p.avatar}/><span><strong>{p.name}</strong><small>ถูก {p.correctCount} · ผิด {p.incorrectCount} · ไม่ตอบ {p.unansweredCount}</small></span></span><strong className="score-value" role="cell">{p.score}<small>/15</small></strong><span className="level-badge" role="cell">{level(p.score)}</span></div>)}</div>
+      <div className="card scoreboard"><div className="scoreboard-heading"><h2>คะแนนทุกคน <span>{snapshot.players.length} คน</span></h2>{isHost&&<button type="button" className="button secondary export-results" onClick={downloadResults}>↓ ดาวน์โหลดผลคะแนน CSV</button>}</div><div className="score-table" role="table" aria-label="คะแนนผู้เล่นทั้งหมด"><div className="score-row table-heading" role="row"><span>อันดับ</span><span>ผู้เล่น</span><span>คะแนน</span><span>ระดับ</span></div>{snapshot.leaderboard?.map(p=><div className={'score-row '+(p.id===snapshot.caller.playerId?'me':'')} role="row" key={p.id}><strong role="cell">{p.rank}</strong><span className="score-player" role="cell"><Avatar options={p.avatar}/><span><strong>{p.name}</strong><small>ถูก {p.correctCount} · ผิด {p.incorrectCount} · ไม่ตอบ {p.unansweredCount}</small></span></span><strong className="score-value" role="cell">{p.score}<small>/15</small></strong><span className="level-badge" role="cell">{level(p.score)}</span></div>)}</div>
         <p className="small-note">คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
+    {session&&isHost&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
     {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
   </main>;
