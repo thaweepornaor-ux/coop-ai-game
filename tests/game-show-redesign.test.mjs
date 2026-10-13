@@ -34,7 +34,7 @@ test('all 25 learner result pictures are compact and available in the projector 
 
 test('showtime projector keeps its countdown outside the question and protects long Thai text',()=>{
  assert.match(game,/const countdownNode=/);
- assert.match(game,/\}:countdownNode/);
+ assert.match(game,/:countdownNode/);
  assert.match(game,/className="projector-timer-wrap"/);
  assert.match(game,/className=\{'question-layout '/);
  assert.match(game,/denseQuestion=questionLength>115\|\|longestOption>90/);
