@@ -550,3 +550,22 @@ body::before{
    font-size:clamp(1.55rem,1.8vw,2.05rem)
  }
 }
+
+
+/* True five-row containment at 720p, even after the entry animation fully settles. */
+@media(min-width:901px) and (max-height:760px){
+ .game-shell .host-question.reveal-mode .question-card{padding:6px 14px;gap:3px}
+ .game-shell .host-question.reveal-mode .question-card>h1{font-size:clamp(1.05rem,1.32vw,1.45rem)}
+ .game-shell .host-question.reveal-mode .explanation{padding:6px 11px}
+ .game-shell .host-question.reveal-mode .question-roster{padding:7px 13px}
+ .game-shell .host-question.reveal-mode .question-roster>h2{margin-bottom:3px}
+ .game-shell .host-question.reveal-mode .reveal-board{gap:3px}
+ .game-shell .host-question.reveal-mode .reveal-summary>span{padding:2px 8px;font-size:.76rem}
+ .game-shell .host-question.reveal-mode .reveal-tiles{
+   gap:4px;padding-bottom:8px;min-height:0;box-sizing:border-box
+ }
+ .game-shell .host-question.reveal-mode .reveal-person{
+   height:100%;min-height:0;max-height:100%;padding:2px 5px
+ }
+ .game-shell .host-question.reveal-mode .reveal-avatar{max-height:50px}
+}
