@@ -75,7 +75,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
   const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
   const [projectorFullscreen,setProjectorFullscreen]=useState(false);
-  const [narrationEnabled,setNarrationEnabled]=useState(initialRole==='host'),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
+  const [narrationEnabled,setNarrationEnabled]=useState(false),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
   const narrationKey=useRef('');
   const voiceTrack=useRef<HTMLAudioElement|null>(null);
   const voiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
@@ -91,7 +91,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const isHost=session?.role==='host';
   const canInteract=network==='online'&&now-lastSync.current<4500&&!busy;
   // Q01–Q15 are the instructor's real ElevenLabs recordings.
-  // The server's deadline reserves the real track duration + a small buffer
+  // When the host imported an MP3 pack, the server reserves its duration + a buffer
   // before the full 25-second answer countdown begins.
   const stopNarration=useCallback(()=>{
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current.currentTime=0;voiceTrack.current=null;}
@@ -141,7 +141,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       if(cancelled||voiceImported.current||files.some(x=>!x))return;
       voiceUrls.current.forEach(url=>{if(url)URL.revokeObjectURL(url)});
       voiceUrls.current=files.map(file=>URL.createObjectURL(file!));
-      setVoiceReady(true);
+      setVoiceReady(true);setNarrationEnabled(true);
     }).catch(()=>{});
     return ()=>{cancelled=true;};
   },[role]);
@@ -294,7 +294,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const started=Date.now();const controller=new AbortController();const timeout=window.setTimeout(()=>controller.abort(),8000);
     try{
       const current=sessionRef.current;
-      const payload={action,...(current?{room:current.room,roundId:snapshot?.room.roundId,questionIndex:snapshot?.room.questionIndex}:{}),...extra};
+      const payload={action,...(current?{room:current.room,roundId:snapshot?.room.roundId,questionIndex:snapshot?.room.questionIndex}:{}),...((action==='start'||action==='next')?{recordedNarration:voiceReady&&narrationEnabled}:{}),...extra};
       const response=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(current?{Authorization:'Bearer '+current.token}:{})},body:JSON.stringify(payload),signal:controller.signal});
       const data=await response.json() as ApiResponse;
       if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return false;
@@ -386,6 +386,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const packedRoster=(snapshot?.players.length||0)>=12;
   function toggleNarration(){
     if(narrationEnabled){setNarrationEnabled(false);stopNarration();return;}
+    if(!voiceReady){setNarrationNotice('กรุณานำเข้า MP3 ให้ครบ 15 ข้อก่อนเปิดเสียงพากย์');return;}
     if(!snapshot)return;
     const currentMode=snapshot.room.phase==='reveal'?'reveal':'question';
     if(narrateSnapshot(snapshot,currentMode)){
