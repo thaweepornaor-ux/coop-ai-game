@@ -1333,3 +1333,63 @@ body::before{
 @media(max-width:700px){
   .game-shell .voice-pack-import{font-size:.72rem;padding:8px 10px;min-height:35px}
 }
+
+
+/* Reliable recorded quiz narration setup: clear difference between sound FX
+   and the real Q01–Q15 spoken questions, with a one-click ZIP import. */
+.game-shell .voice-setup-panel{
+  display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  min-width:0;margin:12px 0;padding:12px 14px;border-radius:14px;
+  border:2px solid #f5d56f;background:
+    radial-gradient(ellipse at 96% 2%,#9465dc6b,transparent 52%),
+    linear-gradient(112deg,#384c79,#263a72 65%,#49317b);
+  box-shadow:inset 0 1px 0 #ffffff72,0 6px 25px #020d3564,0 0 18px #ffd66a3b
+}
+.game-shell .voice-setup-panel.ready{
+  border-color:#4ff9c7;
+  background:linear-gradient(115deg,#165c69,#2b467e);
+  box-shadow:inset 0 1px 0 #ffffff61,0 0 23px #42ffc262
+}
+.game-shell .voice-setup-copy{display:flex;flex-direction:column;min-width:160px;flex:1;gap:3px}
+.game-shell .voice-setup-copy strong{
+  color:#ffeb9b;font-size:clamp(.88rem,1.1vw,1.12rem);font-weight:950;line-height:1.24
+}
+.game-shell .voice-setup-panel.ready .voice-setup-copy strong{color:#a8ffdc}
+.game-shell .voice-setup-copy span{
+  color:#fff;line-height:1.35;font-size:clamp(.7rem,.79vw,.84rem)
+}
+.game-shell .voice-setup-upload,.game-shell .voice-setup-test{
+  flex:none;display:inline-flex;align-items:center;justify-content:center;
+  position:relative;min-height:44px;padding:9px 13px;
+  border-radius:11px;font-size:clamp(.76rem,.94vw,.97rem);font-weight:950;
+  line-height:1.22;cursor:pointer;text-align:center
+}
+.game-shell .voice-setup-upload{
+  color:#092c40;border:1px solid #cefff8;
+  background:linear-gradient(110deg,#48f5e5,#69ecb9);
+  box-shadow:0 0 20px #26efd06c
+}
+.game-shell .voice-setup-upload input{
+  position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer
+}
+.game-shell .voice-setup-test{
+  color:#fff;background:linear-gradient(110deg,#493c9b,#2867a4);
+  border:1px solid #a5d7ff
+}
+.game-shell .voice-setup-test:disabled{
+  opacity:.48;filter:grayscale(.55);cursor:not-allowed
+}
+.game-shell .voice-setup-upload:focus-within,
+.game-shell .voice-setup-test:focus-visible{
+  outline:3px solid #fff4a8;outline-offset:2px
+}
+.game-shell .voice-test-header{border-color:#57f9cf;color:#d5ffef;background:#165b65}
+.game-shell .topbar .preferences{flex-wrap:wrap;gap:6px;max-width:100%}
+@media(max-width:790px){
+  .game-shell .voice-setup-panel{padding:9px;gap:7px}
+  .game-shell .voice-setup-copy{flex-basis:100%}
+  .game-shell .voice-setup-upload,.game-shell .voice-setup-test{flex:1 1 130px}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell .voice-setup-panel,.game-shell .voice-setup-test{transition:none!important;animation:none!important}
+}
