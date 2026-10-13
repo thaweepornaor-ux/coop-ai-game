@@ -166,8 +166,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     void send('join',{room:code,name:playerName,avatar});
   }
   function leave(){
+    // A valid learner QR invitation stays available when changing face or name.
+    // Expired invitations are intentionally discarded so the learner rescans.
+    const oldInvitation=sessionRef.current?.room||roomInput;
+    const keepInvitation=role==='player'&&!showRecovery&&/^[A-Z0-9]{6}$/.test(oldInvitation);
     generation.current++;try{localStorage.removeItem(sessionKey(role))}catch{}
-    sessionRef.current=null;snapshotRef.current=null;setSession(null);setSnapshot(null);setError('');setShowRecovery(false);setNetwork('connecting');setRoomInput('');setPendingChoice(null);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
+    sessionRef.current=null;snapshotRef.current=null;setSession(null);setSnapshot(null);setError('');setShowRecovery(false);setNetwork('connecting');
+    setRoomInput(keepInvitation?oldInvitation:'');
+    setPendingChoice(null);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
   }
   function restartHost(){
     // A saved instructor credential can expire between training days.
@@ -275,7 +281,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>ออกจากเกม</button></div></footer>}
+    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>{isHost?'ออกจากเกม':'เปลี่ยนตัวละคร / ชื่อ'}</button></div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
     {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
   </main>;
