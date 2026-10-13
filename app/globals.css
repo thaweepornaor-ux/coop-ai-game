@@ -243,3 +243,31 @@ html,body{max-width:100%;overflow-x:clip}
  .quick-player .quick-gender button{min-height:54px}
  .quick-player .quick-character{min-height:120px}
 }
+
+/* One-person, one-scoreboard-entry identity editing, available only before the instructor starts. */
+.player-lobby .inline-profile-form{max-width:700px;margin:0 auto;text-align:left;display:grid;gap:17px}
+.inline-profile-form>h2{font-size:1.5rem;text-align:center;color:#165b45}
+.inline-profile-form .quick-title{margin-top:2px}
+.inline-profile-form .quick-characters{max-height:340px;overflow-y:auto}
+.inline-profile-form .quick-character-portrait{height:106px}
+.inline-profile-form label{font-size:.95rem;color:#235d4a;font-weight:800}
+.inline-profile-form label input{font-size:16px;background:#f9fefa;color:#234e40;border:2px solid #d1e8da}
+.inline-profile-actions{display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+.inline-profile-actions .button{min-height:52px;flex:1}
+.edit-player-profile{margin-top:18px}
+.player-lobby .waiting-avatar{max-height:270px;overflow:hidden}
+.player-lobby .waiting-avatar>div{height:100%}
+@media(max-width:600px){
+ .player-lobby .inline-profile-form{gap:13px}
+ .player-lobby .inline-profile-form .quick-characters{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .inline-profile-actions .button{font-size:.85rem;padding:12px}
+ .player-lobby .lobby-main{padding:21px 13px}
+}
+
+/* Readable 20-character gallery labels on phone and projector. */
+.quick-character{min-height:154px;justify-content:flex-start}
+.quick-character strong{font-size:.76rem;margin-top:5px}
+.quick-character small{display:block;font-size:.66rem;line-height:1.3;min-height:2.6em;padding:1px 2px;color:#536d60;overflow-wrap:anywhere}
+.quick-character.selected small{color:#165d45;font-weight:700}
+@media(max-width:900px){.quick-player .quick-character{min-height:145px}}
+@media(max-width:430px){.quick-character-portrait{height:100px}.quick-character small{font-size:.64rem}}

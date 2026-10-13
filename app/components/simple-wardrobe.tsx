@@ -49,7 +49,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
         hatStyle:'none'}} motion={false}/></span>
-      <strong>{c.id}</strong>
+      <strong>{c.id}</strong><small>{c.label}</small>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
    </div>

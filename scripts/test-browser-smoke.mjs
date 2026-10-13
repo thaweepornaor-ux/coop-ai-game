@@ -343,11 +343,35 @@ async function realRoom(browser, browserName) {
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
+    await stage('edit-profile-without-duplicate-join');
+    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
+    await player.locator('.inline-profile-form').waitFor();
+    await player.getByRole('button',{name:'ผู้ชาย · 10 แบบ'}).click();
+    await player.locator('.inline-profile-form .quick-character').filter({hasText:'M02'}).click();
+    const interimName=syntheticName+'ใหม่';
+    await player.locator('#edit-player-name').fill(interimName);
+    const [edited] = await Promise.all([
+      player.waitForRequest(req=>req.method()==='POST'&&new URL(req.url()).pathname==='/api/game'&&req.postDataJSON()?.action==='profile'),
+      player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click()
+    ]);
+    assert.equal(edited.postDataJSON().avatar.presetId,'M02');
+    await player.getByRole('heading',{name:interimName,exact:true}).waitFor();
+    await host.locator('.roster .mini-player').filter({hasText:interimName}).waitFor();
+    assert.equal(await host.locator('.roster .mini-player').count(),1,'Editing an existing player cannot create a duplicate roster entry');
+    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
+    await player.getByRole('button',{name:'ผู้หญิง · 10 แบบ'}).click();
+    await player.locator('.inline-profile-form .quick-character').filter({hasText:'F03'}).click();
+    await player.locator('#edit-player-name').fill(syntheticName);
+    await player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click();
+    await player.getByRole('heading',{name:syntheticName,exact:true}).waitFor();
+    await host.locator('.roster .mini-player').filter({hasText:syntheticName}).waitFor();
+    assert.equal(await host.locator('.roster .mini-player').count(),1);
+    row.checks.push('Name and selected character update the SAME player twice, with no duplicate or second join');
     await stage('session-reload');
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
-    assert.deepEqual(persisted, submittedAvatar); row.checks.push('Name, room session and thirteen-field wardrobe survive reload');
+    assert.equal(persisted.presetId,'F03'); assert.equal(persisted.bodyStyle,'female'); row.checks.push('Edited name and wardrobe survive reload under the same player token');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
     await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
     let expectedScore = 0;
@@ -400,7 +424,7 @@ async function realRoom(browser, browserName) {
     await host.locator('.host-lobby').waitFor(); await player.locator('.player-lobby').waitFor();
     await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
     await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
-    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')), submittedAvatar);
+    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')),persisted);
     row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
   });
 }

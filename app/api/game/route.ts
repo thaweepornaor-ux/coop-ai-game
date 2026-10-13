@@ -205,6 +205,31 @@ async function joinRoom(db: Database, body: Record<string, unknown>): Promise<Re
   return json({ roomCode: code, token, role: "player", playerId: id, snapshot: snapshot(state, caller) }, 201);
 }
 
+/** Edit an existing learner in place. A new room join would duplicate the player and score. */
+async function updatePlayerProfile(db: Database, code: string, tokenHash: string, state: StoredState, caller: Caller,
+  body: Record<string, unknown>): Promise<Response> {
+  if (caller.role !== "player") throw new GameError("PLAYER_ONLY", "เฉพาะผู้เรียนเท่านั้นที่แก้ไขตัวละครได้", 403);
+  assertExpectedState(state.room, body.roundId, body.questionIndex);
+  if (state.room.phase !== "lobby") throw new GameError("GAME_STARTED", "เกมเริ่มแล้ว จึงเปลี่ยนชื่อหรือตัวละครไม่ได้", 409);
+  const name = sanitizeName(body.name);
+  let avatar;
+  try { avatar = normalizeWardrobe(sanitizeAvatar(body.avatar), true); }
+  catch (error) { throw new GameError("INVALID_AVATAR", error instanceof Error ? error.message : "ข้อมูลตัวละครไม่ถูกต้อง"); }
+  // The role, phase, expected round and player ownership are checked by one atomic statement.
+  const result = await db.prepare(`UPDATE players SET name = ?, avatar_json = ?
+    WHERE room_code = ? AND id = ? AND token_hash = ?
+    AND EXISTS (SELECT 1 FROM rooms WHERE code = ? AND phase = 'lobby'
+      AND round_id = ? AND question_index = ?)`)
+    .bind(name, JSON.stringify(avatar), code, caller.playerId, tokenHash,
+      code, state.room.roundId, state.room.questionIndex).run();
+  const fresh = await authenticatedState(db, code, tokenHash);
+  if ((result.meta.changes ?? 0) !== 1) {
+    return json({ error: "เกมเริ่มแล้วหรือข้อมูลเปลี่ยน กรุณารอสถานะล่าสุด", code: "STALE_STATE",
+      snapshot: snapshot(fresh.state, fresh.caller) }, 409);
+  }
+  return json(snapshot(fresh.state, fresh.caller));
+}
+
 async function submitAnswer(db: Database, code: string, tokenHash: string, state: StoredState, caller: Caller,
   body: Record<string, unknown>): Promise<Response> {
   if (caller.role !== "player") throw new GameError("PLAYER_ONLY", "เฉพาะผู้เล่นเท่านั้นที่ส่งคำตอบได้", 403);
@@ -292,12 +317,13 @@ export async function POST(request: Request): Promise<Response> {
     if (body.action === "create" || body.action === "join") await limit(db, request, String(body.action));
     if (body.action === "create") return await createRoom(db);
     if (body.action === "join") return await joinRoom(db, body);
-    if (body.action !== "answer" && !CONTROLS.includes(body.action as ControlAction)) {
+    if (body.action !== "answer" && body.action !== "profile" && !CONTROLS.includes(body.action as ControlAction)) {
       throw new GameError("INVALID_ACTION", "ไม่พบรายการที่ขอ");
     }
     const code = normalizeRoomCode(body.room ?? body.roomCode);
     const tokenHash = await requestTokenHash(request);
     const { state, caller } = await authenticatedState(db, code, tokenHash);
+    if (body.action === "profile") return await updatePlayerProfile(db, code, tokenHash, state, caller, body);
     if (body.action === "answer") return await submitAnswer(db, code, tokenHash, state, caller, body);
     return await controlRoom(db, code, tokenHash, state, caller, body.action as ControlAction, body);
   } catch (error) { return failure(error); }

@@ -35,7 +35,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[network,setNetwork]=useState<'connecting'|'online'|'offline'>('connecting');
   const [now,setNow]=useState(Date.now()),[qr,setQr]=useState(''),[joinUrl,setJoinUrl]=useState('');
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
-  const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false);
+  const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
@@ -137,8 +137,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
   },[timer,timeOpen,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,beep]);
   useEffect(()=>{setPendingChoice(null)},[snapshot?.room.roundId,snapshot?.room.questionIndex]);
+  useEffect(()=>{if(snapshot&&snapshot.room.phase!=='lobby')setEditingProfile(false)},[snapshot?.room.phase]);
   async function send(action:string,extra:Record<string,unknown>={}){
-    if(busyRef.current)return;busyRef.current=true;unlockAudio();setBusy(true);setError('');
+    if(busyRef.current)return false;busyRef.current=true;unlockAudio();setBusy(true);setError('');
     const requestGeneration=generation.current,requestSession=sessionRef.current;
     const started=Date.now();const controller=new AbortController();const timeout=window.setTimeout(()=>controller.abort(),8000);
     try{
@@ -146,7 +147,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       const payload={action,...(current?{room:current.room,roundId:snapshot?.room.roundId,questionIndex:snapshot?.room.questionIndex}:{}),...extra};
       const response=await fetch('/api/game',{method:'POST',headers:{'Content-Type':'application/json',...(current?{Authorization:'Bearer '+current.token}:{})},body:JSON.stringify(payload),signal:controller.signal});
       const data=await response.json() as ApiResponse;
-      if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return;
+      if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return false;
       if(!response.ok){if(data.snapshot)acceptState(data.snapshot,started,Date.now());throw new Error(data.error||'ทำรายการไม่สำเร็จ')}
       if(data.token&&data.roomCode&&data.role){
         const value:Session={token:data.token,room:data.roomCode,role:data.role};
@@ -154,8 +155,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       }
       const state=data.snapshot||(data.room?data as Snapshot:undefined);
       if(state)acceptState(state,started,Date.now());
+      return true;
     }catch(e){if(requestGeneration!==generation.current||requestSession!==sessionRef.current)return;setError(e instanceof Error&&e.name==='AbortError'?'การเชื่อมต่อช้า กำลังตรวจสถานะล่าสุด กรุณารอสักครู่':e instanceof Error?e.message:'เชื่อมต่อไม่ได้');
       if(action==='answer')setPendingChoice(null);
+      return false;
     }finally{window.clearTimeout(timeout);busyRef.current=false;setBusy(false)}
   }
   function join(){
@@ -166,14 +169,22 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     void send('join',{room:code,name:playerName,avatar});
   }
   function leave(){
-    // A valid learner QR invitation stays available when changing face or name.
-    // Expired invitations are intentionally discarded so the learner rescans.
-    const oldInvitation=sessionRef.current?.room||roomInput;
-    const keepInvitation=role==='player'&&!showRecovery&&/^[A-Z0-9]{6}$/.test(oldInvitation);
+    // Rejoining creates a second scoreboard entry. Profiles are now edited in place.
+    const oldInvitation='';
+    const keepInvitation=false;
     generation.current++;try{localStorage.removeItem(sessionKey(role))}catch{}
     sessionRef.current=null;snapshotRef.current=null;setSession(null);setSnapshot(null);setError('');setShowRecovery(false);setNetwork('connecting');
     setRoomInput(keepInvitation?oldInvitation:'');
-    setPendingChoice(null);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
+    setPendingChoice(null);setEditingProfile(false);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
+  }
+  async function saveProfile(){
+    const updated=name.trim();
+    if(!updated){setError('กรุณาตั้งชื่อผู้เล่น');return}
+    if(await send('profile',{name:updated,avatar})){
+      safeWrite('coop-ai-game-name',updated);
+      safeWrite('coop-ai-game-avatar',JSON.stringify(avatar));
+      setEditingProfile(false);
+    }
   }
   function restartHost(){
     // A saved instructor credential can expire between training days.
@@ -245,7 +256,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     {session&&snapshot&&snapshot.room.phase==='lobby'&&<section className={'lobby '+(isHost?'host-lobby':'player-lobby')}>
       <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'สแกนเพื่อเข้าร่วมเกม':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>
         {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน →</button></>
-        :<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>ผู้สอนจะเป็นคนเริ่มเกม<br/>ข้อละ 15 วินาที ตอบถูกได้ 1 คะแนน</p><div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}
+        :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
+          <h2>แก้ไขตัวละครและชื่อ</h2>
+          <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
+          <label htmlFor="edit-player-name">ชื่อผู้เล่น<input id="edit-player-name" maxLength={24} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อเล่นของคุณ"/></label>
+          <div className="inline-profile-actions"><button className="button secondary" type="button" onClick={()=>setEditingProfile(false)}>ยกเลิก</button><button className="button primary" disabled={!canInteract||!name.trim()} type="submit">{busy?'กำลังบันทึก…':'บันทึกตัวละครและชื่อ'}</button></div>
+        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · ข้อละ 15 วินาที</p>
+          <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>เปลี่ยนชื่อ / ตัวละคร</button>
+          <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
       <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอผู้เรียนสแกน QR Code ครับ</p>}</div>
     </section>}
@@ -281,7 +299,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>{isHost?'ออกจากเกม':'เปลี่ยนตัวละคร / ชื่อ'}</button></div></footer>}
+    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}{isHost&&<button className="button secondary" disabled={busy} onClick={()=>setLeaveDialog(true)}>ออกจากเกม</button>}</div></footer>}
     {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
     {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
   </main>;

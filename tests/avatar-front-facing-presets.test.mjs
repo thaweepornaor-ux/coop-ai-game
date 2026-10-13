@@ -25,3 +25,14 @@ test('mismatched or invalid face presets do not generate invalid SVG',()=>{
  assert.equal(renderAvatar({bodyStyle:'female',presetId:'garbage'}),standard);
  assert.ok(!renderAvatar({bodyStyle:'male',presetId:'M10'}).includes('NaN'));
 });
+
+test('visibly different hair presets no longer collapse into aliased silhouettes',()=>{
+ const outfit={bodyStyle:'female',presetId:'F05',hairColor:'brown',hatStyle:'none'};
+ for(const [styled,previousAlias] of [
+  ['wavy','long'],['swept','sidepart'],['shoulder','bob'],
+  ['pixie','short'],['bun','ponytail']
+ ]){
+  assert.notEqual(renderAvatar({...outfit,hairStyle:styled}),renderAvatar({...outfit,hairStyle:previousAlias}),
+   styled+' must look different from '+previousAlias);
+ }
+});
