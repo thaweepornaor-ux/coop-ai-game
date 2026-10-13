@@ -43,6 +43,10 @@ jobs:
         run: bash scripts/configure-staging.sh
       - name: Stamp release commit for post-deploy verification
         run: node scripts/stamp-release.mjs "$GITHUB_SHA"
+      - name: Install the user-provided voice recordings into the published game
+        # The staging release must never claim to read Q01–Q15 unless the authentic files
+        # are present in the Worker static assets.
+        run: node scripts/install-recorded-voice.mjs --required
       - name: Build full game for staging
         run: corepack pnpm exec vite build --config vite.staging.config.ts
       - name: Verify generated worker is staging-only
