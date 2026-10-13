@@ -227,6 +227,25 @@
 }
 .game-shell.motion-off .host-question.reveal-mode .reveal-person{animation:none!important}
 
+
+/* The explanation must NEVER be translucent. A legacy studio-panel-in animation
+   begins near transparent and could make the correct answer invisible at reveal. */
+.game-shell.motion-on .host-question.reveal-mode .explanation,
+.game-shell.motion-off .host-question.reveal-mode .explanation{
+  opacity:1!important;animation:none!important;
+  background:linear-gradient(120deg,#086b76,#225a9b);
+  border:2px solid #7dffe4;
+  box-shadow:inset 0 1px rgba(255,255,255,.3),0 4px 15px rgba(12,33,95,.35);
+  color:#f4fffc
+}
+.game-shell .host-question.reveal-mode .explanation h2{
+  color:#f7ffb8!important;
+  opacity:1;text-shadow:0 1px 2px #075b5c;font-weight:950
+}
+.game-shell .host-question.reveal-mode .explanation p{
+  color:#f6ffff!important;opacity:1;text-shadow:0 1px 2px #16486a
+}
+
 /* Score final: the podium should feel like a stage, not a table-only report. */
 .game-shell .results-page .finish-heading{
   isolation:isolate;overflow:hidden;
