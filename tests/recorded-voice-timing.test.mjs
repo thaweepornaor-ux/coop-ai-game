@@ -9,21 +9,21 @@ const questions=readFileSync(new URL('../server/questions.ts',import.meta.url),'
 const source=rules.match(/export const NARRATION_DURATION_MS = (\[[^\]]+\])/);
 const duration=source?JSON.parse(source[1]):[];
 
-test('Each real recorded narration reserves the full 25-second answer window',()=>{
- assert.match(rules,/export const QUESTION_SECONDS = 25/);
+test('Each real recorded narration reserves the full 10-second answer window',()=>{
+ assert.match(rules,/export const QUESTION_SECONDS = 10/);
  assert.equal(duration.length,15);
  assert.ok(duration.every(x=>x>=14000&&x<19000));
  assert.match(rules,/NARRATION_BUFFER_MS = 1400/);
  assert.match(rules,/QUESTION_SECONDS\*1000\+/);
  assert.match(route,/answerWindowMs\(plan.questionIndex\)/);
- assert.equal((questions.match(/"timeLimitSeconds": 25/g)||[]).length,15);
+ assert.equal((questions.match(/"timeLimitSeconds": 10/g)||[]).length,15);
 });
 
 test('Presenter uses real MP3 for questions while revealing answers separately',()=>{
  assert.ok(game.includes("new Audio(voiceUrls.current["));
  assert.match(game,/\.mp3'\)/);
  assert.match(game,/const letters=\['A','B','C'\]/);
- assert.match(game,/const timer=Math.min\(25,totalRemaining\)/);
+ assert.match(game,/const timer=Math.min\(10,totalRemaining\)/);
  assert.match(game,/const narrationRemaining=/);
  assert.match(game,/narrationRemaining>0\?'🔊 กำลังพากย์'/);
  assert.match(game,/track.onended=/);
