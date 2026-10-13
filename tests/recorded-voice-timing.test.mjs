@@ -39,6 +39,20 @@ test('Instructor can load and retain a complete local MP3 voice pack without a s
  assert.match(game,/role==='host'&&<label className=/);
  assert.match(game,/Q01\.mp3 ถึง Q15\.mp3/);
  assert.match(game,/voiceReady&&narrationEnabled/);
- assert.match(game,/recordedNarration:voiceReady&&narrationEnabled/);
+ assert.match(game,/recordedNarration:narrationEnabled/);
  assert.match(route,/body\.recordedNarration===true\?answerWindowMs\(plan.questionIndex\):QUESTION_SECONDS\*1000/);
+});
+
+test('spoken Thai fallback is enabled without installing voice files',()=>{
+ assert.match(game,/useState\(true\),\[narrationBusy,setNarrationBusy\]/);
+ assert.match(game,/if\(mode==='question'&&!voiceUrls.current\[state.room.questionIndex\]\)/);
+ assert.match(game,/const spoken='คำถามข้อที่ '/);
+ assert.match(game,/ข้อ เอ\. /);
+ assert.match(game,/ข้อ บี\. /);
+ assert.match(game,/ข้อ ซี\. /);
+ assert.match(game,/window\.speechSynthesis\.speak\(utterance\)/);
+ assert.match(game,/utterance\.lang='th-TH'/);
+ assert.match(game,/if\(sessionRef\.current\?\.role==='host'&&narrationEnabled&&voiceReady/);
+ assert.match(game,/▶ ทดลองเสียงอ่าน/);
+ assert.match(game,/disabled=\{voiceImporting\} onClick=\{testRecordedVoice\}/);
 });
