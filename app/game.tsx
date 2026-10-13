@@ -16,7 +16,7 @@ type Result={playerId:string;name:string;avatar:Record<string,string>;choice:num
 type Leader=Person&{rank:number;correctCount:number;incorrectCount:number;unansweredCount:number};
 type Snapshot={serverNow:number;caller:{role:'host'|'player';playerId?:string};room:{code:string;phase:'lobby'|'question'|'closed'|'reveal'|'finished';questionIndex:number;roundId:number;deadline:number|null};question?:{number:number;topic:string;question:string;options:readonly string[]};players:Person[];ownAnswer?:{choice:number;submittedAt:number}|null;results?:Result[];correctAnswer?:number;explanation?:string;leaderboard?:Leader[]};
 type ApiResponse={roomCode?:string;token?:string;role?:'host'|'player';snapshot?:Snapshot;error?:string;code?:string}&Partial<Snapshot>;
-const letters=['ก','ข','ค'];
+const letters=['A','B','C'];
 const keys=Object.keys(AVATAR_OPTIONS) as (keyof typeof AVATAR_OPTIONS)[];
 const initialAvatar=()=>({...Object.fromEntries(keys.map(k=>[k,AVATAR_OPTIONS[k][0].value])),shirtColor:'white',bodyStyle:'male',presetId:'M01',bottomStyle:'pants',bottomColor:'navy',shoeColor:'white',hairStyle:'sidepart',glassesStyle:'none'});
 const level=(n:number)=>n<=5?'นักสำรวจ AI':n<=10?'นักต่อยอด AI':'นักรู้ทัน AI';
@@ -29,7 +29,7 @@ const sessionKey=(role:Role)=>'coop-ai-game-session-'+role;
 function ArenaLights({celebrate=false}:{celebrate?:boolean}) {
  return <div className="arena-lighting" aria-hidden="true"><div className="spotlight spotlight-left"/><div className="spotlight spotlight-right"/><div className="arena-grid"/><div className="studio-sparkles">{Array.from({length:14},(_,i)=><i className="studio-sparkle" key={i} style={{left:((i*37+7)%94+3)+'%',top:((i*53+11)%88+6)+'%',width:(4+i%3*2)+'px',height:(4+i%3*2)+'px',animationDelay:-(i*.7)+'s',animationDuration:(4.8+i%5*1.2)+'s'}}/>)}</div>{celebrate&&<div className="confetti-burst">{Array.from({length:16},(_,i)=><i key={i} style={{left:(8+i*6)+'%',animationDelay:(i%4)*.15+'s',background:i%3===0?'#cbe997':i%3===1?'#46dbb5':'#e7c46a'}}/>)}</div>}</div>;
 }
-function RulesStrip(){return <div className="rules-strip"><div><b>15</b><span>คำถาม AI</span></div><div><b>15<small> วิ</small></b><span>ต่อหนึ่งคำถาม</span></div><div><b>1<small> แต้ม</small></b><span>เมื่อตอบถูก</span></div></div>}
+function RulesStrip(){return <div className="rules-strip"><div><b>15</b><span>คำถาม AI</span></div><div><b>25<small> วิ</small></b><span>ต่อหนึ่งคำถาม</span></div><div><b>1<small> แต้ม</small></b><span>เมื่อตอบถูก</span></div></div>}
 export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [role,setRole]=useState<Role>(initialRole),[session,setSession]=useState<Session|null>(null);
   const [snapshot,setSnapshot]=useState<Snapshot|null>(null);
@@ -39,47 +39,55 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
   const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
   const [projectorFullscreen,setProjectorFullscreen]=useState(false);
-  const [narrationEnabled,setNarrationEnabled]=useState(false),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
+  const [narrationEnabled,setNarrationEnabled]=useState(initialRole==='host'),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
   const narrationKey=useRef('');
+  const voiceTrack=useRef<HTMLAudioElement|null>(null);
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
-  const timer= snapshot?.room.deadline ? Math.max(0,Math.ceil((snapshot.room.deadline-(now+offset.current))/1000)):15;
+  const totalRemaining=snapshot?.room.deadline ? Math.max(0,Math.ceil((snapshot.room.deadline-(now+offset.current))/1000)):25;
+  const narrationRemaining=snapshot?.room.phase==='question'?Math.max(0,totalRemaining-25):0;
+  const timer=Math.min(25,totalRemaining);
   const timeOpen=snapshot?.room.phase==='question'&&timer>0;
   const isHost=session?.role==='host';
   const canInteract=network==='online'&&now-lastSync.current<4500&&!busy;
-  // Thai narration is deliberately opt-in on the instructor projector.
-  // Web Speech voices depend on the installed OS/browser; the timer still lasts 15 seconds.
+  // Q01–Q15 are the instructor's real ElevenLabs recordings.
+  // The server's deadline reserves the real track duration + a small buffer
+  // before the full 25-second answer countdown begins.
   const stopNarration=useCallback(()=>{
+    if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current.currentTime=0;voiceTrack.current=null;}
     if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);
   },[]);
   const narrateSnapshot=useCallback((state:Snapshot,mode:'question'|'reveal')=>{
-    if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){
-      setNarrationNotice('เบราว์เซอร์นี้ไม่รองรับเสียงอ่าน กรุณาใช้ Chrome หรือ Edge ที่มีเสียงภาษาไทย');
-      return false;
-    }
-    const q=state.question;
-    if(!q)return false;
-    const text=mode==='question'
-      ?'คำถามข้อที่ '+q.number+'. '+q.question+'. ตัวเลือก ก. '+q.options[0]+'. ตัวเลือก ข. '+q.options[1]+'. ตัวเลือก ค. '+q.options[2]+'.'
-      :'เฉลยข้อที่ '+q.number+'. คำตอบที่ถูกต้องคือ '+letters[state.correctAnswer??0]+'. '+q.options[state.correctAnswer??0]+'. '+(state.explanation||'');
-    try{
-      window.speechSynthesis.cancel();
-      const utterance=new SpeechSynthesisUtterance(text);
-      utterance.lang='th-TH';utterance.rate=1.18;utterance.pitch=1;utterance.volume=1;
-      const voices=window.speechSynthesis.getVoices();
-      const thai=voices.find(v=>v.lang.toLowerCase().startsWith('th'));
-      if(thai)utterance.voice=thai;
-      else setNarrationNotice('กำลังใช้เสียงที่เบราว์เซอร์เลือก หากอ่านภาษาไทยไม่ชัด ให้ติดตั้งเสียงภาษาไทยในระบบ');
-      utterance.onstart=()=>setNarrationBusy(true);
-      utterance.onend=()=>setNarrationBusy(false);
-      utterance.onerror=()=>setNarrationBusy(false);
-      window.speechSynthesis.speak(utterance);
+    if(typeof window==='undefined'||!state.question)return false;
+    if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
+    if('speechSynthesis' in window)window.speechSynthesis.cancel();
+    setNarrationBusy(false);setNarrationNotice('');
+    if(mode==='question'){
+      const qnum=state.room.questionIndex+1;
+      const track=new Audio('/voice/Q'+String(qnum).padStart(2,'0')+'.mp3');
+      track.preload='auto';track.volume=1;
+      track.onplaying=()=>setNarrationBusy(true);
+      track.onended=()=>{setNarrationBusy(false);voiceTrack.current=null;};
+      track.onerror=()=>{setNarrationBusy(false);setNarrationNotice('ยังไม่พบไฟล์ Q'+String(qnum).padStart(2,'0')+'.mp3 บนเว็บ');};
+      voiceTrack.current=track;
+      void track.play().catch(()=>setNarrationNotice('กรุณากด “อ่านซ้ำ” เพื่ออนุญาตเปิดเสียงพากย์ในเบราว์เซอร์'));
       return true;
-    }catch{setNarrationBusy(false);setNarrationNotice('เปิดเสียงอ่านไม่ได้ กรุณาตรวจการตั้งค่าเสียงของเบราว์เซอร์');return false}
+    }
+    if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return false;
+    const q=state.question;
+    const spoken='เฉลยข้อที่ '+q.number+'. คำตอบที่ถูกต้องคือ '+letters[state.correctAnswer??0]+'. '+q.options[state.correctAnswer??0]+'. '+(state.explanation||'');
+    const utterance=new SpeechSynthesisUtterance(spoken);
+    utterance.lang='th-TH';utterance.rate=1.18;
+    const thai=window.speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith('th'));
+    if(thai)utterance.voice=thai;
+    utterance.onstart=()=>setNarrationBusy(true);
+    utterance.onend=()=>setNarrationBusy(false);
+    utterance.onerror=()=>setNarrationBusy(false);
+    window.speechSynthesis.speak(utterance);
+    return true;
   },[]);
-
 
   const beep=useCallback((frequency=550,duration=.09)=>{
     if(!sound||!audio.current||audio.current.state!=='running')return;
@@ -182,7 +190,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     narrationKey.current=key;
     narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
   },[isHost,narrationEnabled,snapshot?.room.code,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,narrateSnapshot,stopNarration]);
-  useEffect(()=>()=>{if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel()},[]);
+  useEffect(()=>()=>{if(voiceTrack.current)voiceTrack.current.pause();if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel()},[]);
   useEffect(()=>{setPendingChoice(null)},[snapshot?.room.roundId,snapshot?.room.questionIndex]);
   useEffect(()=>{const sync=()=>setProjectorFullscreen(Boolean(document.fullscreenElement));document.addEventListener('fullscreenchange',sync);return()=>document.removeEventListener('fullscreenchange',sync)},[]);
   useEffect(()=>{if(snapshot&&snapshot.room.phase!=='lobby')setEditingProfile(false)},[snapshot?.room.phase]);
@@ -344,14 +352,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       </form>
     </section>)}
     {session&&snapshot&&snapshot.room.phase==='lobby'&&<section className={'lobby '+(isHost?'host-lobby':'player-lobby')}>
-      <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'ประเมินความเข้าใจ AI':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>{isHost&&<><p className="showcase-subtitle">เกมประเมินความเข้าใจ AI แบบตอบไว · เล่นพร้อมกันบนมือถือ</p><div className="stage-stat-line" aria-label="กติกาเกม"><span>◆ 15 คำถาม</span><span>◷ 15 วินาที / ข้อ</span><span>★ ตอบถูก 1 คะแนน</span></div></>}
+      <div className="card lobby-main enter"><div className="badge">{isHost?'รอผู้เรียนเข้าร่วม':'YOU ARE IN'}</div><h1>{isHost?'ประเมินความเข้าใจ AI':'เตรียมพร้อม ภารกิจกำลังเริ่ม'}</h1>{isHost&&<><p className="showcase-subtitle">เกมประเมินความเข้าใจ AI แบบตอบไว · เล่นพร้อมกันบนมือถือ</p><div className="stage-stat-line" aria-label="กติกาเกม"><span>◆ 15 คำถาม</span><span>◷ ฟังจบแล้วตอบ 25 วินาที</span><span>★ ตอบถูก 1 คะแนน</span></div></>}
         {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>เลือกตัวละคร → ตั้งชื่อ → รอเริ่มเกม</p><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน →</button></>
         :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
           <h2>แก้ไขตัวละครและชื่อ</h2>
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
           <label htmlFor="edit-player-name">ชื่อผู้เล่น<input id="edit-player-name" maxLength={24} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อเล่นของคุณ"/></label>
           <div className="inline-profile-actions"><button className="button secondary" type="button" onClick={()=>setEditingProfile(false)}>ยกเลิก</button><button className="button primary" disabled={!canInteract||!name.trim()} type="submit">{busy?'กำลังบันทึก…':'บันทึกตัวละครและชื่อ'}</button></div>
-        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · ข้อละ 15 วินาที</p>
+        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · หลังฟังโจทย์มีเวลาตอบ 25 วินาที</p>
           <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>เปลี่ยนชื่อ / ตัวละคร</button>
           <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
@@ -360,7 +368,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')+(isHost&&denseQuestion&&!reveal?' dense-question':'')+(isHost&&packedRoster&&!reveal?' packed-roster':'')}>
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
-        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงอ่านเปิด':'🔊 เปิดเสียงอ่าน'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">กำลังอ่าน…</span>}</div>:countdownNode}</div>
+        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงพากย์เปิด':'🔇 เปิดเสียงพากย์'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">🔊 กำลังอ่านโจทย์…</span>}</div>:countdownNode}</div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
         <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
         <div className="answer-grid">{snapshot.question?.options.map((option,i)=>{
@@ -368,7 +376,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           const correct=reveal&&snapshot.correctAnswer===i;
           return <button key={i} className={'answer answer-'+i+(picked?' picked':'')+(correct?' correct':'')+(reveal&&picked&&!correct?' wrong':'')} disabled={!!isHost||!timeOpen||!canInteract||snapshot.ownAnswer!=null||pendingChoice!==null} onClick={()=>chooseAnswer(i)}><span className="answer-letter">{correct?'✓':letters[i]}</span><span>{option}</span>{picked&&!reveal&&<span className="picked-mark">✓</span>}</button>
         })}</div>
-        {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
+        {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย' :narrationRemaining>0?'กำลังฟังเสียงโจทย์ · จากนั้นมีเวลาตอบเต็ม 25 วินาที':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
         {isHost&&!reveal&&<div className="host-controls"><span>ตอบแล้ว <strong>{answered} / {snapshot.players.length}</strong> คน</span><button className="button primary" disabled={!canInteract} onClick={()=>void send('reveal')}>{timeOpen?'ปิดรับคำตอบและเปิดเฉลย':'เปิดเฉลย ✦'}</button></div>}
         {reveal&&<div className="explanation"><h2>คำตอบ: {letters[snapshot.correctAnswer??0]} · {snapshot.question?.options[snapshot.correctAnswer??0]}</h2><p>{snapshot.explanation}</p></div>}
         {reveal&&!isHost&&<div className={'own-result '+(ownResult?.status||'unanswered')} role="status"><strong>{ownResult?.status==='correct'?'ตอบถูก! เก่งมาก ✦':ownResult?.status==='incorrect'?'ข้อนี้ยังไม่ถูก ลองดูเฉลยกัน':'ข้อนี้ไม่ได้ตอบ ไม่เป็นไร เรียนรู้ไปด้วยกัน'}</strong><span>คะแนนตอนนี้ {ownResult?.score??own?.score??0} / 15</span><Avatar options={own?.avatar||avatar}/><p>รอผู้สอนเริ่มข้อถัดไป</p></div>}
