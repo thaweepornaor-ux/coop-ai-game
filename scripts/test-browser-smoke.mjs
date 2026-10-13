@@ -531,7 +531,7 @@ async function realRoom(browser, browserName) {
     const expectedTier=expectedScore<=5?'นักสำรวจ AI':expectedScore<=10?'นักต่อยอด AI':'นักรู้ทัน AI';
     for(const [page,role] of [[host,'host'],[player,'learner']]){
       assert.equal(await page.locator('.result-level-summary').count(),3,'All three levels appear at finish');
-      assert.equal(await page.locator('.result-level-summary').allTextContents().then(xs=>xs.reduce((n,x)=>n+Number(x.match(/(\\d+) คน/)?.[1]||0),0)),1,
+      assert.equal(await page.locator('.result-level-summary').allTextContents().then(xs=>xs.reduce((n,x)=>n+Number(x.match(/([0-9]+) คน/)?.[1]||0),0)),1,
         'Level distribution must count the real finished learner');
       assert.ok((await page.locator('.score-row:not(.table-heading) .score-level').first().innerText()).includes(expectedTier));
       assert.ok((await page.locator('.result-podium-detail .result-level-chip').first().innerText()).includes(expectedTier));
