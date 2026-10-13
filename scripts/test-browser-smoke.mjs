@@ -198,6 +198,34 @@ async function question(page, number) {
   await page.locator('.question-card .badge').filter({ hasText: 'ข้อ ' + number + ' / 15' }).waitFor({ timeout: 15_000 });
   assert.equal(await page.locator('.answer-grid button').count(), 3);
 }
+async function checkProjectorQuestionFit(page,label) {
+  const sample=await page.evaluate(()=>{
+    const card=document.querySelector('.host-question:not(.reveal-mode) .question-card');
+    const title=card?.querySelector('h1');
+    const buttons=[...(card?.querySelectorAll('.answer-grid button')||[])];
+    const controls=card?.querySelector('.host-controls');
+    const timer=document.querySelector('.host-question .question-roster .projector-timer-wrap .countdown');
+    if(!card||!title||buttons.length!==3||!controls||!timer) return {missing:true};
+    const frame=card.getBoundingClientRect(),t=title.getBoundingClientRect();
+    const answers=buttons.map(b=>({r:b.getBoundingClientRect(),textClip:b.scrollHeight>b.clientHeight+3}));
+    const action=controls.getBoundingClientRect(),clock=timer.getBoundingClientRect();
+    return {
+      missing:false,
+      textClip:answers.some(a=>a.textClip),
+      titleToAnswer:t.bottom<=answers[0].r.top+1,
+      answersSeparated:answers[0].r.bottom<=answers[1].r.top+1&&answers[1].r.bottom<=answers[2].r.top+1,
+      controlsVisible:action.bottom<=frame.bottom+1&&action.bottom<=innerHeight+2,
+      titleInCard:t.top>=frame.top-1&&t.bottom<=frame.bottom+1,
+      pageOverflow:document.documentElement.scrollHeight>innerHeight+4,
+      timerInFrame:clock.width>=130&&clock.left>=0&&clock.right<=innerWidth+1&&clock.bottom<=innerHeight+1
+    };
+  });
+  assert.equal(sample.missing,false,label+' needs all question, answer and timer elements');
+  for(const [key,value] of Object.entries(sample)){
+    if(key==='missing')continue;
+    assert.equal(value,!['textClip','pageOverflow'].includes(key),label+': '+key+' '+JSON.stringify(sample));
+  }
+}
 function pageErrors(page) { const errors = []; page.on('pageerror', error => errors.push(error.message.slice(0, 300))); return errors; }
 
 async function wardrobe(page) {
@@ -407,6 +435,13 @@ async function realRoom(browser, browserName) {
         assert.equal(await player.locator('.explanation').count(), 0);
         assert.equal(await host.locator('.explanation').count(), 0);
         await question(host, 2); row.checks.push('Real fifteen-second deadline locks answers without revealing or advancing');
+      }
+      if ([1,8,15].includes(number)) {
+        await host.setViewportSize({width:1280,height:720});
+        await checkProjectorQuestionFit(host,'Projector 1280x720 question '+number);
+        if(number===1||number===15)await shot(host,browserName+'-1280x720-question-'+number);
+        await host.setViewportSize({width:1280,height:900});
+        row.checks.push('Question '+number+' fits 720p without clipping Thai headings, choices or controls');
       }
       if (number === 1) {
         await noOverflow(player,'mobile active question');
