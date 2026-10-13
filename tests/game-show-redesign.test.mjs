@@ -47,3 +47,19 @@ test('showtime projector keeps its countdown outside the question and protects l
  assert.match(css,/arena-light-sweep/);
  assert.match(css,/motion-off \.host-question/);
 });
+
+test('live instructor console has visible avatars, participation meter and three distinctly colored answer panels',()=>{
+ assert.match(game,/className="live-score-stage"/);
+ assert.match(game,/className="answer-meter" role="progressbar"/);
+ assert.match(game,/className="score-spotlight"/);
+ assert.match(game,/className="spotlight-avatar"/);
+ assert.match(game,/className="spotlight-state/);
+ assert.match(game,/snapshot\.players\.length<=3/);
+ assert.match(css,/AI ARENA V2/);
+ assert.match(css,/\.answer\.answer-0\{/);
+ assert.match(css,/\.answer\.answer-1\{/);
+ assert.match(css,/\.answer\.answer-2\{/);
+ assert.match(css,/@keyframes arena-stage-rise/);
+ assert.match(css,/@keyframes arena-live-breathe/);
+ assert.match(css,/\.motion-off \.live-indicator i/);
+});
