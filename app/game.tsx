@@ -406,7 +406,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
               </div>)}
           </div>
         </div>
-        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')+(packedRoster?' packed-players':'')} role="list" aria-label={'คะแนนและสถานะผู้เรียน '+snapshot.players.length+' คน'}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id} role="listitem" title={p.name+' · '+p.score+' คะแนน · '+(p.answered?'ตอบแล้ว':'ยังไม่ตอบ')}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b><span className="packed-answer-state" aria-label={p.answered?'ตอบแล้ว':'ยังไม่ตอบ'}>{p.answered?'✓':'•'}</span><span className="roster-verbose-state"> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</span></small></div>)}</div>}
+        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')+(packedRoster?' packed-players':'')} style={packedRoster?{'--packed-rows':Math.ceil(snapshot.players.length/3)} as React.CSSProperties:undefined} role="list" aria-label={'คะแนนและสถานะผู้เรียน '+snapshot.players.length+' คน'}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id} role="listitem" title={p.name+' · '+p.score+' คะแนน · '+(p.answered?'ตอบแล้ว':'ยังไม่ตอบ')}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b><span className="packed-answer-state" aria-label={p.answered?'ตอบแล้ว':'ยังไม่ตอบ'}>{p.answered?'✓':'•'}</span><span className="roster-verbose-state"> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</span></small></div>)}</div>}
       </aside>}
     </section>}
 
