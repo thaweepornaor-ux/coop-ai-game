@@ -34,7 +34,7 @@ test('all 25 learner result pictures are compact and available in the projector 
 
 test('showtime projector keeps its countdown outside the question and protects long Thai text',()=>{
  assert.match(game,/const countdownNode=/);
- assert.match(game,/!isHost&&countdownNode/);
+ assert.match(game,/:countdownNode/);
  assert.match(game,/className="projector-timer-wrap"/);
  assert.match(game,/className=\{'question-layout '/);
  assert.match(game,/denseQuestion=questionLength>115\|\|longestOption>90/);
@@ -62,4 +62,31 @@ test('live instructor console has visible avatars, participation meter and three
  assert.match(css,/@keyframes arena-stage-rise/);
  assert.match(css,/@keyframes arena-live-breathe/);
  assert.match(css,/\.motion-off \.live-indicator i/);
+});
+
+test('25-player presenter switches to compact no-scroll grid without changing the 25-player reveal',()=>{
+ assert.match(game,/packedRoster=\(snapshot\?\.players\.length\|\|0\)>=12/);
+ assert.match(game,/packed-players/);
+ assert.match(game,/--packed-rows/);
+ assert.match(game,/role="listitem" title=\{p.name/);
+ assert.match(css,/25-CONTESTANT LIVE HUD/);
+ assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/grid-template-rows:repeat\(var\(--packed-rows,9\),minmax\(0,1fr\)\)/);
+ assert.match(css,/\.host-question\.packed-roster:not\(\.reveal-mode\)/);
+ assert.match(css,/\.host-scored-roster\.packed-players/);
+});
+
+test('Thai presenter narration reads all question choices and the revealed explanation, on opt-in only',()=>{
+ assert.match(game,/SpeechSynthesisUtterance/);
+ assert.match(game,/speechSynthesis\.cancel\(\)/);
+ assert.match(game,/utterance\.lang='th-TH'/);
+ assert.match(game,/utterance\.rate=1\.18/);
+ assert.match(game,/q\.options\[0\]/);
+ assert.match(game,/q\.options\[1\]/);
+ assert.match(game,/q\.options\[2\]/);
+ assert.match(game,/state\.explanation\|\|''/);
+ assert.match(game,/narrationEnabled,setNarrationEnabled/);
+ assert.match(game,/narrationKey\.current===key/);
+ assert.match(game,/aria-pressed=\{narrationEnabled\}/);
+ assert.match(game,/if\(narrationEnabled\)/);
 });

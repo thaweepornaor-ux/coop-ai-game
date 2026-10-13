@@ -38,6 +38,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const [sound,setSound]=useState(true),[motion,setMotion]=useState(true),[pendingChoice,setPendingChoice]=useState<number|null>(null),[resetDialog,setResetDialog]=useState(false),[leaveDialog,setLeaveDialog]=useState(false);
   const [copied,setCopied]=useState(false),[showRecovery,setShowRecovery]=useState(false),[editingProfile,setEditingProfile]=useState(false);
   const [projectorFullscreen,setProjectorFullscreen]=useState(false);
+  const [narrationEnabled,setNarrationEnabled]=useState(false),[narrationBusy,setNarrationBusy]=useState(false),[narrationNotice,setNarrationNotice]=useState('');
+  const narrationKey=useRef('');
   const offset=useRef(0),lastSync=useRef(0),generation=useRef(0),sessionRef=useRef<Session|null>(null);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
@@ -45,6 +47,38 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const timeOpen=snapshot?.room.phase==='question'&&timer>0;
   const isHost=session?.role==='host';
   const canInteract=network==='online'&&now-lastSync.current<4500&&!busy;
+  // Thai narration is deliberately opt-in on the instructor projector.
+  // Web Speech voices depend on the installed OS/browser; the timer still lasts 15 seconds.
+  const stopNarration=useCallback(()=>{
+    if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel();
+    setNarrationBusy(false);
+  },[]);
+  const narrateSnapshot=useCallback((state:Snapshot,mode:'question'|'reveal')=>{
+    if(typeof window==='undefined'||!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){
+      setNarrationNotice('เบราว์เซอร์นี้ไม่รองรับเสียงอ่าน กรุณาใช้ Chrome หรือ Edge ที่มีเสียงภาษาไทย');
+      return false;
+    }
+    const q=state.question;
+    if(!q)return false;
+    const text=mode==='question'
+      ?'คำถามข้อที่ '+q.number+'. '+q.question+'. ตัวเลือก ก. '+q.options[0]+'. ตัวเลือก ข. '+q.options[1]+'. ตัวเลือก ค. '+q.options[2]+'.'
+      :'เฉลยข้อที่ '+q.number+'. คำตอบที่ถูกต้องคือ '+letters[state.correctAnswer??0]+'. '+q.options[state.correctAnswer??0]+'. '+(state.explanation||'');
+    try{
+      window.speechSynthesis.cancel();
+      const utterance=new SpeechSynthesisUtterance(text);
+      utterance.lang='th-TH';utterance.rate=1.18;utterance.pitch=1;utterance.volume=1;
+      const voices=window.speechSynthesis.getVoices();
+      const thai=voices.find(v=>v.lang.toLowerCase().startsWith('th'));
+      if(thai)utterance.voice=thai;
+      else setNarrationNotice('กำลังใช้เสียงที่เบราว์เซอร์เลือก หากอ่านภาษาไทยไม่ชัด ให้ติดตั้งเสียงภาษาไทยในระบบ');
+      utterance.onstart=()=>setNarrationBusy(true);
+      utterance.onend=()=>setNarrationBusy(false);
+      utterance.onerror=()=>setNarrationBusy(false);
+      window.speechSynthesis.speak(utterance);
+      return true;
+    }catch{setNarrationBusy(false);setNarrationNotice('เปิดเสียงอ่านไม่ได้ กรุณาตรวจการตั้งค่าเสียงของเบราว์เซอร์');return false}
+  },[]);
+
 
   const beep=useCallback((frequency=550,duration=.09)=>{
     if(!sound||!audio.current||audio.current.state!=='running')return;
@@ -138,6 +172,16 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       if(lastEffect.current!==key){lastEffect.current=key;beep(740,.2)}
     }
   },[timer,timeOpen,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,beep]);
+  useEffect(()=>{
+    if(!isHost||!narrationEnabled||!snapshot||!['question','closed','reveal'].includes(snapshot.room.phase)){
+      stopNarration();return;
+    }
+    const key=snapshot.room.code+':'+snapshot.room.roundId+':'+snapshot.room.questionIndex+':'+(snapshot.room.phase==='reveal'?'reveal':'question');
+    if(narrationKey.current===key)return;
+    narrationKey.current=key;
+    narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
+  },[isHost,narrationEnabled,snapshot?.room.code,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,narrateSnapshot,stopNarration]);
+  useEffect(()=>()=>{if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel()},[]);
   useEffect(()=>{setPendingChoice(null)},[snapshot?.room.roundId,snapshot?.room.questionIndex]);
   useEffect(()=>{const sync=()=>setProjectorFullscreen(Boolean(document.fullscreenElement));document.addEventListener('fullscreenchange',sync);return()=>document.removeEventListener('fullscreenchange',sync)},[]);
   useEffect(()=>{if(snapshot&&snapshot.room.phase!=='lobby')setEditingProfile(false)},[snapshot?.room.phase]);
@@ -173,6 +217,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   }
   function leave(){
     // Rejoining creates a second scoreboard entry. Profiles are now edited in place.
+    stopNarration();setNarrationEnabled(false);narrationKey.current='';
     const oldInvitation='';
     const keepInvitation=false;
     generation.current++;try{localStorage.removeItem(sessionKey(role))}catch{}
@@ -235,6 +280,20 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const questionLength=snapshot?.question?.question.length||0;
   const longestOption=Math.max(0,...(snapshot?.question?.options||[]).map(option=>option.length));
   const denseQuestion=questionLength>115||longestOption>90;
+  const packedRoster=(snapshot?.players.length||0)>=12;
+  function toggleNarration(){
+    if(narrationEnabled){setNarrationEnabled(false);stopNarration();return;}
+    if(!snapshot)return;
+    const currentMode=snapshot.room.phase==='reveal'?'reveal':'question';
+    if(narrateSnapshot(snapshot,currentMode)){
+      narrationKey.current=snapshot.room.code+':'+snapshot.room.roundId+':'+snapshot.room.questionIndex+':'+snapshot.room.phase;
+      setNarrationEnabled(true);
+    }
+  }
+  function repeatNarration(){
+    if(!snapshot)return;
+    narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
+  }
   const countdownNode=<div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/15)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':timer<=5?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':timer}</span><small>{reveal?'เฉลย':'วินาที'}</small></div>;
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
@@ -247,6 +306,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       </div>
     </header>
     {error&&<div className="notice error" role="alert">{error}</div>}
+    {narrationNotice&&role==='host'&&<div className="narration-notice" role="status">{narrationNotice}<button type="button" aria-label="ปิดคำแนะนำเสียงอ่าน" onClick={()=>setNarrationNotice('')}>×</button></div>}
     {session&&<div className={'connection '+network} role="status"><i/>{network==='online'?'เชื่อมต่อแล้ว':network==='offline'?'กำลังเชื่อมต่อใหม่… กรุณารอสักครู่':'กำลังเชื่อมต่อเกม…'} {showRecovery&&<button type="button" onClick={isHost?restartHost:leave}>{isHost?'เริ่มเกมใหม่':'กลับไปสแกน QR ใหม่'}</button>}</div>}
 
     {!session&&role==='choose'&&<section className="welcome entry-stage enter">
@@ -297,9 +357,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&<p>รอผู้เรียนสแกน QR Code ครับ</p>}</div>
     </section>}
 
-    {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')+(isHost&&denseQuestion&&!reveal?' dense-question':'')}>
+    {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')+(isHost&&denseQuestion&&!reveal?' dense-question':'')+(isHost&&packedRoster&&!reveal?' packed-roster':'')}>
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
-        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{!isHost&&countdownNode}</div>
+        <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงอ่านเปิด':'🔊 เปิดเสียงอ่าน'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">กำลังอ่าน…</span>}</div>:countdownNode}</div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
         <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
         <div className="answer-grid">{snapshot.question?.options.map((option,i)=>{
@@ -346,7 +406,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
               </div>)}
           </div>
         </div>
-        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</small></div>)}</div>}
+        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')+(packedRoster?' packed-players':'')} style={packedRoster?{'--packed-rows':Math.ceil(snapshot.players.length/3)} as React.CSSProperties:undefined} role="list" aria-label={'คะแนนและสถานะผู้เรียน '+snapshot.players.length+' คน'}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id} role="listitem" title={p.name+' · '+p.score+' คะแนน · '+(p.answered?'ตอบแล้ว':'ยังไม่ตอบ')}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b><span className="packed-answer-state" aria-label={p.answered?'ตอบแล้ว':'ยังไม่ตอบ'}>{p.answered?'✓':'•'}</span><span className="roster-verbose-state"> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</span></small></div>)}</div>}
       </aside>}
     </section>}
 
