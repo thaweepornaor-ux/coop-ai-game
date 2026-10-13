@@ -436,13 +436,29 @@ async function realRoom(browser, browserName) {
         assert.equal(await host.locator('.explanation').count(), 0);
         await question(host, 2); row.checks.push('Real fifteen-second deadline locks answers without revealing or advancing');
       }
+      // Every real assessment question must fit the real 720p projector, not just samples.
+      await host.setViewportSize({width:1280,height:720});
+      await checkProjectorQuestionFit(host,'Projector 1280x720 question '+number);
       if ([1,8,15].includes(number)) {
-        await host.setViewportSize({width:1280,height:720});
-        await checkProjectorQuestionFit(host,'Projector 1280x720 question '+number);
-        if(number===1||number===15)await shot(host,browserName+'-1280x720-question-'+number);
-        await host.setViewportSize({width:1280,height:900});
-        row.checks.push('Question '+number+' fits 720p without clipping Thai headings, choices or controls');
+        const visuals=await host.evaluate(()=>{
+          const stage=document.querySelector('.host-question');
+          const colors=[...document.querySelectorAll('.host-question .answer-grid .answer')].map(x=>getComputedStyle(x).backgroundImage);
+          const live=document.querySelector('.live-score-stage');
+          const spotlight=document.querySelector('.score-spotlight .spotlight-person');
+          return {stage:Boolean(stage),live:Boolean(live),spotlight:Boolean(spotlight),colorCount:new Set(colors).size,
+            answers:[...document.querySelectorAll('.answer-grid .answer')].length};
+        });
+        assert.ok(visuals.stage&&visuals.live&&visuals.spotlight,'Host has question plus broadcast HUD at 720p');
+        assert.equal(visuals.colorCount,3,'Each answer must have its own saturated broadcast color');
+        assert.equal(visuals.answers,3);
+        await shot(host,browserName+'-1280x720-question-'+number);
+        await host.setViewportSize({width:1366,height:768});
+        await checkProjectorQuestionFit(host,'Projector 1366x768 question '+number);
+        await host.setViewportSize({width:1920,height:1080});
+        await checkProjectorQuestionFit(host,'Projector 1920x1080 question '+number);
       }
+      await host.setViewportSize({width:1280,height:900});
+      row.checks.push('Question '+number+' fits 720p with no Thai text clipping, all answer choices and presenter actions');
       if (number === 1) {
         await noOverflow(player,'mobile active question');
         const timerSize=await host.locator('.countdown').boundingBox();
