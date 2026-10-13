@@ -46,7 +46,7 @@ test('Instructor sees unmistakable spoken-audio ZIP and preview controls, separa
  assert.match(app,/importVoiceSelection/);
  assert.match(app,/unpackQuizVoiceZip\(chosen\[0\]\)/);
  assert.match(app,/🎙 เลือก ZIP เสียงโจทย์/);
- assert.match(app,/▶ ทดลองฟังข้อ 1/);
+ assert.match(app,/▶ ทดลองเสียงอ่าน/);
  assert.match(app,/voice-setup-panel/);
  assert.match(app,/เอฟเฟกต์เปิด/);
  assert.match(app,/voiceReady&&narrationEnabled/);
