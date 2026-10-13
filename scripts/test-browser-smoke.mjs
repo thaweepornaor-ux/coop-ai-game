@@ -414,6 +414,24 @@ async function realRoom(browser, browserName) {
         assert.ok(timerSize && timerSize.width>=130 && timerSize.height>=130,'Projector countdown must be large and visible');
         const titleSize=await host.locator('.question-card h1').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
         assert.ok(titleSize>=35,'Projector question must have a prominently readable font');
+        await stage('question-fits-projector-without-scroll');
+        for(const vp of [{width:1280,height:900},{width:1280,height:720},{width:1920,height:1080}]){
+          await host.setViewportSize(vp);
+          const layout=await host.evaluate(()=>{
+            const selectors=['.question-card h1','.countdown','.answer-grid .answer','.host-controls button'];
+            const elements=selectors.flatMap(q=>[...document.querySelectorAll(q)]);
+            const cut=elements.map((el,i)=>({i,r:el.getBoundingClientRect()}))
+              .filter(({r})=>r.top<0||r.bottom>innerHeight+1||r.left<0||r.right>innerWidth+1);
+            return {cut:cut.map(x=>x.i),pageScroll:document.documentElement.scrollHeight>innerHeight+4,
+              answerCount:document.querySelectorAll('.answer-grid .answer').length};
+          });
+          assert.equal(layout.answerCount,3);
+          assert.deepEqual(layout.cut,[],'Question, options and countdown must fit '+vp.width+'x'+vp.height);
+          assert.equal(layout.pageScroll,false,'No projector page scrolling at '+vp.width+'x'+vp.height);
+          await shot(host,browserName+'-live-question-'+vp.width+'x'+vp.height);
+        }
+        await host.setViewportSize({width:1280,height:900});
+        row.checks.push('Whole live question fits 720p, 900p and 1080p without scrolling');
         await shot(player,browserName+'-question-player');await shot(host,browserName+'-question-host');
       }
       await stage('reveal-' + number);
@@ -574,13 +592,16 @@ async function realTwentyFive(browser,browserName){
          r.width<110||r.height<35||r.left<0||r.right>innerWidth+1||r.top<0||r.bottom>innerHeight+1);
        const clipped=cards.map((x,i)=>({i,parent:x.closest('.reveal-tiles'),rect:x.getBoundingClientRect()}))
          .filter(({parent,rect})=>{const p=parent.getBoundingClientRect();return rect.top<p.top-1||rect.bottom>p.bottom+1});
-       return {count:cards.length,outside:outside.map(x=>x.i),clipped:clipped.map(x=>x.i),
+       return {count:cards.length,outside:outside.map(x=>x.i),clipped:clipped.map(x=>({index:x.i,excessBottomPx:Math.round((x.rect.bottom-x.parent.getBoundingClientRect().bottom)*100)/100})),
          viewport,pageScroll:document.documentElement.scrollHeight>innerHeight+4};
      });
      assert.equal(dimensions.count,25);
      assert.deepEqual(dimensions.outside,[],'All real player tiles must be on projector '+viewport.width+'x'+viewport.height);
      assert.deepEqual(dimensions.clipped,[],'No real player may be clipped inside board '+viewport.width+'x'+viewport.height);
      assert.equal(dimensions.pageScroll,false,'No vertical scrolling for projector reveal '+viewport.width+'x'+viewport.height);
+     const allReadable=await host.locator('.reveal-person').evaluateAll(cards=>
+       cards.every(card=>Number(getComputedStyle(card).opacity)>=0.99));
+     assert.equal(allReadable,true,'No reveal player card should become hard to read during animation');
      await shot(host,browserName+'-real-25-reveal-'+viewport.width+'x'+viewport.height);
    }
    row.checks.push('Twenty-five real avatar cards, all answer-status groups and scores fit at 720p and 1080p without scrolling');
