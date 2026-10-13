@@ -113,7 +113,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         const response=await fetch('/api/game?room='+encodeURIComponent(session!.room),{headers:{Authorization:'Bearer '+session!.token},cache:'no-store',signal:request.signal});
         const data=await response.json() as ApiResponse;
         if(disposed||thisGeneration!==generation.current)return;
-        if(!response.ok){if(response.status===401||response.status===404){setError(data.error||'ห้องนี้ไม่พร้อมใช้งาน');setShowRecovery(true)}throw new Error(data.error||'เชื่อมต่อไม่ได้')}
+        if(!response.ok){if(response.status===401||response.status===404){setError(session!.role==='host'?'การเชื่อมต่อเกมเดิมหมดอายุ กด “เริ่มเกมใหม่” เพื่อแสดง QR Code ใหม่ครับ':'ไม่สามารถกลับเข้าเกมนี้ได้ กรุณาสแกน QR Code ของผู้สอนอีกครั้งครับ');setShowRecovery(true)}throw new Error(data.error||'เชื่อมต่อไม่ได้')}
         const state=(data.snapshot||data) as Snapshot;acceptState(state,started,Date.now());
       }catch{if(!disposed)setNetwork('offline')}
       finally{window.clearTimeout(timeout);if(!disposed)tick=window.setTimeout(poll,850)}
@@ -169,9 +169,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     generation.current++;try{localStorage.removeItem(sessionKey(role))}catch{}
     sessionRef.current=null;snapshotRef.current=null;setSession(null);setSnapshot(null);setError('');setShowRecovery(false);setNetwork('connecting');setRoomInput('');setPendingChoice(null);setResetDialog(false);setLeaveDialog(false);setQr('');setJoinUrl('');
   }
+  function restartHost(){
+    // A saved instructor credential can expire between training days.
+    // Release only this browser's stale session before opening a fresh QR invitation.
+    leave();
+    void send('create');
+  }
   async function copyJoin(){
     try{await navigator.clipboard.writeText(joinUrl);setCopied(true);window.setTimeout(()=>setCopied(false),2000)}
-    catch{setError('คัดลอกอัตโนมัติไม่ได้ เลือกข้อความลิงก์ด้านล่างแล้วคัดลอกได้ครับ')}
+    catch{setError('คัดลอกลิงก์ไม่ได้ แต่ผู้เรียนยังสแกน QR Code ได้ตามปกติครับ')}
   }
   function chooseAnswer(choice:number){
     if(busyRef.current||!canInteract||!timeOpen||snapshot?.ownAnswer||pendingChoice!==null)return;
@@ -195,7 +201,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       </div>
     </header>
     {error&&<div className="notice error" role="alert">{error}</div>}
-    {session&&<div className={'connection '+network} role="status"><i/>{network==='online'?'เชื่อมต่อแล้ว':network==='offline'?'กำลังเชื่อมต่อใหม่… คำตอบจะเปิดเมื่อเชื่อมต่อได้':'กำลังเข้าห้อง…'} {showRecovery&&<button onClick={leave}>กลับหน้าเข้าห้อง</button>}</div>}
+    {session&&<div className={'connection '+network} role="status"><i/>{network==='online'?'เชื่อมต่อแล้ว':network==='offline'?'กำลังเชื่อมต่อใหม่… คำตอบจะเปิดเมื่อเชื่อมต่อได้':'กำลังเข้าห้อง…'} {showRecovery&&<button type="button" onClick={isHost?restartHost:leave}>{isHost?'เริ่มเกมใหม่':'กลับไปสแกน QR ใหม่'}</button>}</div>}
 
     {!session&&role==='choose'&&<section className="welcome entry-stage enter">
       <div className="entry-copy"><div className="eyebrow"><i/> COOPERATIVE • AI ARENA</div><h1>ประเมิน<br/><em>ความเข้าใจ AI</em></h1><p className="entry-description">เข้าเวทีแห่งไอเดีย ท้าทายความเข้าใจ<br/>และเรียนรู้พลังของ AI ไปด้วยกัน</p><RulesStrip/><div className="entry-actions"><a className="button primary" href="/play">เข้าร่วมภารกิจ <span>↗</span></a><a className="button secondary" href="/host">เปิดเวทีผู้สอน <span>→</span></a></div><p className="small-note">เล่นผ่านมือถือ · ไม่ต้องสมัครสมาชิก</p></div>
@@ -269,8 +275,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         <p className="small-note">คะแนนเท่ากันใช้อันดับร่วมกันครับ</p><div className="level-guide"><span><b>0–5</b> นักสำรวจ AI</span><span><b>6–10</b> นักต่อยอด AI</span><span><b>11–15</b> นักรู้ทัน AI</span></div>
       </div>
     </section>}
-    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนเป็นคนควบคุมเกม':'ออกเพื่อเข้าห้องอื่น หรือเปลี่ยนชื่อผู้เล่น'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>ออกจากเกม</button></div></footer>}
-    {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากห้องผู้สอนไหม?</h2><p>สิทธิ์ควบคุมห้องนี้ในเบราว์เซอร์นี้จะหายไป และกลับมาควบคุมห้องเดิมไม่ได้<br/>การออกจะไม่รีเซ็ตห้อง ไม่ล้างคะแนนหรือคำตอบของผู้เล่น<br/>คุณสามารถสร้างห้องใหม่ได้หลังออก</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
+    {session&&<footer className="host-footer session-footer"><span>{isHost?'ผู้สอนควบคุมคำถามและคะแนน':'ต้องการกลับไปเลือกตัวละครหรือตั้งชื่อใหม่?'}</span><div className="session-actions">{isHost&&<button className="button ghost" disabled={!snapshot||busy} onClick={()=>setResetDialog(true)}>↻ เริ่มรอบใหม่</button>}<button className="button secondary" disabled={busy} onClick={()=>isHost?setLeaveDialog(true):leave()}>ออกจากเกม</button></div></footer>}
+    {leaveDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="leave-title"><h2 id="leave-title">ออกจากเกมผู้สอนใช่ไหม?</h2><p>คุณจะไม่สามารถกลับมาควบคุมรอบเดิมบนเบราว์เซอร์นี้ได้<br/>คะแนนและคำตอบที่บันทึกไว้จะไม่ถูกลบ<br/>หากต้องการสอนใหม่ สามารถเปิดเกมอีกครั้งได้</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setLeaveDialog(false)}>ยังอยู่ในห้อง</button><button className="button primary" disabled={busy} onClick={leave}>ยืนยัน ออกจากห้อง</button></div></section></div>}
     {resetDialog&&<div className="modal-backdrop"><section className="card reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">เริ่มรอบใหม่ไหม?</h2><p>คะแนนและคำตอบรอบนี้จะถูกล้าง<br/>ชื่อกับตัวละครของทุกคนยังอยู่</p><div className="entry-actions"><button className="button secondary" autoFocus onClick={()=>setResetDialog(false)}>ยังไม่เริ่มใหม่</button><button className="button primary" disabled={busy} onClick={()=>{setResetDialog(false);void send('reset')}}>ยืนยัน เริ่มรอบใหม่</button></div></section></div>}
   </main>;
 }
