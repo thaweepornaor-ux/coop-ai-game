@@ -19,7 +19,7 @@ const report = {
   scope: 'Disposable local preview; synthetic users; no production database',
   playwright: installed.version,
   limits: ['Linux Chromium/WebKit emulation is not a physical iPhone or Android test', 'Nonblank raster and screenshots do not certify professional avatar art'],
-  plannedCases: 12,
+  plannedCases: 14,
   cases: [],
 };
 const deadline = setTimeout(() => { console.error('Browser smoke exceeded its ten minute bound'); process.exit(1); }, 600_000);
@@ -389,6 +389,19 @@ async function realRoom(browser, browserName) {
         await player.locator('.answer-grid button').first().click();
         await player.locator('.answer-status').filter({ hasText: 'ส่งคำตอบแล้ว' }).waitFor();
       } else {
+        await stage('last-five-seconds-projector-visual');
+        await host.locator('.countdown.urgent').waitFor({timeout:18000});
+        const flash=await host.locator('.countdown.urgent').evaluate(el=>{
+          const style=getComputedStyle(el);
+          return {width:el.getBoundingClientRect().width,
+            name:style.animationName,color:style.color,
+            label:el.querySelector('.timer-kicker')?.textContent};
+        });
+        assert.ok(flash.width>=130,'Last-five-seconds countdown remains large');
+        assert.ok(flash.name.includes('arena-last-five'),'Last five seconds should visibly pulse in motion-enabled mode');
+        assert.match(flash.label,/เร็วเข้า/);
+        await shot(host,browserName+'-urgent-five-seconds');
+        row.checks.push('Large red flashing countdown on the instructor projector during the final five seconds');
         await player.waitForFunction(() => document.querySelector('.countdown .timer-value')?.textContent?.trim() === '0', undefined, { timeout: 20_000 });
         assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
         assert.equal(await player.locator('.explanation').count(), 0);
@@ -490,6 +503,90 @@ async function realRoom(browser, browserName) {
 }
 
 
+
+/** Twenty-five REAL API enrollments in disposable D1, unlike copied browser tiles.
+ * One projector renders the actual backend results for all 25 in a single frame.
+ * Never call a public Worker or mutate a persistent database from this test.
+ */
+async function realTwentyFive(browser,browserName){
+ return boundedCase(browser,browserName+'-real-25-attendees',105_000,async({createContext,createPage,stage},row)=>{
+   const context=await createContext({viewport:{width:1280,height:720},locale:'th-TH'});
+   const host=await createPage(context);
+   await stage('create-real-classroom');
+   await host.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
+   await host.locator('.host-lobby .qr img').waitFor({timeout:20000});
+   const room=(await host.locator('.room-code').textContent()).trim();
+   assert.match(room,/^[A-Z0-9]{6}$/);
+   await stage('enroll-25-genuine-players');
+   const joined=[];
+   for(let i=0;i<25;i++){
+     const female=i%2===1;
+     const code=(female?'F':'M')+String(Math.floor(i/2)%10+1).padStart(2,'0');
+     const response=await host.request.post(preview.origin+'/api/game',{data:{
+       action:'join',room,name:'ผู้เรียน '+String(i+1).padStart(2,'0'),
+       avatar:{presetId:code,bodyStyle:female?'female':'male'}
+     },timeout:12000});
+     assert.equal(response.status(),201,'Player '+(i+1)+' should join with an approved character');
+     const record=await response.json();
+     assert.equal(record.playerId?.length>0,true);
+     joined.push(record);
+   }
+   await host.waitForFunction(()=>document.querySelectorAll('.host-lobby .mini-player').length===25,null,{timeout:18000});
+   assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
+   row.checks.push('Twenty-five actual authenticated players joined disposable D1 with 20 distinct character IDs');
+   await shot(host,browserName+'-25-real-lobby');
+   await stage('begin-game-with-25-players');
+   await host.getByRole('button',{name:/เริ่มเกมกับผู้เล่น 25 คน/}).click();
+   await question(host,1);
+   const firstState=await host.request.get(preview.origin+'/api/game?room='+room,{
+     headers:{Authorization:'Bearer '+joined[0].token}
+   });
+   assert.equal(firstState.status(),200);
+   const gameState=await firstState.json();
+   assert.equal(gameState.room.questionIndex,0);
+   const action=(token,choice)=>host.request.post(preview.origin+'/api/game',{
+     headers:{Authorization:'Bearer '+token},
+     data:{action:'answer',room,roundId:gameState.room.roundId,
+       questionIndex:gameState.room.questionIndex,choice}
+   });
+   const answeredRight=await action(joined[0].token,1);
+   const answeredWrong=await action(joined[1].token,0);
+   assert.equal(answeredRight.status(),200);
+   assert.equal(answeredWrong.status(),200);
+   await stage('reveal-genuine-25-player-result-board');
+   await host.locator('.host-controls button').click();
+   await host.locator('.reveal-tiles .reveal-person').first().waitFor({timeout:15000});
+   await host.waitForFunction(()=>document.querySelectorAll('.reveal-tiles .reveal-person').length===25,null,{timeout:15000});
+   assert.equal(await host.locator('.reveal-person.correct').count(),1);
+   assert.equal(await host.locator('.reveal-person.incorrect').count(),1);
+   assert.equal(await host.locator('.reveal-person.unanswered').count(),23);
+   const names=await host.locator('.reveal-person .reveal-details strong').allTextContents();
+   assert.equal(new Set(names).size,25,'Every real learner must appear once');
+   const graphicCount=await host.locator('.reveal-person svg').count();
+   assert.equal(graphicCount,25,'Every real learner has a rendered character image');
+   for(const viewport of [{width:1280,height:720},{width:1920,height:1080}]){
+     await stage('real-25-in-frame-'+viewport.width+'x'+viewport.height);
+     await host.setViewportSize(viewport);
+     const dimensions=await host.evaluate(()=>{
+       const viewport={width:innerWidth,height:innerHeight};
+       const cards=[...document.querySelectorAll('.reveal-tiles .reveal-person')];
+       const outside=cards.map((x,i)=>({i,r:x.getBoundingClientRect()})).filter(({r})=>
+         r.width<110||r.height<35||r.left<0||r.right>innerWidth+1||r.top<0||r.bottom>innerHeight+1);
+       const clipped=cards.map((x,i)=>({i,parent:x.closest('.reveal-tiles'),rect:x.getBoundingClientRect()}))
+         .filter(({parent,rect})=>{const p=parent.getBoundingClientRect();return rect.top<p.top-1||rect.bottom>p.bottom+1});
+       return {count:cards.length,outside:outside.map(x=>x.i),clipped:clipped.map(x=>x.i),
+         viewport,pageScroll:document.documentElement.scrollHeight>innerHeight+4};
+     });
+     assert.equal(dimensions.count,25);
+     assert.deepEqual(dimensions.outside,[],'All real player tiles must be on projector '+viewport.width+'x'+viewport.height);
+     assert.deepEqual(dimensions.clipped,[],'No real player may be clipped inside board '+viewport.width+'x'+viewport.height);
+     assert.equal(dimensions.pageScroll,false,'No vertical scrolling for projector reveal '+viewport.width+'x'+viewport.height);
+     await shot(host,browserName+'-real-25-reveal-'+viewport.width+'x'+viewport.height);
+   }
+   row.checks.push('Twenty-five real avatar cards, all answer-status groups and scores fit at 720p and 1080p without scrolling');
+ });
+}
+
 const surfaceOrder = [sizes[3], sizes[1], sizes[0], sizes[2]];
 for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
   let browser, prerequisite = true;
@@ -501,12 +598,18 @@ for (const [name, type] of [['chromium', chromium], ['webkit', webkit]]) {
     }
     if (prerequisite) prerequisite = await surfaces(browser, name, sizes[1], 'reduce');
     else await notRun(name + '-mobile-390-reduced', 'Earlier browser surface failed');
-    if (prerequisite) await realRoom(browser, name);
-    else await notRun(name + '-real-room', 'Browser entry or wardrobe prerequisites failed; room journey remains unverified');
+    if(prerequisite){
+      prerequisite=await realRoom(browser,name);
+      if(prerequisite)await realTwentyFive(browser,name);
+      else await notRun(name+'-real-25-attendees','Ordinary game journey failed; twenty-five-player test not yet valid');
+    }else{
+      await notRun(name+'-real-room','Browser entry or wardrobe prerequisites failed; room journey remains unverified');
+      await notRun(name+'-real-25-attendees','Browser entry or wardrobe prerequisites failed');
+    }
   } catch (error) {
     const row = { label: name + '-launch', status: 'failed', stage: 'browser-lifecycle', error: safeCaseText(error.message) };
     report.cases.push(row); emitCase(row); await saveReport();
-    for (const label of [...surfaceOrder.map(size => name + '-' + size.label), name + '-mobile-390-reduced', name + '-real-room']) {
+    for (const label of [...surfaceOrder.map(size => name + '-' + size.label), name + '-mobile-390-reduced', name + '-real-room', name+'-real-25-attendees']) {
       if (!report.cases.some(row => row.label === label)) await notRun(label, 'Browser initialization or lifecycle failed');
     }
   } finally {
