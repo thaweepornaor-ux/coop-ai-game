@@ -41,3 +41,24 @@ test('persisted female avatar opens the female face gallery after player state h
  assert.match(picker,/useEffect\(\(\)=>\{setGender\(avatar\.bodyStyle==='female'\?'female':'male'\)\},\[avatar\.bodyStyle\]\)/);
  assert.match(game,/setAvatar\(normalizeWardrobe\(previousAvatar\)\)/);
 });
+
+test('editing learner identity preserves existing player and never creates a second join',()=>{
+ const api=readFileSync(new URL('../app/api/game/route.ts',import.meta.url),'utf8');
+ assert.match(api,/async function updatePlayerProfile\(/);
+ assert.match(api,/if \(caller\.role !== "player"\)/);
+ assert.match(api,/assertExpectedState\(state\.room, body\.roundId, body\.questionIndex\)/);
+ assert.match(api,/state\.room\.phase !== "lobby"/);
+ assert.match(api,/UPDATE players SET name = \?, avatar_json = \?/);
+ assert.match(api,/AND token_hash = \?/);
+ assert.match(api,/AND EXISTS \(SELECT 1 FROM rooms WHERE code = \? AND phase = 'lobby'/);
+ assert.match(api,/if \(body\.action === "profile"\) return await updatePlayerProfile/);
+ assert.match(game,/send\('profile',\{name:updated,avatar\}\)/);
+ assert.match(game,/className="inline-profile-form"/);
+ assert.match(game,/เปลี่ยนชื่อ \/ ตัวละคร/);
+ assert.doesNotMatch(game,/\?\s*'เปลี่ยนตัวละคร \/ ชื่อ'\}\<\/button\>/);
+});
+test('lost instructor session can reopen a new QR without asking for codes',()=>{
+ assert.match(game,/function restartHost\(\)/);
+ assert.match(game,/onClick=\{isHost\?restartHost:leave\}/);
+ assert.match(game,/session!\.role==='host'/);
+});
