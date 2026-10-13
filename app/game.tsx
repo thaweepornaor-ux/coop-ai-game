@@ -625,7 +625,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             <span className="live-answer-count">{answered}<small>ตอบแล้ว</small></span>
           </div>
           <div className="answer-meter" role="progressbar" aria-label="สัดส่วนผู้เล่นที่ส่งคำตอบ" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={snapshot.players.length} style={{'--answer-percent':(snapshot.players.length?Math.round(answered/snapshot.players.length*100):0)+'%'} as React.CSSProperties}><span/></div>
-          <p className="live-score-hint">{rankedPlayers[0]?.score>0?'✦ คะแนนนำขณะนี้: '+rankedPlayers.filter(p=>p.score===rankedPlayers[0].score).map(p=>p.name).slice(0,2).join(' / ')+(rankedPlayers.filter(p=>p.score===rankedPlayers[0].score).length>2?' และคนอื่น':'')+' · '+rankedPlayers[0].score+'/15':answered===snapshot.players.length?'ผู้เรียนส่งคำตอบครบแล้ว ✨':'กำลังรอคำตอบจากผู้เรียน'}</p>
+          <p className="live-score-hint">{(rankedPlayers[0]?.score??0)>0?'✦ คะแนนนำขณะนี้: '+rankedPlayers.filter(p=>p.score===rankedPlayers[0]?.score).map(p=>p.name).slice(0,2).join(' / ')+(rankedPlayers.filter(p=>p.score===rankedPlayers[0]?.score).length>2?' และคนอื่น':'')+' · '+rankedPlayers[0]?.score+'/15':answered===snapshot.players.length?'ผู้เรียนส่งคำตอบครบแล้ว ✨':'กำลังรอคำตอบจากผู้เรียน'}</p>
         </div>}
         {!reveal&&snapshot.players.length>0&&snapshot.players.length<=3&&<div className="score-spotlight" aria-label="ผู้เล่นบนเวที">
           {rankedPlayers.slice(0,3).map((player,index)=><div className="spotlight-person" key={player.id}>
