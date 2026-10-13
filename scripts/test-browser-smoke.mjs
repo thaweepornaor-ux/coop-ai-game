@@ -322,6 +322,8 @@ async function realRoom(browser, browserName) {
     await stage('host-create-real-room');
     await host.goto(preview.origin + '/host', { waitUntil: 'domcontentloaded' });
     await host.locator('.host-lobby .qr img').waitFor({timeout:20000}); await online(host);
+    assert.equal(await host.locator('header .brand').evaluate(el=>el.tagName),'DIV','Header must not navigate away from a live game');
+    assert.equal(await host.getByRole('button',{name:/เต็มจอโปรเจคเตอร์/}).count(),1,'Instructor has a projector full-screen control');
     const room = (await host.locator('.room-code').textContent()).trim(); assert.match(room, /^[A-Z0-9]{6}$/);
     await host.getByRole('img', { name: 'QR สำหรับผู้เล่นเข้าห้อง', exact: true }).waitFor();
     const urlInput = host.getByLabel('ลิงก์ผู้เล่น', { exact: true });
@@ -341,6 +343,8 @@ async function realRoom(browser, browserName) {
     const submittedAvatar = sent.postDataJSON().avatar;
     assert.equal(Object.keys(submittedAvatar).length, 13); assert.equal(submittedAvatar.presetId, 'F03'); assert.equal(submittedAvatar.bodyStyle,'female');
     await online(player); await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
+    assert.equal(await player.locator('header .brand').evaluate(el=>el.tagName),'DIV','Player must not accidentally return to host by tapping the header');
+    assert.equal(await player.getByRole('button',{name:/เต็มจอโปรเจคเตอร์/}).count(),0);
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
     await stage('edit-profile-without-duplicate-join');
@@ -409,6 +413,14 @@ async function realRoom(browser, browserName) {
     await player.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
     assert.equal((await player.locator('.personal-finish .big-score').innerText()).replace(/\s/g, ''), expectedScore + '/15');
     assert.equal(await player.locator('.score-row.me').count(), 1); row.score = expectedScore;
+    await stage('teacher-export-scores');
+    assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).count(),0,'Learners cannot use the teacher CSV export');
+    const [download]=await Promise.all([
+      host.waitForEvent('download',{timeout:15000}),
+      host.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).click()
+    ]);
+    assert.match(download.suggestedFilename(),/^AI-Assessment-Results-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]csv$/);
+    row.checks.push('Instructor can export final score CSV, but learner cannot');
     for (const size of sizes) {
       await player.setViewportSize({ width: size.width, height: size.height });
       await noOverflow(player, size.label + ' final scoreboard'); await shot(player, browserName + '-' + size.label + '-final');

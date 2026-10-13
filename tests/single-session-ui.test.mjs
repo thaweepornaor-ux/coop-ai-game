@@ -62,3 +62,14 @@ test('lost instructor session can reopen a new QR without asking for codes',()=>
  assert.match(game,/onClick=\{isHost\?restartHost:leave\}/);
  assert.match(game,/session!\.role==='host'/);
 });
+
+test('trainer tools are available only in the presenter view',()=>{
+ assert.match(game,/role==='host'&&<button className="icon-button fullscreen-toggle"/);
+ assert.match(game,/document\.documentElement\.requestFullscreen\(\)/);
+ assert.match(game,/document\.exitFullscreen\(\)/);
+ assert.match(game,/isHost&&<button type="button" className="button secondary export-results"/);
+ assert.match(game,/scoreCsv\(snapshot\.leaderboard\)/);
+ assert.doesNotMatch(game,/<a className="brand" href="\/"/);
+ assert.match(game,/<div className="brand">/);
+ assert.match(game,/session&&isHost&&<footer/);
+});
