@@ -314,6 +314,22 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         {reveal&&isHost&&<div className="host-controls"><span>อ่านเฉลยและคุยทบทวนได้เต็มที่</span><button className="button primary" disabled={!canInteract} onClick={()=>void send(snapshot.room.questionIndex===14?'finish':'next')}>{snapshot.room.questionIndex===14?'ดูสรุปคะแนน 🏆':'เริ่มข้อถัดไป →'}</button></div>}
       </div>
       {isHost&&<aside className="card question-roster">{!reveal&&<div className="projector-timer-wrap">{countdownNode}</div>}<h2>{reveal?'ผลคำตอบข้อนี้':'คะแนนสะสม'} {!reveal&&<span className="host-score-count">ส่งคำตอบแล้ว {answered} / {snapshot.players.length}</span>}</h2>
+        {!reveal&&<div className="live-score-stage" aria-label="สถานะการตอบคำถามแบบสด">
+          <div className="live-score-stats">
+            <span className="live-indicator"><i/> LIVE SCORE</span>
+            <span className="live-player-count">{snapshot.players.length} <small>ผู้เล่น</small></span>
+            <span className="live-answer-count">{answered}<small>ตอบแล้ว</small></span>
+          </div>
+          <div className="answer-meter" role="progressbar" aria-label="สัดส่วนผู้เล่นที่ส่งคำตอบ" aria-valuenow={answered} aria-valuemin={0} aria-valuemax={snapshot.players.length} style={{'--answer-percent':(snapshot.players.length?Math.round(answered/snapshot.players.length*100):0)+'%'} as React.CSSProperties}><span/></div>
+          <p className="live-score-hint">{answered===snapshot.players.length?'ผู้เรียนส่งคำตอบครบแล้ว ✨':'กำลังรอคำตอบจากผู้เรียน'}</p>
+        </div>}
+        {!reveal&&snapshot.players.length>0&&snapshot.players.length<=3&&<div className="score-spotlight" aria-label="ผู้เล่นบนเวที">
+          {rankedPlayers.slice(0,3).map((player,index)=><div className="spotlight-person" key={player.id}>
+            <div className="spotlight-avatar"><Avatar options={player.avatar} motion={motion}/></div>
+            <div className="spotlight-meta"><small>ผู้เล่น {String(index+1).padStart(2,'0')}</small><strong>{player.name}</strong><b>{player.score}<span> / 15</span></b></div>
+            <span className={'spotlight-state '+(player.answered?'done':'waiting')}>{player.answered?'✓ ตอบแล้ว':'รอคำตอบ'}</span>
+          </div>)}
+        </div>}
         {reveal?<div className="reveal-board">
           <div className="reveal-summary" aria-label="จำนวนผู้เรียนในแต่ละผลคำตอบ">
             <span className="summary-correct">✓ ตอบถูก <b>{snapshot.results?.filter(r=>r.status==='correct').length||0}</b></span>
@@ -330,7 +346,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
               </div>)}
           </div>
         </div>
-        :<div className="roster host-scored-roster">{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</small></div>)}</div>}
+        :<div className={'roster host-scored-roster '+(snapshot.players.length<=3?'few-players':'many-players')}>{rankedPlayers.map(p=><div className={'mini-player '+(p.answered?'answered':'')} key={p.id}><Avatar options={p.avatar}/><strong>{p.name}</strong><small><b>{p.score} / 15</b> · {p.answered?'ตอบแล้ว ✓':'ยังไม่ตอบ'}</small></div>)}</div>}
       </aside>}
     </section>}
 
