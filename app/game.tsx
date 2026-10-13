@@ -173,10 +173,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
   },[timer,timeOpen,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,beep]);
   useEffect(()=>{
-    if(!isHost||!narrationEnabled||!snapshot||!['question','reveal'].includes(snapshot.room.phase)){
+    if(!isHost||!narrationEnabled||!snapshot||!['question','closed','reveal'].includes(snapshot.room.phase)){
       stopNarration();return;
     }
-    const key=snapshot.room.code+':'+snapshot.room.roundId+':'+snapshot.room.questionIndex+':'+snapshot.room.phase;
+    const key=snapshot.room.code+':'+snapshot.room.roundId+':'+snapshot.room.questionIndex+':'+(snapshot.room.phase==='reveal'?'reveal':'question');
     if(narrationKey.current===key)return;
     narrationKey.current=key;
     narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
