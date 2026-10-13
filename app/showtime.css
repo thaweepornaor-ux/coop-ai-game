@@ -301,7 +301,7 @@ body::before{
 .game-shell.motion-on .question-card .answer:nth-child(3){animation-delay:.14s}
 @keyframes arena-answer-in{from{opacity:.3;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
 .game-shell.motion-on .reveal-person{animation:arena-reveal .34s ease-out both}
-@keyframes arena-reveal{from{opacity:.25;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes arena-reveal{from{opacity:1;transform:translateY(4px) scale(.975);filter:brightness(.93)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
 .game-shell.motion-on .reveal-person:nth-child(5n+2){animation-delay:.05s}
 .game-shell.motion-on .reveal-person:nth-child(5n+3){animation-delay:.10s}
 .game-shell.motion-on .reveal-person:nth-child(5n+4){animation-delay:.15s}
@@ -467,3 +467,74 @@ body::before{
 
 /* Learner-first UX: do not reintroduce presenter/settings controls through the theme. */
 .game-shell[data-role="player"] .topbar .preferences{display:none!important}
+
+
+/* A projector is not a scrolling article: contain the live question within its actual frame. */
+.game-shell:has(.host-question:not(.reveal-mode)) .session-footer{display:none}
+@media(min-width:901px) and (max-height:1000px){
+ .game-shell:has(.host-question:not(.reveal-mode)){
+   display:flex;flex-direction:column;height:100svh;min-height:0;
+   overflow:hidden;padding:6px clamp(10px,1.4vw,24px)
+ }
+ .game-shell:has(.host-question:not(.reveal-mode)) .topbar{
+   flex:none;padding:5px 12px;margin-bottom:6px
+ }
+ .game-shell:has(.host-question:not(.reveal-mode)) .topbar .brand img{width:39px;height:39px}
+ .game-shell:has(.host-question:not(.reveal-mode)) .connection{
+   flex:none;padding:4px 12px;margin:0 0 7px
+ }
+ .game-shell .host-question:not(.reveal-mode).question-layout{
+   flex:1;min-height:0;overflow:hidden;gap:12px
+ }
+ .game-shell .host-question:not(.reveal-mode) .question-card,
+ .game-shell .host-question:not(.reveal-mode) .question-roster{
+   min-height:0;height:100%;overflow:hidden
+ }
+ .game-shell .host-question:not(.reveal-mode) .question-card{
+   padding:14px 23px
+ }
+ .game-shell .host-question:not(.reveal-mode) .question-meta .badge{
+   font-size:1rem;padding:9px 14px
+ }
+ .game-shell .host-question:not(.reveal-mode) .countdown{
+   width:136px;height:136px;font-size:4.3rem
+ }
+ .game-shell .host-question:not(.reveal-mode) .mission-progress{margin:8px 0 10px}
+ .game-shell .host-question:not(.reveal-mode) .topic{
+   margin:4px 0 8px;font-size:.92rem
+ }
+ .game-shell .host-question:not(.reveal-mode) .question-card h1{
+   font-size:clamp(2.24rem,2.7vw,2.8rem);line-height:1.35;
+   margin:4px 0 14px
+ }
+ .game-shell .host-question:not(.reveal-mode) .answer-grid{
+   flex:1;min-height:0;grid-template-rows:repeat(3,minmax(0,1fr));gap:10px
+ }
+ .game-shell .host-question:not(.reveal-mode) .answer{
+   min-height:0;padding:9px 20px;
+   font-size:clamp(1.35rem,1.75vw,1.7rem)
+ }
+ .game-shell .host-question:not(.reveal-mode) .answer-letter{
+   width:54px;height:56px;font-size:1.65rem
+ }
+ .game-shell .host-question:not(.reveal-mode) .host-controls{
+   flex:none;margin-top:10px;padding-top:9px
+ }
+ .game-shell .host-question:not(.reveal-mode) .host-controls .button{min-height:49px}
+ .game-shell .host-question:not(.reveal-mode) .question-roster{padding:17px}
+}
+/* On a short 720p projector keep all options and a clear, >=130px countdown. */
+@media(min-width:901px) and (max-height:760px){
+ .game-shell .host-question:not(.reveal-mode) .countdown{width:132px;height:132px;font-size:4.1rem}
+ .game-shell .host-question:not(.reveal-mode) .question-card{padding:9px 17px}
+ .game-shell .host-question:not(.reveal-mode) .question-card h1{
+   font-size:2.2rem;line-height:1.26;margin:2px 0 8px
+ }
+ .game-shell .host-question:not(.reveal-mode) .answer-grid{gap:7px}
+ .game-shell .host-question:not(.reveal-mode) .answer{padding:7px 16px;font-size:1.29rem}
+ .game-shell .host-question:not(.reveal-mode) .answer-letter{width:48px;height:50px}
+ .game-shell .host-question:not(.reveal-mode) .host-controls{margin-top:6px;padding-top:6px}
+ .game-shell .host-question:not(.reveal-mode) .host-controls .button{min-height:42px;padding:8px 12px}
+}
+/* All reveal cards are readable from their very first animation frame. */
+.game-shell .reveal-person,.game-shell.motion-on .reveal-person{opacity:1}
