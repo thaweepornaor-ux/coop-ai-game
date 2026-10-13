@@ -590,6 +590,39 @@ async function realTwentyFive(browser,browserName){
    await stage('begin-game-with-25-players');
    await host.getByRole('button',{name:/เริ่มเกมกับผู้เล่น 25 คน/}).click();
    await question(host,1);
+   await stage('verify-all-25-live-score-cells-are-visible');
+   await host.waitForFunction(()=>document.querySelectorAll('.host-scored-roster.packed-players .mini-player').length===25,null,{timeout:15000});
+   for(const viewport of [{width:1280,height:720},{width:1366,height:768},{width:1920,height:1080}]){
+     await host.setViewportSize(viewport);
+     const live=await host.evaluate(()=>{
+       const board=document.querySelector('.host-scored-roster.packed-players');
+       const cards=[...document.querySelectorAll('.host-scored-roster.packed-players .mini-player')];
+       const timer=document.querySelector('.projector-timer-wrap .countdown');
+       if(!board||!timer)return {missing:true};
+       const bb=board.getBoundingClientRect();
+       const outside=cards.map((item,i)=>({i,box:item.getBoundingClientRect()})).filter(({box})=>
+         box.top<bb.top-1||box.bottom>bb.bottom+1||box.left<bb.left-1||box.right>bb.right+1||
+         box.top<0||box.bottom>innerHeight+1||box.left<0||box.right>innerWidth+1||
+         box.width<65||box.height<25);
+       return {missing:false,count:cards.length,outside:outside.map(x=>x.i),
+         boardScroll:board.scrollHeight>board.clientHeight+3,
+         pageScroll:document.documentElement.scrollHeight>innerHeight+4,
+         timerVisible:timer.getBoundingClientRect().bottom<=innerHeight,
+         names:cards.map(el=>el.querySelector('strong')?.textContent),
+         voiceButtons:document.querySelectorAll('.host-question .narrate-button').length};
+     });
+     assert.equal(live.missing,false,'Live contestant board exists');
+     assert.equal(live.count,25,'All enrolled learners must be in scoreboard DOM');
+     assert.deepEqual(live.outside,[],'Every one of 25 live avatar-score cards must fit '+viewport.width+'x'+viewport.height);
+     assert.equal(live.boardScroll,false,'Live board must show all 25 without scrolling '+viewport.width);
+     assert.equal(live.pageScroll,false,'Projector page must not scroll with 25 players');
+     assert.equal(live.timerVisible,true,'Countdown remains visible even with 25 players');
+     assert.equal(new Set(live.names).size,25,'Each player is uniquely represented in the live board');
+     assert.ok(live.voiceButtons>=1,'Trainer has Thai question narration control');
+     if(viewport.width!==1366)await shot(host,browserName+'-real-25-live-score-'+viewport.width+'x'+viewport.height);
+   }
+   await host.setViewportSize({width:1280,height:720});
+   row.checks.push('All 25 REAL player portraits, names, points and answer markers fit live at 720p/768p/1080p without scrolling');
    const firstState=await host.request.get(preview.origin+'/api/game?room='+room,{
      headers:{Authorization:'Bearer '+joined[0].token}
    });
