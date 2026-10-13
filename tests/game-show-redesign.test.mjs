@@ -105,3 +105,21 @@ test('finished leaderboard uses bounded avatar frames and visible presenter rese
  assert.match(css,/\.results-page \.score-player>\.result-score-avatar\{/);
  assert.match(css,/\.results-page \[class\*="result-"\]\[class\*="-avatar"\] svg\{/);
 });
+
+test('all 3 AI knowledge levels stay clearly visible by participant on all result surfaces',()=>{
+ for(const name of ['นักสำรวจ AI','นักต่อยอด AI','นักรู้ทัน AI']){
+   assert.ok(game.includes(name),'missing score level '+name);
+ }
+ assert.match(game,/const levelTier=\(n:number\)=>/);
+ assert.match(game,/className="result-level-overview"/);
+ assert.match(game,/result-level-summary tier-explorer/);
+ assert.match(game,/result-level-summary tier-builder/);
+ assert.match(game,/result-level-summary tier-aware/);
+ assert.match(game,/className=\{'result-level-chip tier-'\+levelTier\(own.score\)\}/);
+ assert.match(game,/className=\{'result-level-inline tier-'\+levelTier\(p.score\)\}/);
+ assert.match(game,/className=\{'result-level-chip score-level tier-'\+levelTier\(p.score\)\}/);
+ assert.match(css,/VISIBLE AI LEVELS/);
+ assert.match(css,/\.results-page \.result-level-inline/);
+ assert.match(css,/\.results-page \.result-level-overview/);
+ assert.match(css,/@media\(max-width:700px\)/);
+});

@@ -526,6 +526,38 @@ async function realRoom(browser, browserName) {
     await player.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
     assert.equal((await player.locator('.personal-finish .big-score').innerText()).replace(/\s/g, ''), expectedScore + '/15');
     assert.equal(await player.locator('.score-row.me').count(), 1); row.score = expectedScore;
+    // The level must be shown to EVERY learner, not only in an off-screen
+    // legend or desktop-only fourth column.
+    const expectedTier=expectedScore<=5?'นักสำรวจ AI':expectedScore<=10?'นักต่อยอด AI':'นักรู้ทัน AI';
+    for(const [page,role] of [[host,'host'],[player,'learner']]){
+      assert.equal(await page.locator('.result-level-summary').count(),3,'All three levels appear at finish');
+      assert.equal(await page.locator('.result-level-summary').allTextContents().then(xs=>xs.reduce((n,x)=>n+Number(x.match(/([0-9]+) คน/)?.[1]||0),0)),1,
+        'Level distribution must count the real finished learner');
+      assert.ok((await page.locator('.score-row:not(.table-heading) .score-level').first().innerText()).includes(expectedTier));
+      assert.ok((await page.locator('.result-podium-detail .result-level-chip').first().innerText()).includes(expectedTier));
+      if(role==='learner')assert.ok((await page.locator('.personal-finish .result-level-chip').innerText()).includes(expectedTier));
+      for(const vp of [{width:1280,height:720},{width:390,height:844},{width:320,height:720}]){
+        await page.setViewportSize(vp);
+        const visible=await page.evaluate(()=>{
+          const displayed=el=>!!el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
+          const row=document.querySelector('.score-row:not(.table-heading)');
+          const chip=vp=>vp<701?row?.querySelector('.result-level-inline'):row?.querySelector('.score-level');
+          return {labels:[...document.querySelectorAll('.result-level-summary strong')].map(x=>x.textContent),
+            rowLevelVisible:displayed(chip(innerWidth)),
+            podiumLevelVisible:displayed(document.querySelector('.result-podium-detail .result-level-chip')),
+            hasHorizontalOverflow:document.documentElement.scrollWidth>innerWidth+2};
+        });
+        assert.deepEqual(visible.labels,['นักสำรวจ AI','นักต่อยอด AI','นักรู้ทัน AI']);
+        assert.ok(visible.rowLevelVisible,'Every score row must show the awarded AI level '+role+' '+vp.width);
+        assert.ok(visible.podiumLevelVisible,'Winning contestant must show awarded AI level '+role+' '+vp.width);
+        assert.equal(visible.hasHorizontalOverflow,false,'Level badges must not force side scrolling');
+        if(vp.width===390)await shot(page,browserName+'-'+role+'-visible-ai-level-390');
+      }
+    }
+    await host.setViewportSize({width:1280,height:900});
+    await player.setViewportSize({width:390,height:844});
+    row.checks.push('Every finished learner has a visible named AI level, with all three level bands and accurate class counts');
+
     // Regression: avatars must not grow to viewport height or cover the scoreboard.
     for(const [page,role] of [[host,'host'],[player,'learner']]){
       for(const viewport of [{width:1280,height:720},{width:1920,height:1080},{width:390,height:844},{width:320,height:720}]){
