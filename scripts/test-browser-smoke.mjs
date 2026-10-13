@@ -611,18 +611,42 @@ async function realRoom(browser, browserName) {
       await noOverflow(player, size.label + ' final scoreboard'); await shot(player, browserName + '-' + size.label + '-final');
     }
     row.checks.push('All fifteen questions, instructor reveals and final score rendered through real API');
-    await stage('instructor-reset');
-    assert.equal(await player.getByRole('button', { name: /เริ่มรอบใหม่/ }).count(), 0);
-    await host.getByRole('button', { name: /เริ่มรอบใหม่/ }).click();
-    await host.getByRole('dialog').waitFor(); await host.getByRole('button', { name: 'ยังไม่เริ่มใหม่', exact: true }).click();
-    await host.getByRole('table', { name: 'คะแนนผู้เล่นทั้งหมด', exact: true }).waitFor();
-    await host.getByRole('button', { name: /เริ่มรอบใหม่/ }).click();
-    await host.getByRole('button', { name: 'ยืนยัน เริ่มรอบใหม่', exact: true }).click();
-    await host.locator('.host-lobby').waitFor(); await player.locator('.player-lobby').waitFor();
-    await player.reload({ waitUntil: 'domcontentloaded' }); await online(player);
-    await player.getByRole('heading', { name: syntheticName, exact: true }).waitFor();
-    assert.deepEqual(await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null')),persisted);
-    row.checks.push('Reset requires instructor confirmation and returns both clients to lobby with identity and wardrobe retained');
+    await stage('instructor-fresh-room-clears-players');
+    assert.equal(await player.getByRole('button',{name:/เริ่มเกมใหม่/}).count(),0);
+    const previousHost=await host.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null'));
+    const previousPlayer=await player.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-player')||'null'));
+    assert.ok(previousHost?.room&&previousPlayer?.token);
+    await host.getByRole('button',{name:/เริ่มเกมใหม่ \(ห้องว่าง\)/}).click();
+    await host.getByRole('dialog').waitFor();
+    assert.match(await host.getByRole('dialog').innerText(),/QR Code ใหม่/);
+    await host.getByRole('button',{name:'ยังไม่เริ่มใหม่',exact:true}).click();
+    await host.getByRole('table',{name:'คะแนนผู้เล่นทั้งหมด',exact:true}).waitFor();
+    await host.getByRole('button',{name:/เริ่มเกมใหม่ \(ห้องว่าง\)/}).click();
+    await host.getByRole('button',{name:'ยืนยัน สร้างห้องว่างใหม่',exact:true}).click();
+    await host.locator('.host-lobby').waitFor({timeout:20000});
+    await host.waitForFunction(old=>{
+      const saved=JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null');
+      return Boolean(saved?.room&&saved.room!==old);
+    },previousHost.room,{timeout:15000});
+    const newHost=await host.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-session-host')||'null'));
+    assert.notEqual(newHost.room,previousHost.room,'Fresh classroom must use a new room QR invitation');
+    assert.equal(await host.locator('.host-lobby .roster-panel .mini-player').count(),0,'No stale character should remain');
+    assert.equal(await host.locator('.host-lobby .roster-panel h2 span').innerText(),'0 คน');
+    const fresh=await host.request.get(preview.origin+'/api/game?room='+newHost.room,{
+      headers:{Authorization:'Bearer '+newHost.token}
+    });
+    assert.equal(fresh.status(),200);
+    const freshState=await fresh.json();
+    assert.equal(freshState.room.phase,'lobby');
+    assert.equal(freshState.players.length,0);
+    const oldPlayerResponse=await player.request.get(preview.origin+'/api/game?room='+previousHost.room,{
+      headers:{Authorization:'Bearer '+previousPlayer.token}
+    });
+    assert.equal(oldPlayerResponse.status(),404,'Old QR/player token cannot reenter the retired room');
+    await player.reload({waitUntil:'domcontentloaded'});
+    await player.getByRole('button',{name:'กลับไปสแกน QR ใหม่'}).waitFor({timeout:18000});
+    assert.deepEqual(await player.evaluate(()=>JSON.parse(localStorage.getItem('coop-ai-game-avatar')||'null')),persisted);
+    row.checks.push('Fresh classroom uses a new QR, has ZERO players, and invalidates old room/player tokens');
   });
 }
 
