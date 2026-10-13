@@ -722,10 +722,27 @@ async function realTwentyFive(browser,browserName){
    const joined=[];
    for(let i=0;i<25;i++){
      const female=i%2===1;
-     const code=(female?'F':'M')+String(Math.floor(i/2)%10+1).padStart(2,'0');
+     const choice=Math.floor(i/2)%10;
+     const code=(female?'F':'M')+String(choice+1).padStart(2,'0');
+     // Use the actual visible customization contract, NOT just presetId.
+     // A preset ID alone intentionally uses generic default clothes/hair and
+     // misleadingly makes 25 independent players look like identical twins.
+     const maleHair=['sidepart','wavy','short','buzz','sidepart','swept','curly','short','sidepart','short'];
+     const femaleHair=['bob','ponytail','shoulder','bob','pixie','bun','wavy','shoulder','ponytail','bob'];
+     const hairColor=['brown','black','chestnut','black','saltpepper','blonde','brown','silver','black','silver'];
+     const shirtColors=['lightgreen','blueviolet','white','red','charcoal','teal','purple','coral','sky','gold'];
+     const avatar={
+       presetId:code,bodyStyle:female?'female':'male',
+       skinTone:['warm','fair','tan','warm','deep','warm','tan','fair','warm','fair'][choice],
+       hairStyle:(female?femaleHair:maleHair)[choice],
+       hairColor:hairColor[choice],shirtStyle:choice%3===0?'polo':choice%3===1?'shirt':'tshirt',
+       shirtColor:shirtColors[(choice+i%4)%10],
+       bottomStyle:female&&choice%3===0?'skirt':'pants',
+       bottomColor:['navy','charcoal','denim','sand','olive'][i%5],
+       shoeColor:i%3===0?'white':'black',glassesStyle:choice%5===2?'rectangle':'none',
+     };
      const response=await host.request.post(preview.origin+'/api/game',{data:{
-       action:'join',room,name:'ผู้เรียน '+String(i+1).padStart(2,'0'),
-       avatar:{presetId:code,bodyStyle:female?'female':'male'}
+       action:'join',room,name:'ผู้เรียน '+String(i+1).padStart(2,'0'),avatar
      },timeout:12000});
      assert.equal(response.status(),201,'Player '+(i+1)+' should join with an approved character');
      const record=await response.json();
@@ -734,7 +751,10 @@ async function realTwentyFive(browser,browserName){
    }
    await host.waitForFunction(()=>document.querySelectorAll('.host-lobby .mini-player').length===25,null,{timeout:18000});
    assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
-   row.checks.push('Twenty-five actual authenticated players joined disposable D1 with 20 distinct character IDs');
+   const uniqueWardrobes=await host.locator('.host-lobby .mini-player svg').evaluateAll(nodes=>
+     new Set(nodes.map(node=>node.outerHTML)).size);
+   assert.ok(uniqueWardrobes>=18,'At least 18 visibly distinct full-wardrobe SVGs must render on the host');
+   row.checks.push('25 real players with 20 character presets and >=18 visibly distinct wardrobe renders');
    await shot(host,browserName+'-25-real-lobby');
    await stage('begin-game-with-25-players');
    await host.getByRole('button',{name:/เริ่มเกมกับผู้เล่น 25 คน/}).click();
@@ -767,6 +787,8 @@ async function realTwentyFive(browser,browserName){
      assert.equal(live.pageScroll,false,'Projector page must not scroll with 25 players');
      assert.equal(live.timerVisible,true,'Countdown remains visible even with 25 players');
      assert.equal(new Set(live.names).size,25,'Each player is uniquely represented in the live board');
+     const visiblePortraits=await host.locator('.host-scored-roster.packed-players .mini-player svg').count();
+     assert.equal(visiblePortraits,25,'Each of 25 live scorecards paints an actual avatar, not just a CSS placeholder');
      assert.ok(live.voiceButtons>=1,'Trainer has Thai question narration control');
      if(viewport.width!==1366)await shot(host,browserName+'-real-25-live-score-'+viewport.width+'x'+viewport.height);
    }
