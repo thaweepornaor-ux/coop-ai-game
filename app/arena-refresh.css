@@ -461,3 +461,69 @@ body::before{
     animation:none!important;transition:none!important;scroll-behavior:auto!important
   }
 }
+
+
+/* Specificity parity with legacy projector rules: visual overrides must actually win. */
+.game-shell .host-question .question-card,
+.game-shell .host-question:not(.reveal-mode) .question-card{
+  background:radial-gradient(ellipse 65% 50% at 4% 0,rgba(59,220,255,.34),transparent 73%),
+    radial-gradient(ellipse 55% 44% at 100% 100%,rgba(176,119,255,.32),transparent),
+    linear-gradient(142deg,#1b62bb,#30479e 68%,#5d319b);
+  border-color:#8ddfff;
+  box-shadow:0 15px 35px #0d2a7b3c,inset 0 2px #ffffff44
+}
+.game-shell .host-question:not(.reveal-mode) .question-roster,
+.game-shell .host-question.reveal-mode .question-roster{
+  background:radial-gradient(ellipse 75% 38% at 100% 0,rgba(174,130,255,.34),transparent),
+    linear-gradient(140deg,#205bb0,#353e9e 70%,#57389a);
+  border-color:#97cfff;
+  box-shadow:0 15px 35px #102c8338,inset 0 1px #ffffff3b
+}
+.game-shell .question-card .answer.answer-0{
+  background:linear-gradient(105deg,#1484c0,#2164b7 60%,#30459a);
+  border:2px solid #6bfff0;
+  box-shadow:inset 5px 0 #49ffee,inset 0 1px #ffffff49,0 8px 24px #0bc5ff57
+}
+.game-shell .question-card .answer.answer-1{
+  background:linear-gradient(105deg,#7054c9,#6058bd 60%,#45449e);
+  border:2px solid #dbbaff;
+  box-shadow:inset 5px 0 #ffc879,inset 0 1px #ffffff50,0 8px 24px #a374ff5e
+}
+.game-shell .question-card .answer.answer-2{
+  background:linear-gradient(105deg,#9458b7,#665cba 60%,#4056a8);
+  border:2px solid #f6bcff;
+  box-shadow:inset 5px 0 #ff9aeb,inset 0 1px #ffffff50,0 8px 24px #b879ff59
+}
+.game-shell .question-card .answer.answer-0 .answer-letter{
+  background:linear-gradient(135deg,#3effef,#7bd6ff);color:#123e70;border-color:#c7ffff
+}
+.game-shell .question-card .answer.answer-1 .answer-letter{
+  background:linear-gradient(135deg,#ffe589,#ffbd9c);color:#553877;border-color:#fff5cd
+}
+.game-shell .question-card .answer.answer-2 .answer-letter{
+  background:linear-gradient(135deg,#f5b8ff,#c2a1ff);color:#563074;border-color:#f4dcff
+}
+/* An empty classroom should still look like a live broadcast waiting for players. */
+.game-shell .host-lobby .roster-panel:has(.roster:empty)::after{
+  content:"";width:min(73%,250px);aspect-ratio:1;flex:none;align-self:center;
+  margin:auto 0;opacity:.65;border-radius:50%;
+  border:1px solid #91fffa85;
+  background:
+    radial-gradient(circle at 50% 50%,#cfffff 0 3px,transparent 4px),
+    repeating-radial-gradient(circle,transparent 0 24px,#69fcf466 25px 26px,transparent 27px 42px),
+    conic-gradient(from 70deg,transparent,rgba(80,255,241,.3) 42deg,transparent 95deg 360deg);
+  box-shadow:0 0 48px #6bfff343,inset 0 0 45px #71e3ff26
+}
+@keyframes arena-vibrant-radar{
+  to{transform:rotate(360deg)}
+}
+.game-shell.motion-on .host-lobby .roster-panel:has(.roster:empty)::after{
+  animation:arena-vibrant-radar 25s linear infinite
+}
+.game-shell.motion-off .host-lobby .roster-panel:has(.roster:empty)::after{animation:none!important}
+@media(max-width:650px),(max-height:680px){
+  .game-shell .host-lobby .roster-panel:has(.roster:empty)::after{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell .host-lobby .roster-panel:has(.roster:empty)::after{animation:none!important}
+}
