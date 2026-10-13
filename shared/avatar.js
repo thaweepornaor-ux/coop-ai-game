@@ -92,15 +92,12 @@ function backHair(style, color) {
   return '';
 }
 function frontHair(style, color) {
-  // All wardrobe menu values must result in visible hair, except explicitly bald.
-  const aliases = {
-    wavy: 'long', swept: 'sidepart', shoulder: 'bob',
-    pixie: 'short', bun: 'ponytail',
-  };
-  style = aliases[style] || style;
+  // Every named preset should have its own visibly distinct silhouette.
+  // Previously these aliases hid the wavy, swept, shoulder, pixie and bun assets.
   const dark = shade(color);
   switch (style) {
-    case 'wavy': case 'shoulder': return `<path d="M52 65L53 45Q56 26 80 29Q107 26 108 48L107 67L99 61L97 46Q88 56 81 43Q70 57 61 54L60 66Z" fill="${color}"/><path d="M61 43Q72 33 81 38M87 36Q98 38 101 45" stroke="${dark}" stroke-width="2" fill="none"/>`;
+    case 'wavy': return `<path d="M52 65L53 45Q56 26 80 29Q107 26 108 48L107 67L99 61L97 46Q88 56 81 43Q70 57 61 54L60 66Z" fill="${color}"/><path d="M61 43Q72 33 81 38M87 36Q98 38 101 45" stroke="${dark}" stroke-width="2" fill="none"/>`;
+    case 'shoulder': return `<path d="M54 74L53 46Q55 28 78 30Q104 27 107 46L108 79L101 76L98 47Q89 54 80 40Q67 52 62 54L60 76Z" fill="${color}"/><path d="M63 42Q79 30 97 41M53 65Q56 77 60 79M107 66Q105 78 102 80" stroke="${dark}" stroke-width="2" fill="none"/>`;
     case 'pixie': return `<path d="M55 58Q48 43 61 35Q78 22 96 32Q111 39 103 58L99 50L94 45Q84 49 74 41Q67 52 59 53Z" fill="${color}"/><path d="M65 37Q76 30 84 34" stroke="${dark}" stroke-width="2" fill="none"/>`;
     case 'swept': return `<path d="M55 61L54 43Q61 25 84 29Q104 28 107 45L103 61L99 54Q92 45 83 40Q72 57 58 59Z" fill="${color}"/><path d="M84 36Q73 45 60 49" stroke="${dark}" stroke-width="2" fill="none"/>`;
     case 'bun': return `<path d="M55 61L54 46Q58 27 81 28Q104 28 106 47L104 61L99 56L98 45Q80 50 62 44L61 61Z" fill="${color}"/><path d="M66 35Q80 31 97 39" stroke="${dark}" stroke-width="2" fill="none"/>`;
