@@ -661,3 +661,276 @@ body::before{
 .game-shell.motion-off .host-question .question-card::after,
 .game-shell.motion-off .host-question:not(.reveal-mode) .question-roster,
 .game-shell.motion-off .question-card .answer::after{animation:none!important}
+
+
+/* AI ARENA V2 — saturated broadcast lights, readable text and active live HUD.
+   Intentionally follows all previous overrides; does not touch the verified
+   25-person reveal-board grid. */
+.game-shell .host-question:not(.reveal-mode) .question-card{
+  border:2px solid #65aaf3;
+  background:
+    radial-gradient(ellipse 52% 70% at 0% 6%,#117de785,transparent 74%),
+    radial-gradient(ellipse 70% 68% at 103% 89%,#9539f15c,transparent 68%),
+    linear-gradient(135deg,#122858,#131b48 58%,#2c1559);
+  box-shadow:inset 0 1px 0 #ffffff57,0 15px 55px #01061ea8,
+    0 0 0 1px #8dbaff44,0 0 42px #3f9cff53;
+  position:relative;isolation:isolate;
+}
+.game-shell .host-question:not(.reveal-mode) .question-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
+  border-radius:inherit;opacity:.75;
+  background:
+    linear-gradient(122deg,transparent 22%,#7aaaff14 43%,transparent 62%),
+    radial-gradient(ellipse at 90% 10%,#8f65f34c,transparent 36%)
+}
+.game-shell .host-question:not(.reveal-mode) .question-card> :is(.question-meta,.mission-progress,.topic,h1,.answer-grid,.host-controls){
+  position:relative;z-index:1
+}
+.game-shell .host-question:not(.reveal-mode) .topic{
+  color:#abfdff;font-weight:950;letter-spacing:.01em
+}
+.game-shell .host-question:not(.reveal-mode) .topic span{
+  color:#ffee92;background:#4c3975aa;border:1px solid #b19fff66;
+  border-radius:7px;padding:3px 7px;margin-right:9px
+}
+.game-shell .host-question:not(.reveal-mode) .question-card>h1{
+  color:#fff;text-shadow:0 2px 5px #050c297a,0 0 26px #6cabff5f;
+  font-weight:950;max-width:100%;
+  letter-spacing:-.035em;overflow-wrap:break-word;word-break:normal
+}
+.game-shell .question-card .answer.answer-0{
+  background:linear-gradient(105deg,#175fbc,#173d91 53%,#202b6d);
+  border-color:#46d9ff;
+  box-shadow:inset 5px 0 0 #1ef4ff,inset 0 1px 0 #ffffff41,
+    0 8px 25px #087dfa53,0 0 15px #17beff4a
+}
+.game-shell .question-card .answer.answer-1{
+  background:linear-gradient(105deg,#6b30c3,#4a2c99 52%,#332369);
+  border-color:#df81ff;
+  box-shadow:inset 5px 0 0 #de77ff,inset 0 1px 0 #ffffff3b,
+    0 8px 25px #9949fa43,0 0 15px #e36aff3c
+}
+.game-shell .question-card .answer.answer-2{
+  background:linear-gradient(105deg,#a96923,#905021 52%,#583351);
+  border-color:#ffd464;
+  box-shadow:inset 5px 0 0 #ffe16b,inset 0 1px 0 #ffffff52,
+    0 8px 25px #d8871a48,0 0 15px #ffc13a42
+}
+.game-shell .question-card .answer{
+  color:#fff!important;font-weight:880;overflow-wrap:break-word;
+  text-shadow:0 1px 3px #0007;transform-origin:center left
+}
+.game-shell .question-card .answer>span:not(.answer-letter){position:relative;z-index:2}
+.game-shell .question-card .answer .answer-letter{z-index:2;position:relative;
+  border:2px solid #ffffff72!important;
+  box-shadow:0 3px 14px #040b2c6e,inset 0 1px 0 #ffffff68!important}
+.game-shell .question-card .answer::after{z-index:1}
+.game-shell .question-card .answer:disabled{opacity:1}
+.game-shell .question-card .answer:not(:disabled):hover{
+  transform:translateY(-3px) scale(1.005);
+  filter:saturate(1.17) brightness(1.12)
+}
+.game-shell .host-question:not(.reveal-mode) .question-roster{
+  border:2px solid #aa87f0;
+  background:radial-gradient(ellipse 90% 40% at 65% 3%,#633bcb73,transparent),
+    linear-gradient(155deg,#1c2f67,#171d49 67%,#25184b);
+  box-shadow:0 10px 55px #030a287d,inset 0 1px 0 #dacdff5c,0 0 24px #986eff55
+}
+.game-shell .host-question:not(.reveal-mode) .question-roster h2{font-size:clamp(1.02rem,1.22vw,1.35rem)}
+.game-shell .host-question:not(.reveal-mode) .host-score-count{
+  background:#137b73;border:1px solid #39ebcf;
+  color:#effffb;box-shadow:0 0 15px #37e5c35c
+}
+.game-shell .projector-timer-wrap{
+  border:2px solid #7ec6ff;
+  background:
+    radial-gradient(ellipse 78% 85% at 50% 54%,#226caa91,transparent),
+    linear-gradient(135deg,#154a89,#31216e 55%,#162d65);
+  box-shadow:inset 0 1px 0 #ffffff68,0 0 24px #3495ff82
+}
+.game-shell .projector-timer-wrap::before{color:#c7f5ff;letter-spacing:.23em}
+.game-shell .projector-timer-wrap .countdown{
+  --ring:#3bffe9;
+  box-shadow:0 0 0 5px #52f8ff3a,0 0 34px #46f7eaaa,inset 0 0 24px #010924;
+}
+.game-shell .projector-timer-wrap .countdown.urgent{
+  --ring:#ff5b73;
+  box-shadow:0 0 0 8px #ff56634d,0 0 40px #ff5265a5,inset 0 0 30px #4c0e2c
+}
+.game-shell .live-score-stage{
+  flex:none;min-width:0;padding:9px 11px 7px;margin:0 0 9px;border-radius:16px;
+  background:linear-gradient(130deg,#164d6cbd,#213266db 55%,#3d2378bb);
+  border:1px solid #7cb9ff8c;box-shadow:inset 0 1px 0 #ffffff4d,0 6px 20px #0003
+}
+.game-shell .live-score-stats{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.game-shell .live-indicator{display:flex;gap:5px;align-items:center;
+  font-size:.69rem;color:#aefcff;font-weight:950;letter-spacing:.1em;white-space:nowrap}
+.game-shell .live-indicator i{display:block;width:8px;height:8px;
+  border-radius:50%;background:#35ffcf;box-shadow:0 0 11px #25ffd3}
+.game-shell .live-player-count,.game-shell .live-answer-count{
+  display:flex;gap:4px;align-items:baseline;font-weight:950;
+  font-size:1.32rem;line-height:1;color:#fff
+}
+.game-shell .live-answer-count{color:#79ffcf}
+.game-shell .live-player-count small,.game-shell .live-answer-count small{
+  font-size:.6rem;font-weight:750;color:#dce7ff
+}
+.game-shell .answer-meter{height:8px;margin-top:10px;overflow:hidden;border-radius:99px;
+  background:#07152a;border:1px solid #426cb0;
+  box-shadow:inset 0 2px 5px #0008}
+.game-shell .answer-meter span{display:block;height:100%;width:var(--answer-percent,0%);
+  background:linear-gradient(90deg,#25acff,#2af8df 65%,#a0ff90);
+  border-radius:inherit;box-shadow:0 0 13px #56ffd2;
+  transition:width .55s cubic-bezier(.22,.7,.2,1)}
+.game-shell .live-score-hint{font-size:.65rem;color:#d6eaff;
+  font-weight:750;margin:4px 0 0;line-height:1.2}
+.game-shell .score-spotlight{
+  display:grid;min-height:0;flex:1;gap:8px;
+  grid-template-rows:repeat(auto-fit,minmax(0,1fr));
+  padding:3px 1px 10px;overflow:hidden
+}
+.game-shell .spotlight-person{
+  display:grid;grid-template-columns:minmax(62px,42%) minmax(0,1fr);
+  grid-template-rows:1fr auto;align-items:center;gap:4px 9px;
+  padding:8px;min-height:0;border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse at 20% 55%,#357cd18c,transparent 63%),
+    linear-gradient(135deg,#205486,#252160);
+  border:2px solid #71c6fb;box-shadow:inset 0 2px 0 #ffffff45,0 0 25px #568de35c
+}
+.game-shell .spotlight-avatar{
+  grid-row:1/3;align-self:stretch;min-width:0;min-height:0;
+  max-height:100%;aspect-ratio:3/4;justify-self:center;overflow:hidden;
+  display:flex;justify-content:center;align-items:center;
+  filter:drop-shadow(0 7px 7px #040c3e93)
+}
+.game-shell .spotlight-avatar>div{width:auto!important;height:100%!important;aspect-ratio:3/4;max-width:100%}
+.game-shell .spotlight-meta{display:flex;min-width:0;flex-direction:column;
+  justify-content:center;gap:3px}
+.game-shell .spotlight-meta small{color:#acf9ff;font-weight:900;font-size:.65rem}
+.game-shell .spotlight-meta strong{
+  color:#fff;line-height:1.2;font-size:clamp(.87rem,1.18vw,1.2rem);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.game-shell .spotlight-meta b{color:#ffdf7e;font-size:clamp(1.1rem,2vw,2rem);
+  line-height:1.12;text-shadow:0 0 12px #ffb84fa9}
+.game-shell .spotlight-meta b span{font-size:.57em;color:#d0e8ff}
+.game-shell .spotlight-state{
+  font-size:.66rem;font-weight:900;line-height:1;padding:6px 8px;
+  border-radius:99px;justify-self:start;white-space:nowrap
+}
+.game-shell .spotlight-state.done{background:#115c4f;color:#baffee;border:1px solid #39f0c9}
+.game-shell .spotlight-state.waiting{background:#413064;color:#e5d6ff;border:1px solid #906ab9}
+.game-shell .host-scored-roster.few-players{display:none!important}
+.game-shell .host-scored-roster.many-players .mini-player{
+  border-color:#658bf3;background:linear-gradient(130deg,#244e87,#24255e);
+  box-shadow:inset 0 1px 0 #ffffff2c
+}
+.game-shell .host-scored-roster.many-players .mini-player.answered{
+  border-color:#62ffc9;background:linear-gradient(130deg,#145d63,#15594d);
+  box-shadow:0 0 8px #40ffc72e
+}
+.game-shell .host-scored-roster.many-players .mini-player strong{color:#fff}
+.game-shell .host-scored-roster.many-players .mini-player small{color:#dce9ff}
+.game-shell .host-question .host-controls .button.primary{border:1px solid #dcfffa;
+  background:linear-gradient(115deg,#2be9e1,#4efbb7,#66afff);
+  box-shadow:0 0 26px #2bf9df69,0 6px 19px #062847;
+}
+.game-shell .host-question .host-controls .button.primary:disabled{
+  box-shadow:none;border-color:#7b98aa;background:#344b64;color:#cfdee8
+}
+.game-shell .host-lobby .simple-join-ticket .qr{box-shadow:0 0 36px #46fadd62,0 12px 38px #07143289}
+.game-shell .results-page .finish-heading{
+  background:radial-gradient(ellipse at 50% 0%,#7065d477,transparent 65%),
+    linear-gradient(130deg,#143568,#231449)
+}
+.game-shell .results-page .podium-person.rank-1{
+  border-color:#ffe073;box-shadow:0 0 28px #ffdc6780,inset 0 1px 0 #ffffff40
+}
+/* Make motion perceptible at projection distance without flashing question text. */
+@keyframes arena-broadcast-orbit{
+  from{transform:rotate(0)}to{transform:rotate(360deg)}
+}
+@keyframes arena-pulse-light{
+  0%,100%{opacity:.52;transform:translateY(0) scale(1)}
+  50%{opacity:1;transform:translateY(-3px) scale(1.03)}
+}
+@keyframes arena-stage-rise{
+  from{opacity:.35;transform:translateY(18px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes arena-live-breathe{
+  0%,100%{box-shadow:0 0 5px #3dffd2}
+  50%{box-shadow:0 0 18px #3dffd2,0 0 28px #21efb664}
+}
+.game-shell.motion-on .host-question:not(.reveal-mode) .question-card::before{
+  animation:arena-pulse-light 9s ease-in-out infinite
+}
+.game-shell.motion-on .host-question:not(.reveal-mode) .answer{
+  animation:arena-stage-rise .48s both cubic-bezier(.15,.75,.28,1)
+}
+.game-shell.motion-on .host-question:not(.reveal-mode) .answer:nth-child(2){animation-delay:.10s}
+.game-shell.motion-on .host-question:not(.reveal-mode) .answer:nth-child(3){animation-delay:.20s}
+.game-shell.motion-on .live-indicator i{animation:arena-live-breathe 2s ease-in-out infinite}
+.game-shell.motion-on .spotlight-person{
+  animation:arena-stage-rise .7s both cubic-bezier(.15,.75,.28,1)
+}
+.game-shell.motion-on .spotlight-person:nth-child(2){animation-delay:.15s}
+.game-shell.motion-on .spotlight-person:nth-child(3){animation-delay:.3s}
+.game-shell.motion-on .projector-timer-wrap:not(:has(.urgent)){
+  animation:arena-pulse-light 3.5s ease-in-out infinite
+}
+@media(min-width:901px){
+  .game-shell .host-question:not(.reveal-mode) .question-card>h1{
+    font-size:clamp(1.9rem,2.45vw,2.82rem);line-height:1.23;
+    margin:5px 0 11px
+  }
+  .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{
+    font-size:clamp(1.38rem,1.8vw,2.15rem);line-height:1.22;
+    margin-bottom:7px
+  }
+  .game-shell .host-question:not(.reveal-mode) .answer{
+    font-size:clamp(1.11rem,1.5vw,1.79rem);line-height:1.24
+  }
+  .game-shell .host-question.dense-question:not(.reveal-mode) .answer{
+    font-size:clamp(1rem,1.28vw,1.47rem)
+  }
+}
+@media(min-width:901px) and (max-height:790px){
+  .game-shell .host-question:not(.reveal-mode) .question-card>h1{
+    font-size:clamp(1.45rem,1.85vw,2.26rem);
+    line-height:1.21;margin:3px 0 7px
+  }
+  .game-shell .host-question.dense-question:not(.reveal-mode) .question-card>h1{font-size:1.25rem}
+  .game-shell .host-question:not(.reveal-mode) .answer{
+    font-size:clamp(1.06rem,1.33vw,1.52rem);line-height:1.2
+  }
+  .game-shell .host-question:not(.reveal-mode) .question-roster{padding:9px}
+  .game-shell .live-score-stage{padding:7px 9px 5px;margin-bottom:6px}
+  .game-shell .live-score-stats{gap:5px}
+  .game-shell .live-player-count,.game-shell .live-answer-count{font-size:1.06rem}
+  .game-shell .live-score-hint{font-size:.61rem}
+  .game-shell .spotlight-person{padding:6px}
+}
+@media(max-width:900px){
+  .game-shell .score-spotlight{min-height:180px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));grid-template-rows:auto}
+  .game-shell .spotlight-person{min-height:155px}
+  .game-shell .spotlight-avatar{max-height:145px}
+  .game-shell .host-scored-roster.many-players{max-height:500px}
+}
+@media(max-width:600px){
+  .game-shell .question-card .answer{line-height:1.34}
+  .game-shell .live-score-stage{margin-bottom:10px}
+  .game-shell .spotlight-person{min-height:120px}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell.motion-on .host-question:not(.reveal-mode) .question-card::before,
+  .game-shell.motion-on .host-question:not(.reveal-mode) .answer,
+  .game-shell.motion-on .live-indicator i,
+  .game-shell.motion-on .spotlight-person,
+  .game-shell.motion-on .projector-timer-wrap{animation:none!important;transition:none!important}
+}
+.game-shell.motion-off .host-question:not(.reveal-mode) .question-card::before,
+.game-shell.motion-off .host-question:not(.reveal-mode) .answer,
+.game-shell.motion-off .live-indicator i,
+.game-shell.motion-off .spotlight-person,
+.game-shell.motion-off .projector-timer-wrap{animation:none!important;transition:none!important}
