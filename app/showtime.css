@@ -463,3 +463,7 @@ body::before{
  .game-shell.motion-on .question-card .answer,
  .game-shell.motion-on .podium-person{animation:none!important;transition:none!important}
 }
+
+
+/* Learner-first UX: do not reintroduce presenter/settings controls through the theme. */
+.game-shell[data-role="player"] .topbar .preferences{display:none!important}
