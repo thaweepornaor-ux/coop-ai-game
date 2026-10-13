@@ -21,8 +21,16 @@ test('every question is answerable and has a 15-second timer',()=>{
   assert.ok(typeof q.explanation==='string'&&q.explanation.trim().length>0);
  }
 });
-test('opening question matches approved prompt',()=>{
- assert.equal(questions[0].question,'ข้อไหนคือใช้ AI สร้างเนื้อหาใหม่?');
+test('all fifteen questions assess applied AI literacy, not basic menu recognition',()=>{
+ assert.match(questions[0].question,/ระเบียบข้อ 12/);
+ assert.match(questions[1].question,/ไม่แต่งข้อมูลเพิ่ม/);
+ assert.match(questions[7].question,/ส่งข้อมูลออกนอกองค์กร/);
+ assert.match(questions[13].question,/ภาพมีมุมอับ/);
+ assert.ok(questions.every(q=>q.question.length<=100),'fit 15-second game show question');
+ assert.ok(questions.every(q=>q.options.every(o=>o.length<=65)),'answer option readable from projector');
+ assert.deepEqual([0,1,2].map(i=>questions.filter(q=>q.answer===i).length),[5,5,5],'balanced A/B/C answers');
+ assert.ok(questions.every(q=>q.explanation.length>25),'meaningful teaching explanation');
+ assert.ok(new Set(questions.map(q=>q.topic)).size>=10,'coverage across multiple workplace AI topics');
 });
 
 test('no duplicate prompts or answer choices can make a round ambiguous',()=>{

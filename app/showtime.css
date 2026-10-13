@@ -1,0 +1,469 @@
+/*
+ * AI ARENA — cinematic game show design (projector + smartphone)
+ * Load AFTER globals.css. No game rules, data, network calls or room UX changed.
+ */
+:root{color-scheme:dark;--navy:#0b1027;--panel:#12203a;--line:#3e5576;--text:#f3f8ff;--muted:#b5c9db;--green:#35e8c7;--mint:#35e8c7;--gold:#ffcd70;--radius:25px}
+html{background:#070d20}
+body{
+  min-height:100vh;color:#f5f8ff;
+  background:radial-gradient(ellipse 40% 48% at 1% 10%,#224f8890,transparent),
+    radial-gradient(ellipse 44% 48% at 95% 1%,#5d3d9299,transparent),
+    radial-gradient(ellipse 60% 46% at 48% 95%,#0a657365,transparent),
+    linear-gradient(135deg,#080e22,#111834 50%,#070f24);
+  font-family:"Noto Sans Thai","IBM Plex Sans Thai","Sarabun",system-ui,sans-serif
+}
+body::before{
+ content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.18;
+ background:linear-gradient(#76bfff30 1px,transparent 1px),linear-gradient(90deg,#76bfff30 1px,transparent 1px);
+ background-size:74px 74px;mask-image:linear-gradient(#000,transparent 90%)
+}
+.game-shell{position:relative;isolation:isolate;max-width:1920px;width:100%;min-height:100svh;margin:auto;padding:14px clamp(14px,2vw,38px) 20px;color:#f5f8ff}
+.game-shell .arena-lighting{display:block;position:fixed;inset:0;z-index:-1;opacity:.17;pointer-events:none}
+.game-shell .arena-lighting .spotlight{opacity:.35}
+.game-shell .arena-lighting .arena-grid{opacity:.2}
+.game-shell h1,.game-shell h2,.game-shell h3{color:#f5faff;letter-spacing:-.035em}
+.game-shell .eyebrow{color:#86ffe1;font-weight:900;letter-spacing:.11em}
+.game-shell .badge{color:#a6ffed;background:#0d4850;border:1px solid #4eead37d;border-radius:10px;font-weight:900;letter-spacing:.08em;padding:7px 13px}
+.game-shell .small-note{color:#b4c5d8}
+.game-shell .topbar{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+ background:linear-gradient(120deg,#142c46f2,#172442ec 55%,#242046ef);
+ border:1px solid #698bb456;border-radius:20px;padding:9px 18px;margin-bottom:16px;
+ box-shadow:inset 0 1px #ffffff20,0 13px 40px #0005;backdrop-filter:blur(14px)
+}
+.game-shell .topbar .brand{display:flex;gap:13px;align-items:center}
+.game-shell .topbar .brand img{background:#fff;border-radius:12px;width:55px;height:55px;padding:4px;border:2px solid #8dffe2}
+.game-shell .topbar .brand strong{color:#fff;font-size:clamp(.95rem,1.2vw,1.22rem);font-weight:900}
+.game-shell .topbar .brand small{color:#a1c5d9;font-size:.72rem}
+.game-shell .topbar .preferences{display:flex;flex-flow:row wrap;align-items:center;justify-content:flex-end;gap:8px}
+.game-shell .topbar .icon-button{
+ background:#29446291;border:1px solid #6d99bc74;color:#e6f6ff;
+ min-height:43px;padding:9px 15px;border-radius:11px;font-size:.8rem;font-weight:800
+}
+.game-shell .topbar .icon-button[aria-pressed=true]{color:#afffec;border-color:#3ecfac}
+.game-shell .topbar .icon-button:hover{background:#315778;border-color:#68edda}
+.game-shell .card{
+ background:linear-gradient(148deg,#1b2d4c,#111e38 72%,#142944);
+ color:#f4faff;border:1px solid #718ca666;border-radius:25px;
+ box-shadow:0 18px 70px #0005,inset 0 1px #ffffff21
+}
+.game-shell .connection{display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;border-radius:99px;
+ margin-bottom:15px;padding:9px 15px;color:#affbe9;background:#10494b;border:1px solid #38cba95e;font-weight:800}
+.game-shell .connection i{background:#34eabb;box-shadow:0 0 10px #27e7ae}
+.game-shell .connection.offline{background:#523a27;color:#ffe0ba;border-color:#e4b76c}
+.game-shell .connection.offline i{background:#ffc671}
+.game-shell .connection.connecting{background:#253751;color:#e1e9ff;border-color:#6686a5}
+.game-shell .button{min-height:54px;border-radius:14px;font-weight:900;transition:transform .17s,filter .17s,box-shadow .17s}
+.game-shell .button.primary{background:linear-gradient(110deg,#47f3c0,#31dcdf 61%,#45bdff);
+ border:1px solid #94fff3;color:#092538;text-shadow:none;box-shadow:0 9px 30px #20e8ce44}
+.game-shell .button.primary:disabled{background:#42636c;color:#d6e4e9;border-color:#63868e;box-shadow:none}
+.game-shell .button.secondary{background:#1f475c;color:#d5fff4;border:1px solid #47a2a0}
+.game-shell .button.ghost{background:#1c2e4b;color:#dcecff;border:1px solid #6883a2}
+.game-shell .button:not(:disabled):hover{filter:brightness(1.13);transform:translateY(-1px)}
+.game-shell :is(button,input,a):focus-visible{outline:3px solid #ffdc7a;outline-offset:3px}
+.game-shell .rules-strip b{color:#89ffe8}
+.game-shell .rules-strip span{color:#c3d8e6}
+.game-shell .single-host-welcome,.game-shell .scan-needed{
+ background:radial-gradient(ellipse at 50% 0%,#295d727f,transparent 65%),linear-gradient(150deg,#1c2a4a,#101a34);
+ min-height:530px
+}
+.game-shell .single-host-welcome h1{font-size:clamp(2.5rem,4.8vw,4.7rem);font-weight:950}
+.game-shell .single-host-welcome>p,.game-shell .scan-needed p{color:#cadfec}
+.game-shell .single-host-welcome .host-loading{color:#b6ffdf}
+/* Projector lobby: the QR is the hero, not a little form field. */
+.game-shell .host-lobby.lobby{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.65fr);gap:16px;align-items:stretch}
+.game-shell .host-lobby .lobby-main{min-height:calc(100svh - 200px);overflow:hidden;
+ padding:clamp(22px,2vw,38px);background:
+ radial-gradient(ellipse 60% 64% at 1% 78%,#0066744c,transparent),
+ radial-gradient(ellipse 70% 90% at 99% 0%,#4a428047,transparent),
+ linear-gradient(145deg,#192c49,#0e1933)}
+.game-shell .host-lobby .lobby-main::before{content:"";position:absolute;top:0;left:5%;right:5%;height:3px;
+ background:linear-gradient(90deg,transparent,#34f7d1,#5dbeff,transparent);box-shadow:0 0 23px #39e7cb}
+.game-shell .host-lobby .lobby-main h1{font-size:clamp(2.3rem,3vw,4.1rem);font-weight:950;line-height:1.19;margin:18px 0 10px}
+.game-shell .host-lobby .lobby-main h1::after{content:"";display:block;margin-top:17px;width:85px;height:5px;border-radius:10px;
+ background:linear-gradient(90deg,#47f6c5,#63bafd);box-shadow:0 0 15px #54f6c5}
+.game-shell .host-lobby .stage-stat-line{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 20px}
+.game-shell .host-lobby .stage-stat-line span{padding:8px 12px;border-radius:10px;background:#113f539e;
+ border:1px solid #4c8f9d80;color:#d5fff5;font-size:clamp(.76rem,.9vw,1rem);font-weight:800}
+.game-shell .host-lobby .simple-join-ticket{display:grid;grid-template-columns:minmax(230px,350px) minmax(0,1fr);
+ gap:clamp(16px,2.2vw,35px);align-items:center;margin:16px 0 22px;padding:24px;
+ border:1px solid #547f9b8a;border-radius:23px;background:#061c32b3;position:relative}
+.game-shell .host-lobby .simple-join-ticket .qr{width:100%;max-width:350px;aspect-ratio:1;display:grid;place-items:center;
+ background:#fff;border:8px solid #fff;border-radius:16px;padding:9px;box-shadow:0 0 0 2px #71f7e1,0 0 35px #3fdacf66}
+.game-shell .host-lobby .simple-join-ticket .qr img{display:block;width:100%;height:auto;object-fit:contain}
+.game-shell .host-lobby .simple-join-ticket h2{color:#fff;font-size:clamp(1.45rem,2vw,2.35rem);line-height:1.38;font-weight:900}
+.game-shell .host-lobby .simple-join-ticket p{color:#bcd5e3;font-size:clamp(.9rem,1vw,1.16rem);line-height:1.7;margin:10px 0 22px}
+.game-shell .host-lobby .lobby-main>.button.primary{font-size:clamp(1.15rem,1.5vw,1.55rem);
+ min-height:70px;padding:15px 29px;width:min(100%,490px);box-shadow:0 13px 30px #14f1cb55}
+.game-shell .host-lobby .roster-panel{min-height:calc(100svh - 200px);padding:26px;
+ display:flex;flex-direction:column;gap:15px;background:linear-gradient(155deg,#222e50,#101b35)}
+.game-shell .host-lobby .roster-panel::before{content:"LIVE  •  PLAYER BOARD";font-weight:900;letter-spacing:.17em;
+ color:#77ffe3;font-size:.73rem}
+.game-shell .host-lobby .roster-panel h2{margin:0;padding-bottom:14px;display:flex;justify-content:space-between;align-items:center;
+ font-size:clamp(1.45rem,1.8vw,2rem);color:#fff;border-bottom:1px solid #53728d}
+.game-shell .host-lobby .roster-panel h2 span{border-radius:99px;padding:7px 12px;background:#106255;
+ color:#acffe6;border:1px solid #38dab0;font-size:1rem}
+.game-shell .host-lobby .roster-panel .roster{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ align-content:start;gap:11px;max-height:60vh;overflow-y:auto;padding:4px}
+.game-shell .host-lobby .roster-panel .mini-player{background:linear-gradient(130deg,#294963,#182741);border:1px solid #547e9c;
+ border-radius:14px;padding:9px 5px;color:#fff;min-width:0}
+.game-shell .host-lobby .roster-panel .mini-player strong{color:#fff;font-weight:800;font-size:.85rem}
+.game-shell .host-lobby .roster-panel .mini-player>div{height:117px;width:100%;max-width:110px;overflow:hidden;
+ border-radius:11px;background:radial-gradient(circle,#468ca560,#1b3451)}
+.game-shell .host-lobby .roster-panel>p{padding:24px;background:#ffffff0a;border:1px dashed #6d91a0;border-radius:15px;color:#c9d4e6}
+/* Full-frame question and scoreboard presentation at projector scale. */
+.game-shell:has(.host-question){max-width:none;width:100%;padding:10px clamp(12px,1.4vw,28px) 12px}
+.game-shell:has(.host-question) .topbar{margin-bottom:9px;padding:6px 15px}
+.game-shell:has(.host-question) .topbar .brand img{width:44px;height:44px}
+.game-shell:has(.host-question) .connection{margin:0 0 9px;padding:5px 13px}
+.game-shell .host-question.question-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,.59fr);
+ align-items:stretch;gap:13px;min-height:calc(100svh - 128px);max-width:none;width:100%}
+.game-shell .host-question .question-card{display:flex;flex-direction:column;min-width:0;min-height:calc(100svh - 128px);
+ padding:clamp(20px,1.9vw,37px);background:radial-gradient(ellipse at 0 0,#30618e63,transparent 75%),linear-gradient(155deg,#182b4b,#0e1a33)}
+.game-shell .question-meta{display:flex;justify-content:space-between;gap:18px;align-items:center}
+.game-shell .question-meta .badge{font-size:clamp(1rem,1.4vw,1.35rem);padding:12px 21px}
+.game-shell .host-question .question-card h1{color:#fff;font-size:clamp(2.2rem,3.1vw,4.1rem);
+ line-height:1.44;letter-spacing:-.035em;font-weight:950;margin:7px 0 clamp(20px,2.5vh,35px);text-wrap:pretty}
+.game-shell .host-question .topic{color:#b7eada;font-size:clamp(.98rem,1.2vw,1.3rem);font-weight:800;margin-top:10px}
+.game-shell .host-question .topic span{color:#6af5ce;margin-right:14px}
+.game-shell .mission-progress i{background:#374b67}
+.game-shell .mission-progress i.complete{background:#24dcb7}
+.game-shell .mission-progress i.current{background:#ffd16e;box-shadow:0 0 12px #ffd16eaa}
+.game-shell .host-question .answer-grid{display:grid;gap:clamp(12px,1.5vh,21px);flex:1;align-content:stretch}
+.game-shell .host-question .answer{min-height:clamp(95px,12.5vh,140px);font-size:clamp(1.35rem,2vw,2.5rem);
+ font-weight:850;line-height:1.45;border-radius:18px;padding:14px clamp(20px,1.8vw,36px);gap:22px}
+.game-shell .answer{color:#f4faff;background:linear-gradient(115deg,#213954,#192b4b);
+ border:1px solid #6483a2;border-radius:15px}
+.game-shell .answer:disabled{color:#ebf7ff}
+.game-shell .answer:not(:disabled):hover{border-color:#4af5d4;background:#244866}
+.game-shell .answer-letter{background:#145359;color:#aeffeb;border:1px solid #49cbb3}
+.game-shell .host-question .answer-letter{width:clamp(60px,4.7vw,82px);height:clamp(65px,5vw,88px);
+ border-radius:16px;font-size:clamp(1.6rem,2.4vw,2.7rem);font-weight:900}
+.game-shell .answer.picked,.game-shell .answer.correct{background:#124a42;color:#f1fff9;border-color:#3cf5c8}
+.game-shell .answer.wrong{background:#4e2a3a;color:#fff5f6;border-color:#fa8799}
+.game-shell .host-question .host-controls{margin-top:18px;padding-top:16px;border-top:1px solid #5b728d;
+ display:flex;align-items:center;justify-content:space-between;gap:14px}
+.game-shell .host-question .host-controls span{color:#cfdeeb;font-size:clamp(1rem,1.2vw,1.35rem);font-weight:800}
+.game-shell .host-question .host-controls .button{font-size:clamp(1rem,1.2vw,1.3rem);min-height:58px}
+.game-shell .host-question .question-roster{min-width:0;min-height:calc(100svh - 128px);padding:22px;
+ background:linear-gradient(147deg,#1d2e4f,#101e37)}
+.game-shell .host-question .question-roster h2{color:#fff;font-size:clamp(1.26rem,1.65vw,1.85rem)}
+.game-shell .host-question .host-score-count{color:#abffe7;background:#12544e;border:1px solid #34d6b1}
+.game-shell .host-question .host-scored-roster{max-height:65vh}
+.game-shell .host-scored-roster .mini-player{background:#1d3d55;color:#f3fcff;border:1px solid #4b8295}
+.game-shell .host-scored-roster .mini-player.answered{background:#1e6754;border-color:#4ce3b7}
+.game-shell .host-scored-roster .mini-player strong{color:#fff}
+.game-shell .host-scored-roster .mini-player small{color:#c7d7de}
+.game-shell .host-scored-roster .mini-player small b{color:#91ffe3}
+.game-shell .countdown{
+ --ring:#55f9c8;width:clamp(138px,10.8vw,205px);height:clamp(138px,10.8vw,205px);
+ flex:none;position:relative;border:0;border-radius:50%;font-size:clamp(3.7rem,6vw,7rem);
+ font-weight:950;line-height:1.0;color:#fff;
+ background:radial-gradient(circle at center,#112c43 59%,transparent 60%),
+ conic-gradient(var(--ring) calc(var(--remaining,1)*360deg),#354562 0);
+ box-shadow:0 0 0 6px #56f5c51c,0 0 38px #29f7c269,inset 0 0 24px #021422;
+ text-shadow:0 0 12px #49f9cc8a;
+}
+.game-shell .countdown .timer-kicker{
+ position:relative;display:block;color:#a3fff0;letter-spacing:.04em;
+ font-size:clamp(.73rem,.9vw,1rem);font-weight:850;margin:0 0 3px;
+ text-shadow:none;white-space:nowrap
+}
+.game-shell .countdown small{position:relative;color:#dafff7;font-weight:700;
+ font-size:clamp(.83rem,.85vw,1rem);margin-top:4px}
+.game-shell .countdown.urgent{
+ --ring:#ff6659;color:#fff;text-shadow:0 0 25px #ff7869;
+ background:radial-gradient(circle,#461b30 59%,transparent 60%),
+ conic-gradient(#ff6d60 calc(var(--remaining,1)*360deg),#705067 0);
+ box-shadow:0 0 0 7px #ff675d44,0 0 52px #ff514d9e,inset 0 0 30px #401420;
+}
+.game-shell .countdown.urgent .timer-kicker{color:#ffdcad}
+@keyframes arena-last-five{
+ 0%,49%,100%{box-shadow:0 0 0 7px #ff675d33,0 0 30px #ff514d73;filter:brightness(1)}
+ 50%,90%{box-shadow:0 0 0 13px #ff675d99,0 0 70px #ff3333db;filter:brightness(1.28)}
+}
+.game-shell.motion-on .countdown.urgent{animation:arena-last-five .72s steps(2,end) infinite}
+.game-shell .explanation{background:#124c46;border:1px solid #4bdbb7;border-radius:17px;padding:17px;color:#e5fff6}
+.game-shell .explanation h2{color:#d7ffec}
+.game-shell .explanation p{color:#ebfffa}
+.game-shell .question-roster,.game-shell .scoreboard{background:linear-gradient(150deg,#1c2d49,#0e1931);color:#f1f7fe}
+.game-shell .question-roster h2,.game-shell .scoreboard h2{color:#fff}
+.game-shell .result-group{background:#17334a;border:1px solid #426b80}
+.game-shell .result-person{color:#e8f5ff}
+.game-shell .result-person small{color:#b5cada}
+.game-shell .results-page .finish-heading{background:radial-gradient(ellipse at top,#594e8a6b,transparent 60%),linear-gradient(130deg,#1d3052,#111932)}
+.game-shell .finish-heading h1{font-size:clamp(2.4rem,3.7vw,4.4rem)}
+.game-shell .finish-heading p{color:#cad8ea}
+.game-shell .podium-person{background:#213c55;border:1px solid #5e8a99}
+.game-shell .podium-person h2,.game-shell .podium-person strong{color:#fff}
+.game-shell .score-row{color:#f4f8ff;border-color:#35546b}
+.game-shell .score-row.table-heading{background:#29405a;color:#b3ffed}
+.game-shell .score-row.me{background:#14534e}
+.game-shell .score-player strong,.game-shell .score-value{color:#fff}
+.game-shell .score-player small{color:#aec7da}
+.game-shell .level-badge,.game-shell .level-guide{background:#124747;color:#c5fff1;border-color:#429784}
+.game-shell .quick-player .wardrobe,.game-shell .player-lobby .lobby-main,.game-shell .player-lobby .roster-panel{background:linear-gradient(145deg,#1c2e4c,#101d36)}
+.game-shell .quick-player .customizer-preview{background:radial-gradient(circle,#265e795c,transparent 70%),#132541;border-color:#4c748b}
+.game-shell .quick-player .customizer-preview h1,.game-shell .quick-player .wardrobe-heading h2{color:#fff}
+.game-shell .quick-player .wardrobe-heading p,.game-shell .quick-title span{color:#b8cede}
+.game-shell .quick-title strong{color:#bcffea}
+.game-shell .quick-gender button{background:#253d55;color:#d4e8f5;border-color:#486d82}
+.game-shell .quick-gender button[aria-pressed=true]{background:#155e55;border-color:#42e8b8;color:#bffff1}
+.game-shell .quick-character{background:#203a50;color:#fff;border-color:#53758b}
+.game-shell .quick-character.selected{background:#146352;border-color:#55ffd6;box-shadow:0 0 0 2px #48f6c34d}
+.game-shell .quick-character-portrait{background:radial-gradient(circle,#5089a176,#21405a)}
+.game-shell .quick-character strong{color:#fff}
+.game-shell .quick-character small{color:#bcd6e6}
+.game-shell .quick-character.selected small{color:#bffff0}
+.game-shell .quick-check{background:#30f0c3;color:#08352c}
+.game-shell .quick-more-toggle{background:#1d3851;color:#c3ffea;border-color:#459d9c}
+.game-shell .quick-options fieldset{border-color:#4a6b84}
+.game-shell .quick-options legend,.game-shell .quick-player .join-fields label{color:#c6ffeb}
+.game-shell .quick-option-list button{background:#233c56;color:#e3f1fa;border-color:#50718b}
+.game-shell .quick-option-list button[aria-pressed=true]{background:#145f53;color:#c2ffe7;border-color:#56e5be}
+.game-shell .quick-player .join-fields input,.game-shell .inline-profile-form label input{background:#1d3653;color:#fff;border:2px solid #4d7992}
+.game-shell .quick-player .join-fields input::placeholder{color:#adc1d1}
+.game-shell .player-lobby h1,.game-shell .player-lobby h2{color:#fff}
+.game-shell .player-lobby .mini-player{background:#1d3850;border-color:#456f86;color:#fff}
+.game-shell .modal-backdrop{background:#050918d8;backdrop-filter:blur(10px)}
+.game-shell .reset-modal h2{color:#fff}
+.game-shell .reset-modal p{color:#cfdded}
+.game-shell .session-footer{border-top:1px solid #56708a;color:#b2c8d9;margin-top:14px;padding-top:15px}
+@media (min-width:1500px){
+ .game-shell:has(.host-question){padding-left:20px;padding-right:20px}
+ .game-shell .host-question.question-layout{grid-template-columns:minmax(0,1.75fr) minmax(345px,.55fr)}
+ .game-shell .host-question .answer{font-size:clamp(1.65rem,2.1vw,2.6rem)}
+ .game-shell .countdown{width:clamp(155px,10.5vw,205px);height:clamp(155px,10.5vw,205px)}
+}
+@media(max-width:1200px){
+ .game-shell .host-lobby.lobby{grid-template-columns:minmax(0,1.15fr) minmax(270px,.8fr)}
+ .game-shell .host-lobby .simple-join-ticket{grid-template-columns:minmax(185px,270px) minmax(0,1fr);padding:16px}
+ .game-shell .host-lobby .simple-join-ticket .qr{max-width:270px}
+ .game-shell .host-lobby .roster-panel .roster{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .game-shell .host-question.question-layout{grid-template-columns:minmax(0,1.3fr) 300px}
+ .game-shell .host-question .answer{font-size:clamp(1.2rem,1.8vw,1.8rem)}
+ .game-shell .countdown{width:135px;height:135px;font-size:4.2rem}
+}
+@media(max-width:900px){
+ .game-shell{padding:12px 15px 23px}
+ .game-shell .host-lobby.lobby{grid-template-columns:1fr}
+ .game-shell .host-lobby .lobby-main,.game-shell .host-lobby .roster-panel{min-height:0}
+ .game-shell .host-lobby .roster-panel .roster{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .game-shell .host-question.question-layout{grid-template-columns:1fr;min-height:0}
+ .game-shell .host-question .question-card,.game-shell .host-question .question-roster{min-height:0}
+ .game-shell .host-question .question-card h1{font-size:clamp(1.8rem,4.7vw,2.65rem)}
+ .game-shell .host-question .answer{font-size:clamp(1.15rem,2.8vw,1.6rem);min-height:85px}
+ .game-shell .host-question .answer-grid{flex:none}
+ .game-shell .countdown{width:116px;height:116px;font-size:3.4rem}
+}
+@media(max-width:600px){
+ .game-shell .topbar{padding:10px 12px;gap:8px}
+ .game-shell .topbar .brand img{width:41px;height:41px}
+ .game-shell .topbar .brand small{font-size:.54rem}
+ .game-shell .topbar .brand strong{font-size:.88rem}
+ .game-shell .topbar .icon-button{padding:7px 9px;font-size:.65rem;min-height:36px}
+ .game-shell .host-lobby .lobby-main{padding:19px 17px}
+ .game-shell .host-lobby .lobby-main h1{font-size:clamp(1.9rem,7vw,2.7rem)}
+ .game-shell .host-lobby .simple-join-ticket{grid-template-columns:1fr;gap:13px;text-align:center;justify-items:center}
+ .game-shell .host-lobby .simple-join-ticket .qr{width:min(100%,330px);max-width:330px}
+ .game-shell .host-lobby .roster-panel .roster{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .game-shell .question-meta .badge{font-size:.96rem;padding:8px 12px}
+ .game-shell .countdown{width:104px;height:104px;font-size:3rem}
+ .game-shell .countdown .timer-kicker{font-size:.65rem}
+ .game-shell .countdown small{font-size:.72rem}
+ .game-shell .host-question .question-card{padding:18px 14px}
+ .game-shell .host-question .question-card h1{font-size:1.55rem}
+ .game-shell .host-question .answer{font-size:1.04rem;min-height:77px;padding:13px;gap:10px}
+ .game-shell .host-question .answer-letter{width:41px;height:42px;font-size:1.24rem;border-radius:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .game-shell.motion-on .countdown.urgent{animation:none!important}
+ .game-shell .button{transition:none}
+}
+.game-shell.motion-off .countdown.urgent{animation:none!important}
+
+
+/* The numeric time remains independently visible and can be tested at every second. */
+.game-shell .countdown .timer-value{display:block;position:relative;line-height:1;min-height:1em;font-variant-numeric:tabular-nums}
+.game-shell.motion-on .host-lobby .qr{animation:arena-qr-entrance .8s cubic-bezier(.17,.9,.2,1) both}
+@keyframes arena-qr-entrance{from{opacity:0;transform:translateY(18px) scale(.93);filter:blur(6px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player{animation:arena-player-entrance .42s cubic-bezier(.14,.85,.25,1) both}
+@keyframes arena-player-entrance{from{opacity:0;transform:translateY(13px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player:nth-child(5n+1){animation-delay:.05s}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player:nth-child(5n+2){animation-delay:.10s}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player:nth-child(5n+3){animation-delay:.15s}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player:nth-child(5n+4){animation-delay:.20s}
+.game-shell.motion-on .host-lobby .roster-panel .mini-player:nth-child(5n){animation-delay:.25s}
+.game-shell.motion-on .question-card{animation:arena-card-pop .37s ease-out both}
+@keyframes arena-card-pop{from{opacity:.5;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.game-shell.motion-on .question-card .answer{animation:arena-answer-in .4s ease-out both}
+.game-shell.motion-on .question-card .answer:nth-child(2){animation-delay:.07s}
+.game-shell.motion-on .question-card .answer:nth-child(3){animation-delay:.14s}
+@keyframes arena-answer-in{from{opacity:.3;transform:translateX(-14px)}to{opacity:1;transform:translateX(0)}}
+.game-shell.motion-on .reveal-person{animation:arena-reveal .34s ease-out both}
+@keyframes arena-reveal{from{opacity:.25;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.game-shell.motion-on .reveal-person:nth-child(5n+2){animation-delay:.05s}
+.game-shell.motion-on .reveal-person:nth-child(5n+3){animation-delay:.10s}
+.game-shell.motion-on .reveal-person:nth-child(5n+4){animation-delay:.15s}
+.game-shell.motion-on .reveal-person:nth-child(5n){animation-delay:.20s}
+.game-shell.motion-on .reveal-person.correct{box-shadow:0 0 19px #17f1be24,inset 0 1px #ffffff24}
+.game-shell.motion-on .podium-person.rank-1{filter:drop-shadow(0 0 18px #ffd16e77)}
+.game-shell.motion-on .quick-character.selected{box-shadow:0 0 0 2px #48f6c390,0 0 28px #19f6cf52}
+.game-shell.motion-on .button.primary:not(:disabled){transition:transform .2s,box-shadow .2s,filter .2s}
+/* Answer-reveal mode uses the WHOLE projector, not a narrow scrolling sidebar. */
+.game-shell:has(.host-question.reveal-mode){height:100svh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.game-shell:has(.host-question.reveal-mode) .topbar{flex:none;margin-bottom:6px}
+.game-shell:has(.host-question.reveal-mode) .connection{flex:none;margin-bottom:6px}
+.game-shell .host-question.reveal-mode.question-layout{
+ flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);
+ gap:8px;overflow:hidden
+}
+.game-shell .host-question.reveal-mode .question-card{
+ min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.65fr);
+ grid-template-rows:auto auto;gap:6px 15px;padding:10px 20px;
+ align-content:center
+}
+.game-shell .host-question.reveal-mode .question-meta{grid-column:1;grid-row:1;align-self:center}
+.game-shell .host-question.reveal-mode .question-meta .badge{font-size:.83rem;padding:6px 10px}
+.game-shell .host-question.reveal-mode .countdown{display:none}
+.game-shell .host-question.reveal-mode .mission-progress,.game-shell .host-question.reveal-mode .topic{display:none}
+.game-shell .host-question.reveal-mode .question-card>h1{grid-column:1;grid-row:2;
+ font-size:clamp(1.16rem,1.45vw,1.7rem);line-height:1.32;margin:0;align-self:center}
+.game-shell .host-question.reveal-mode .answer-grid{display:none}
+.game-shell .host-question.reveal-mode .explanation{
+ grid-column:2;grid-row:1/3;align-self:stretch;margin:0;padding:9px 13px;
+ display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;overflow:hidden
+}
+.game-shell .host-question.reveal-mode .explanation h2{font-size:clamp(.87rem,1vw,1.16rem);line-height:1.4;margin:0}
+.game-shell .host-question.reveal-mode .explanation p{font-size:clamp(.75rem,.85vw,1rem);line-height:1.25;margin:0;max-height:3.8em;overflow:hidden}
+.game-shell .host-question.reveal-mode .host-controls{grid-column:1/-1;
+ border:0;padding:0;margin:0;display:flex;gap:12px;justify-content:flex-end;align-items:center}
+.game-shell .host-question.reveal-mode .host-controls>span{font-size:.83rem;color:#bed8e7;margin-right:auto}
+.game-shell .host-question.reveal-mode .host-controls .button{min-height:42px;padding:8px 18px;font-size:.91rem}
+.game-shell .host-question.reveal-mode .question-roster{
+ min-height:0;overflow:hidden;display:flex;flex-direction:column;
+ padding:12px 19px;background:linear-gradient(140deg,#1a2e49,#101a33)
+}
+.game-shell .host-question.reveal-mode .question-roster>h2{
+ flex:none;margin:0 0 7px;font-size:clamp(1.12rem,1.4vw,1.48rem)
+}
+.game-shell .host-question.reveal-mode .reveal-board{
+ min-height:0;flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden
+}
+.game-shell .host-question.reveal-mode .reveal-summary{flex:none;
+ display:flex;align-items:center;justify-content:flex-start;gap:8px;flex-wrap:wrap;
+ color:#fff;font-weight:800
+}
+.game-shell .host-question.reveal-mode .reveal-summary>span{
+ display:inline-flex;align-items:center;gap:6px;
+ border-radius:10px;padding:6px 12px;
+ font-size:clamp(.79rem,.9vw,1rem);white-space:nowrap;border:1px solid #4b8295
+}
+.game-shell .reveal-summary .summary-correct{background:#114c43;border-color:#29a98b!important;color:#baffea}
+.game-shell .reveal-summary .summary-incorrect{background:#592939;border-color:#b15c76!important;color:#ffd8e2}
+.game-shell .reveal-summary .summary-unanswered{background:#41465a;border-color:#78859c!important;color:#e0e9f3}
+.game-shell .reveal-summary .summary-total{margin-left:auto;background:#223957;color:#def7ff}
+.game-shell .reveal-summary b{font-size:1.14em;color:#fff}
+.game-shell .host-question.reveal-mode .reveal-tiles{
+ --reveal-columns:5;flex:1;min-height:0;overflow:hidden;
+ display:grid;grid-template-columns:repeat(var(--reveal-columns),minmax(0,1fr));
+ grid-template-rows:repeat(5,minmax(0,1fr));gap:clamp(5px,.65vw,10px);
+ align-items:stretch
+}
+.game-shell .reveal-person{
+ display:grid;grid-template-columns:clamp(43px,3.8vw,70px) minmax(0,1fr) auto;
+ min-width:0;min-height:0;align-items:center;gap:7px;overflow:hidden;
+ padding:5px 8px;border:1px solid #4f7d8e;border-radius:13px;
+ background:linear-gradient(135deg,#25415b,#172b46);position:relative
+}
+.game-shell .reveal-person::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#587387}
+.game-shell .reveal-person.correct{background:linear-gradient(130deg,#185d51,#153c4c);border-color:#29ce9f}
+.game-shell .reveal-person.correct::before{background:#43f6bd}
+.game-shell .reveal-person.incorrect{background:linear-gradient(130deg,#543249,#2c304c);border-color:#d57891}
+.game-shell .reveal-person.incorrect::before{background:#ff8393}
+.game-shell .reveal-person.unanswered{background:#313e54;border-color:#6b8198}
+.game-shell .reveal-avatar{width:100%;height:100%;max-height:75px;min-height:0;
+ display:grid;place-items:center;overflow:hidden;border-radius:8px;
+ background:radial-gradient(circle,#6cafb355,#203b59)}
+.game-shell .reveal-avatar>div{width:auto!important;height:100%!important;max-width:100%}
+.game-shell .reveal-details{min-width:0}
+.game-shell .reveal-details strong{display:block;font-size:clamp(.78rem,.9vw,1.09rem);line-height:1.23;
+ white-space:nowrap;text-overflow:ellipsis;overflow:hidden;color:#fff}
+.game-shell .reveal-details small{display:block;font-size:clamp(.64rem,.75vw,.91rem);
+ line-height:1.22;color:#d5e8f1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-shell .reveal-points{align-self:center;
+ display:inline-flex;gap:1px;align-items:baseline;white-space:nowrap;
+ color:#f9ffff;font-size:clamp(.94rem,1.1vw,1.35rem)}
+.game-shell .reveal-points span{font-size:.6em;color:#b4c9d7}
+@media(min-width:1450px) and (min-height:850px){
+ .game-shell .host-question.reveal-mode .question-card{padding:16px 24px}
+ .game-shell .host-question.reveal-mode .reveal-tiles{gap:10px}
+ .game-shell .reveal-person{padding:7px 12px}
+ .game-shell .reveal-avatar{max-height:100px}
+ .game-shell .reveal-details strong{font-size:1rem}
+}
+@media(max-width:1100px){
+ .game-shell .host-question.reveal-mode .question-card{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto}
+ .game-shell .host-question.reveal-mode .question-meta{grid-column:1;grid-row:1}
+ .game-shell .host-question.reveal-mode .question-card>h1{grid-column:1;grid-row:2}
+ .game-shell .host-question.reveal-mode .explanation{grid-column:1;grid-row:3}
+ .game-shell .host-question.reveal-mode .host-controls{grid-column:1;grid-row:4}
+ .game-shell .host-question.reveal-mode .reveal-tiles{--reveal-columns:4;
+  grid-template-rows:repeat(7,minmax(0,1fr))}
+ .game-shell .reveal-avatar{max-height:53px}
+}
+@media(max-width:700px){
+ .game-shell:has(.host-question.reveal-mode){height:auto;min-height:100svh;overflow:visible}
+ .game-shell .host-question.reveal-mode.question-layout{overflow:visible}
+ .game-shell .host-question.reveal-mode .question-roster{overflow:visible}
+ .game-shell .host-question.reveal-mode .reveal-board{overflow:visible}
+ .game-shell .host-question.reveal-mode .reveal-tiles{--reveal-columns:2;grid-template-rows:auto;overflow:visible}
+ .game-shell .reveal-person{min-height:68px}
+ .game-shell .reveal-avatar{max-height:65px}
+}
+@media(prefers-reduced-motion:reduce){
+ .game-shell.motion-on .reveal-person,.game-shell.motion-on .quick-character,
+ .game-shell.motion-on .host-lobby .qr,.game-shell.motion-on .question-card,
+ .game-shell.motion-on .question-card .answer{animation:none!important}
+}
+.game-shell.motion-off .reveal-person,.game-shell.motion-off .quick-character,
+.game-shell.motion-off .host-lobby .qr,.game-shell.motion-off .question-card,
+.game-shell.motion-off .question-card .answer{animation:none!important}
+
+
+/* Preserve ALL 25 reveal cards: take the footer off the active projection frame. */
+.game-shell:has(.host-question.reveal-mode) .session-footer{display:none}
+.game-shell:has(.host-question.reveal-mode) .reveal-person .reveal-avatar{
+ aspect-ratio:3/4;align-self:center;justify-self:center;min-width:0
+}
+.game-shell:has(.host-question.reveal-mode) .reveal-person .reveal-avatar>div{
+ width:auto!important;height:100%!important;aspect-ratio:3/4
+}
+@media(min-width:901px) and (max-height:800px){
+ .game-shell:has(.host-question.reveal-mode) .topbar{padding-top:3px;padding-bottom:3px}
+ .game-shell:has(.host-question.reveal-mode) .topbar .brand img{width:39px;height:39px}
+ .game-shell:has(.host-question.reveal-mode) .connection{padding:3px 12px}
+ .game-shell .host-question.reveal-mode .question-card{padding:8px 17px}
+ .game-shell .host-question.reveal-mode .question-card>h1{font-size:clamp(1.06rem,1.36vw,1.55rem)}
+ .game-shell .host-question.reveal-mode .explanation p{font-size:.78rem;max-height:2.5em}
+ .game-shell .host-question.reveal-mode .question-roster{padding:9px 15px}
+ .game-shell .host-question.reveal-mode .reveal-board{gap:5px}
+ .game-shell .host-question.reveal-mode .reveal-summary>span{padding:4px 8px}
+ .game-shell .host-question.reveal-mode .reveal-tiles{gap:5px}
+ .game-shell .reveal-person{padding:3px 5px;gap:4px}
+ .game-shell .reveal-avatar{max-height:58px}
+}
+/* Any user's OS motion preference always wins over show effects, including last-five blink. */
+@media(prefers-reduced-motion:reduce){
+ .game-shell.motion-on .countdown.urgent,
+ .game-shell.motion-on .reveal-person,
+ .game-shell.motion-on .host-lobby .roster-panel .mini-player,
+ .game-shell.motion-on .host-lobby .qr,
+ .game-shell.motion-on .question-card,
+ .game-shell.motion-on .question-card .answer,
+ .game-shell.motion-on .podium-person{animation:none!important;transition:none!important}
+}
+
+
+/* Learner-first UX: do not reintroduce presenter/settings controls through the theme. */
+.game-shell[data-role="player"] .topbar .preferences{display:none!important}
