@@ -175,6 +175,61 @@ async function createRoom(db: Database): Promise<Response> {
   throw new GameError("CREATE_ROOM_FAILED", "สร้างห้องไม่สำเร็จ กรุณาลองอีกครั้ง", 503);
 }
 
+/** Host-only, atomic new session. New QR and room token; old participants,
+ * answers and tokens disappear via foreign-key cascading on room deletion.
+ * The previous "reset" action remains separate for same-room practice. */
+async function newEmptyRoom(db: Database, state: StoredState, tokenHash: string, caller: Caller): Promise<Response> {
+  if (caller.role !== "host") throw new GameError("HOST_ONLY", "เฉพาะผู้สอนเท่านั้นที่สร้างห้องใหม่ได้", 403);
+  const old=state.room;
+  const token=randomToken(),newHash=await hashToken(token);
+  for(let attempt=0;attempt<8;attempt++){
+    const newCode=randomRoomCode();
+    if(newCode===old.code)continue;
+    const batch=await db.batch([
+      db.prepare(`INSERT OR IGNORE INTO rooms
+        (code,host_token_hash,phase,question_index,round_id,deadline,created_at,updated_at)
+        SELECT ?,?,'lobby',-1,1,NULL,${SQL_NOW},${SQL_NOW}
+        WHERE EXISTS (SELECT 1 FROM rooms WHERE code=? AND host_token_hash=?
+          AND round_id=? AND question_index=? AND phase=?)`)
+        .bind(newCode,newHash,old.code,tokenHash,old.roundId,old.questionIndex,old.phase),
+      db.prepare(`DELETE FROM rooms WHERE code=? AND host_token_hash=?
+        AND round_id=? AND question_index=? AND phase=?
+        AND EXISTS (SELECT 1 FROM rooms WHERE code=? AND host_token_hash=?)`)
+        .bind(old.code,tokenHash,old.roundId,old.questionIndex,old.phase,newCode,newHash),
+    ]);
+    const inserted=batch[0].meta.changes??0;
+    const deleted=batch[1].meta.changes??0;
+    if(inserted===0){
+      // A different host action may have changed the room, or the random new
+      // room code collided. Never retire the old room in those cases.
+      const current=await readState(db,old.code);
+      if(current.room.roundId!==old.roundId||current.room.questionIndex!==old.questionIndex||
+         current.room.phase!==old.phase)throw new GameError("STALE_STATE","สถานะห้องเดิมเปลี่ยนไปแล้ว กรุณาลองใหม่",409);
+      continue;
+    }
+    if(deleted!==1){
+      // D1 may report zero affected rows for a cascade/batched DELETE.
+      // Inspect actual storage before treating it as a failed reset.
+      const remaining=await db.prepare("SELECT code FROM rooms WHERE code=?").bind(old.code).first();
+      if(remaining){
+        await db.prepare("DELETE FROM rooms WHERE code=? AND host_token_hash=?")
+          .bind(old.code,tokenHash).run();
+      }
+    }
+    const retired=await db.prepare("SELECT code FROM rooms WHERE code=?").bind(old.code).first();
+    if(retired){
+      await db.prepare("DELETE FROM rooms WHERE code=? AND host_token_hash=?").bind(newCode,newHash).run();
+      throw new GameError("STALE_STATE","ล้างห้องเก่าไม่สำเร็จ กรุณาลองใหม่",409);
+    }
+    const oldPlayers=await db.prepare("SELECT COUNT(*) AS count FROM players WHERE room_code=?").bind(old.code).first<{count:number}>();
+    if(Number(oldPlayers?.count||0)!==0)throw new GameError("STALE_STATE","ข้อมูลผู้เล่นเก่ายังไม่ถูกล้าง กรุณาลองใหม่",409);
+    const fresh=await readState(db,newCode);
+    if(fresh.players.length!==0||fresh.room.phase!=="lobby")throw new GameError("ROOM_NOT_READY","ห้องใหม่ยังไม่พร้อม",503);
+    return json({roomCode:newCode,token,role:"host",snapshot:snapshot(fresh,{role:"host"})},201);
+  }
+  throw new GameError("CREATE_ROOM_FAILED","สร้างห้องใหม่ไม่สำเร็จ กรุณาลองอีกครั้ง",503);
+}
+
 async function limit(db: Database, request: Request, action: string) {
  const ip = request.headers.get("CF-Connecting-IP") ?? "unknown";
  const identity = action === "read" ? (request.headers.get("Authorization") ?? ip) : ip;
@@ -314,15 +369,16 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const body = await readBody(request);
     const db = database();
-    if (body.action === "create" || body.action === "join") await limit(db, request, String(body.action));
+    if (body.action === "create" || body.action === "join" || body.action === "newroom") await limit(db, request, body.action === "newroom" ? "create" : String(body.action));
     if (body.action === "create") return await createRoom(db);
     if (body.action === "join") return await joinRoom(db, body);
-    if (body.action !== "answer" && body.action !== "profile" && !CONTROLS.includes(body.action as ControlAction)) {
+    if (body.action !== "answer" && body.action !== "profile" && body.action !== "newroom" && !CONTROLS.includes(body.action as ControlAction)) {
       throw new GameError("INVALID_ACTION", "ไม่พบรายการที่ขอ");
     }
     const code = normalizeRoomCode(body.room ?? body.roomCode);
     const tokenHash = await requestTokenHash(request);
     const { state, caller } = await authenticatedState(db, code, tokenHash);
+    if (body.action === "newroom") return await newEmptyRoom(db, state, tokenHash, caller);
     if (body.action === "profile") return await updatePlayerProfile(db, code, tokenHash, state, caller, body);
     if (body.action === "answer") return await submitAnswer(db, code, tokenHash, state, caller, body);
     return await controlRoom(db, code, tokenHash, state, caller, body.action as ControlAction, body);

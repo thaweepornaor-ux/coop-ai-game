@@ -1393,3 +1393,30 @@ body::before{
 @media(prefers-reduced-motion:reduce){
   .game-shell .voice-setup-panel,.game-shell .voice-setup-test{transition:none!important;animation:none!important}
 }
+
+
+/* INSTRUCTOR NEW GAME: visible during lobby, questions, reveal, and results.
+   It must fit WITHIN the header, never be hidden in an off-screen footer. */
+.game-shell .topbar .preferences{min-width:0;flex-wrap:wrap;align-content:center}
+.game-shell .topbar .new-game-top{
+  order:-1;flex:none;display:inline-flex;align-items:center;justify-content:center;
+  min-height:40px;min-width:134px;padding:8px 13px;
+  border-radius:10px;border:2px solid #fff4b7;
+  background:linear-gradient(115deg,#f8ca61,#ff8557);
+  color:#212a54;font-size:clamp(.82rem,1vw,.96rem);
+  line-height:1.25;font-weight:950;
+  box-shadow:0 0 19px #ffc6618a,inset 0 1px 0 #fff7d5,
+    0 4px 12px #180d3659;
+  text-shadow:none;white-space:nowrap;
+}
+.game-shell .topbar .new-game-top:hover{
+  background:linear-gradient(115deg,#ffe5a4,#ffae7b);
+  border-color:#fff;box-shadow:0 0 27px #ffc65bbf,0 5px 15px #0a173a60;
+}
+.game-shell .topbar .new-game-top:focus-visible{
+  outline:3px solid #ffffff;outline-offset:3px
+}
+.game-shell .topbar .new-game-top:disabled{opacity:.6;cursor:wait}
+@media(max-width:700px){
+  .game-shell .topbar .new-game-top{min-height:36px;min-width:112px;padding:7px 9px;font-size:.76rem}
+}
