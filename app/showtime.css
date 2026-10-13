@@ -429,3 +429,40 @@ body::before{
 .game-shell.motion-off .reveal-person,.game-shell.motion-off .quick-character,
 .game-shell.motion-off .host-lobby .qr,.game-shell.motion-off .question-card,
 .game-shell.motion-off .question-card .answer{animation:none!important}
+
+
+/* Preserve ALL 25 reveal cards: take the footer off the active projection frame. */
+.game-shell:has(.host-question.reveal-mode) .session-footer{display:none}
+.game-shell:has(.host-question.reveal-mode) .reveal-tiles:has(.reveal-person:nth-child(21)){
+ grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr))
+}
+.game-shell:has(.host-question.reveal-mode) .reveal-person .reveal-avatar{
+ aspect-ratio:3/4;align-self:center;justify-self:center;min-width:0
+}
+.game-shell:has(.host-question.reveal-mode) .reveal-person .reveal-avatar>div{
+ width:auto!important;height:100%!important;aspect-ratio:3/4
+}
+@media(min-width:901px) and (max-height:800px){
+ .game-shell:has(.host-question.reveal-mode) .topbar{padding-top:3px;padding-bottom:3px}
+ .game-shell:has(.host-question.reveal-mode) .topbar .brand img{width:39px;height:39px}
+ .game-shell:has(.host-question.reveal-mode) .connection{padding:3px 12px}
+ .game-shell .host-question.reveal-mode .question-card{padding:8px 17px}
+ .game-shell .host-question.reveal-mode .question-card>h1{font-size:clamp(1.06rem,1.36vw,1.55rem)}
+ .game-shell .host-question.reveal-mode .explanation p{font-size:.78rem;max-height:2.5em}
+ .game-shell .host-question.reveal-mode .question-roster{padding:9px 15px}
+ .game-shell .host-question.reveal-mode .reveal-board{gap:5px}
+ .game-shell .host-question.reveal-mode .reveal-summary>span{padding:4px 8px}
+ .game-shell .host-question.reveal-mode .reveal-tiles{gap:5px}
+ .game-shell .reveal-person{padding:3px 5px;gap:4px}
+ .game-shell .reveal-avatar{max-height:58px}
+}
+/* Any user's OS motion preference always wins over show effects, including last-five blink. */
+@media(prefers-reduced-motion:reduce){
+ .game-shell.motion-on .countdown.urgent,
+ .game-shell.motion-on .reveal-person,
+ .game-shell.motion-on .host-lobby .roster-panel .mini-player,
+ .game-shell.motion-on .host-lobby .qr,
+ .game-shell.motion-on .question-card,
+ .game-shell.motion-on .question-card .answer,
+ .game-shell.motion-on .podium-person{animation:none!important;transition:none!important}
+}
