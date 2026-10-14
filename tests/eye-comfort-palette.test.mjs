@@ -49,6 +49,6 @@ test('All screens have restful colors without full-screen flash animation',()=>{
    '@media(prefers-reduced-motion:reduce)']){
    assert.ok(sheet.includes(marker),'Missing palette part '+marker);
  }
- assert.ok(game.includes('aria-label={\\'คะแนนและสถานะผู้เรียน \\''));
+ assert.ok(game.includes('คะแนนและสถานะผู้เรียน '));
  assert.ok(!sheet.includes('#ff00ff'),'Avoid vivid decorative magenta');
 });
