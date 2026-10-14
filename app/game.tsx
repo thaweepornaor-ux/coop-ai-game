@@ -8,6 +8,7 @@ import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studi
 import { SimpleWardrobe } from './components/simple-wardrobe';
 import { scoreCsv } from '../shared/score-export.js';
 import { unpackQuizVoiceZip } from '../shared/quiz-voice-zip.js';
+import { unpackAnswerVoiceZip } from '../shared/answer-voice-zip.js';
 import { LOGO_SRC, COOPERATIVE_NAME } from '../shared/brand';
 
 type Role='choose'|'host'|'player';
@@ -55,6 +56,41 @@ async function saveVoicePack(tracks:File[]):Promise<void>{
   });
  }finally{db.close();}
 }
+
+/** Answer/reveal voice is stored separately: uploading R01–R15 can never
+ * overwrite Q01–Q15 or change the 10-second question countdown. */
+function openAnswerVoiceStorage():Promise<IDBDatabase>{
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open('coop-ai-answer-recorded-voice',1);
+    req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('tracks'))req.result.createObjectStore('tracks');};
+    req.onerror=()=>reject(req.error);
+    req.onsuccess=()=>resolve(req.result);
+  });
+}
+async function saveAnswerVoicePack(tracks:File[]):Promise<void>{
+  const db=await openAnswerVoiceStorage();
+  try {
+    await new Promise<void>((resolve,reject)=>{
+      const tx=db.transaction('tracks','readwrite'),store=tx.objectStore('tracks');
+      tracks.forEach((file,index)=>store.put(file,'R'+String(index+1).padStart(2,'0')+'.mp3'));
+      tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+    });
+  }finally{db.close()}
+}
+async function loadAnswerVoicePack():Promise<(Blob|null)[]>{
+  const db=await openAnswerVoiceStorage();
+  try {
+    return await new Promise((resolve,reject)=>{
+      const tx=db.transaction('tracks','readonly'),store=tx.objectStore('tracks');
+      const tracks:(Blob|null)[]=Array(VOICE_TRACKS).fill(null);
+      for(let i=0;i<VOICE_TRACKS;i++){
+        const req=store.get('R'+String(i+1).padStart(2,'0')+'.mp3');
+        req.onsuccess=()=>{tracks[i]=req.result instanceof Blob?req.result:null};
+      }
+      tx.oncomplete=()=>resolve(tracks);tx.onerror=()=>reject(tx.error);
+    });
+  }finally{db.close()}
+}
 async function loadVoicePack():Promise<(Blob|null)[]>{
  const db=await openVoiceStorage();
  try{
@@ -89,6 +125,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const narrationKey=useRef('');
   const voiceTrack=useRef<HTMLAudioElement|null>(null);
   const voiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
+  const answerVoiceUrls=useRef<(string|null)[]>(Array(VOICE_TRACKS).fill(null));
+  const [answerVoiceReady,setAnswerVoiceReady]=useState(false),[answerVoiceImporting,setAnswerVoiceImporting]=useState(false);
+  const [answerVoiceTesting,setAnswerVoiceTesting]=useState(false);
+  const answerVoiceLoaded=useRef(false);
   const [voiceReady,setVoiceReady]=useState(false),[voiceImporting,setVoiceImporting]=useState(false);
   const [voiceTesting,setVoiceTesting]=useState(false);
   const voiceImported=useRef(false);
@@ -115,8 +155,9 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     // The instructor START/NEXT click unlocks playback synchronously;
     // receiving the server snapshot must not play this file a second time.
     const playingNumber=state.room.questionIndex+1;
-    const wantedSource=voiceUrls.current[playingNumber-1]||'/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3';
-    if(mode==='question'&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href)return true;
+    const answerSource=answerVoiceUrls.current[playingNumber-1];
+    const wantedSource=mode==='reveal'&&answerSource?answerSource:(voiceUrls.current[playingNumber-1]||'/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3');
+    if((mode==='question'||(mode==='reveal'&&!!answerSource))&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href)return true;
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
@@ -129,6 +170,16 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       track.onerror=()=>{setNarrationBusy(false);setNarrationNotice('ยังไม่พบไฟล์ Q'+String(qnum).padStart(2,'0')+'.mp3 บนเว็บ');};
       voiceTrack.current=track;
       void track.play().catch(()=>setNarrationNotice('กรุณากด “อ่านซ้ำ” เพื่ออนุญาตเปิดเสียงพากย์ในเบราว์เซอร์'));
+      return true;
+    }
+    if(answerSource){
+      const track=new Audio(answerSource);
+      track.preload='auto';track.volume=1;
+      track.onplaying=()=>setNarrationBusy(true);
+      track.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null};
+      track.onerror=()=>{setNarrationBusy(false);setNarrationNotice('ไม่พบเสียงเฉลย R'+String(playingNumber).padStart(2,'0'))};
+      voiceTrack.current=track;
+      void track.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่ออนุญาตเปิดเสียงเฉลย'));
       return true;
     }
     if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return false;
@@ -179,6 +230,77 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     return ()=>{cancelled=true;};
   },[role]);
   useEffect(()=>()=>{voiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)})},[]);
+  // R01–R15 may be installed as a separate answer pack on this instructor's
+  // browser. A future first-party reveal manifest can be loaded automatically.
+  useEffect(()=>{
+    if(role!=='host')return;
+    let cancelled=false;
+    void (async()=>{
+      try {
+        const res=await fetch('/voice/reveal/manifest.json',{cache:'no-store'});
+        if(res.ok){
+          const index=await res.json();
+          if(index?.answerCount===15&&Array.isArray(index.names)&&
+             index.names.length===15&&index.names.every((name:unknown,i:number)=>
+                name==='R'+String(i+1).padStart(2,'0')+'.mp3')){
+            if(cancelled||answerVoiceLoaded.current)return;
+            answerVoiceLoaded.current=true;
+            answerVoiceUrls.current=index.names.map((name:string)=>'/voice/reveal/'+name);
+            setAnswerVoiceReady(true);
+            return;
+          }
+        }
+      }catch{}
+      try {
+        const tracks=await loadAnswerVoicePack();
+        if(cancelled||answerVoiceLoaded.current||tracks.some(x=>!x))return;
+        answerVoiceLoaded.current=true;
+        answerVoiceUrls.current=tracks.map(track=>URL.createObjectURL(track!));
+        setAnswerVoiceReady(true);
+      }catch{}
+    })();
+    return ()=>{cancelled=true};
+  },[role]);
+  useEffect(()=>()=>{answerVoiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)})},[]);
+  async function importAnswerSelection(chosen:File[]){
+    if(!chosen.length)return;
+    setAnswerVoiceImporting(true);
+    try {
+      let files:File[];
+      if(chosen.length===1&&chosen[0].name.toLowerCase().endsWith('.zip'))
+        files=await unpackAnswerVoiceZip(chosen[0]) as File[];
+      else {
+        const named=new Map(chosen.map(file=>[file.name.toUpperCase(),file]));
+        files=Array.from({length:VOICE_TRACKS},(_,i)=>named.get('R'+String(i+1).padStart(2,'0')+'.MP3')!);
+      }
+      if(files.length!==15||files.some(file=>!file||file.size<1000||file.size>15_000_000)){
+        throw new Error('กรุณาใช้ R01.mp3 ถึง R15.mp3 ให้ครบทั้ง 15 ข้อ');
+      }
+      // Saving first means the old pack is retained if persistent storage fails.
+      await saveAnswerVoicePack(files);
+      stopNarration();
+      answerVoiceUrls.current.forEach(url=>{if(url?.startsWith('blob:'))URL.revokeObjectURL(url)});
+      answerVoiceUrls.current=files.map(file=>URL.createObjectURL(file));
+      answerVoiceLoaded.current=true;
+      setAnswerVoiceReady(true);
+      setNarrationNotice('ติดตั้งเสียงเฉลยผู้หญิง R01–R15 สำเร็จ ✓ ใช้เสียงนี้แทนเสียงเฉลยระบบและจำไว้ในเบราว์เซอร์เครื่องนี้');
+    }catch(cause){
+      setNarrationNotice(cause instanceof Error?cause.message:'อ่านไฟล์เสียงเฉลยไม่สำเร็จ');
+    }finally{setAnswerVoiceImporting(false)}
+  }
+  function testAnswerVoice(){
+    const source=answerVoiceUrls.current[0];
+    if(!source){setNarrationNotice('เลือก ZIP เสียงเฉลย R01–R15 ก่อน');return}
+    stopNarration();
+    const track=new Audio(source);
+    track.preload='auto';track.volume=1;
+    track.onplaying=()=>{setAnswerVoiceTesting(true);setNarrationBusy(true)};
+    track.onended=()=>{setAnswerVoiceTesting(false);setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null};
+    track.onerror=()=>{setAnswerVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('ไฟล์เสียงเฉลย R01 เล่นไม่ได้')};
+    voiceTrack.current=track;
+    void track.play().catch(()=>{setAnswerVoiceTesting(false);setNarrationBusy(false);setNarrationNotice('กรุณากดทดลองฟัง R01 อีกครั้ง เพื่ออนุญาตเปิดเสียง')});
+  }
+
   async function importVoicePack(files:File[]){
     const matched=new Map(files.map(file=>[file.name.toUpperCase(),file]));
     const ordered=Array.from({length:VOICE_TRACKS},(_,i)=>matched.get('Q'+String(i+1).padStart(2,'0')+'.MP3'));
@@ -371,6 +493,22 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         recording.onerror=()=>setNarrationNotice('ไม่พบไฟล์เสียง Q'+String(nextNumber).padStart(2,'0')+'.mp3');
         voiceTrack.current=recording;
         void recording.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่ออนุญาตการเล่นเสียง'));
+      }
+    }
+    // Start recorded answer during the teacher's Reveal click to satisfy
+    // browser user-gesture audio policies (especially WebKit/iOS).
+    if(action==='reveal'&&sessionRef.current?.role==='host'&&narrationEnabled){
+      const questionNumber=(snapshotRef.current?.room.questionIndex??0)+1;
+      const source=answerVoiceUrls.current[questionNumber-1];
+      if(source){
+        stopNarration();
+        const track=new Audio(source);
+        track.preload='auto';track.volume=1;
+        track.onplaying=()=>setNarrationBusy(true);
+        track.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null};
+        track.onerror=()=>setNarrationNotice('ไม่พบเสียงเฉลย R'+String(questionNumber).padStart(2,'0'));
+        voiceTrack.current=track;
+        void track.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่อเปิดเสียงเฉลย'));
       }
     }
     const requestGeneration=generation.current,requestSession=sessionRef.current;
@@ -589,6 +727,13 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <div className="voice-setup-copy"><strong>{voiceReady?'🎙 เสียงอ่านโจทย์พร้อมใช้งาน':'🔈 ยังไม่มีเสียงอ่านโจทย์'}</strong><span>{voiceReady?'ติดตั้งครบ 15 ข้อแล้ว เริ่มเกมจะเล่นเสียงให้อัตโนมัติ':'กดนำเข้า ZIP เสียงพากย์ไฟล์เดียว จากนั้นกดทดลองฟัง'}</span></div>
           <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{voiceImporting?'กำลังติดตั้ง…':voiceReady?'เปลี่ยนชุดเสียง ZIP':'🎙 เลือก ZIP เสียงโจทย์'}</label>
           <button type="button" className="voice-setup-test" disabled={!voiceReady||voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองฟังข้อ 1'}</button>
+          <details className="reveal-voice-settings">
+            <summary>{answerVoiceReady?'🎧 เสียงเฉลยใหม่พร้อม ✓':'🎧 ตั้งเสียงเฉลยใหม่'}</summary>
+            <div className="reveal-voice-settings-body">
+              <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={answerVoiceImporting} onChange={e=>{void importAnswerSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{answerVoiceImporting?'กำลังติดตั้ง…':'เลือก ZIP R01–R15'}</label>
+              <button type="button" className="voice-setup-test" disabled={!answerVoiceReady||answerVoiceImporting} onClick={testAnswerVoice}>{answerVoiceTesting?'🔊 กำลังเล่น…':'▶ ทดลอง R01'}</button>
+            </div>
+          </details>
         </div>}
         {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div className="arena-ticket-content"><span className="arena-ticket-eyebrow">SCAN • CREATE • PLAY</span><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>ใช้มือถือสแกนแล้วเข้าร่วมได้ทันที</p><div className="arena-join-steps" aria-label="วิธีเข้าร่วม"><span><b>01</b> สแกน QR</span><span><b>02</b> เลือกตัวละคร</span><span><b>03</b> ตั้งชื่อ</span></div><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'(ไม่มีเสียงโจทย์)'} →</button></>
         :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
