@@ -6,6 +6,8 @@
  * Never alter score, join, sound, countdown or 25-person rendering logic.
  */
 @media(min-width:1121px){
+  /* Higher specificity than arena-cast-stage's packed-stage 540px clamp. */
+  .game-shell:has(.host-question.packed-roster) .host-question.question-layout:not(.reveal-mode),
   .game-shell .host-question.question-layout:not(.reveal-mode){
     grid-template-columns:minmax(0,1fr) clamp(415px,37vw,620px)!important;
     gap:clamp(8px,.75vw,15px)!important;
