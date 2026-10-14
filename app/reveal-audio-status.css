@@ -1,3 +1,11 @@
+/* The existing lobby puts all direct children on z-index:1.
+ * Raise the ENTIRE voice panel while its answer menu is open, otherwise the
+ * adjacent QR ticket intercepts clicks even when the dropdown itself says z:80.
+ */
+.game-shell[data-role="host"] > .host-lobby .voice-setup-panel:has(.reveal-voice-settings[open]){
+  z-index:100!important;
+  overflow:visible!important;
+}
 /* Host answer narration must be unmistakable even after game begins. */
 .game-shell[data-role="host"] .reveal-audio-panel{
   display:flex;
