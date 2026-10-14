@@ -1,0 +1,501 @@
+/*
+ * COOP AI / LIVE ARENA SHOWCASE — 14 Oct 2026
+ * A bright broadcast-ready waiting room, not a blank admin dashboard.
+ * Scoped to host lobby. Leaves live gameplay, timer, mobile, room and
+ * CSV export untouched. Imported after host-lobby-fit.css.
+ */
+.game-shell[data-role="host"] > .host-lobby.lobby{
+  --arena-luminous:#69fff3;
+  --arena-sun:#ffdf92;
+  --arena-periwinkle:#aab4ff;
+  gap:clamp(9px,.85vw,14px);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main,
+.game-shell[data-role="host"] > .host-lobby .roster-panel{
+  position:relative;
+  isolation:isolate;
+  border:1px solid rgba(151,234,255,.92);
+  box-shadow:
+    0 13px 31px rgba(11,28,111,.33),
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 0 28px rgba(72,190,255,.08);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main{
+  background:
+    radial-gradient(ellipse 55% 49% at 0 0,rgba(59,244,242,.33),transparent 87%),
+    radial-gradient(ellipse 64% 67% at 110% 105%,rgba(165,125,255,.39),transparent 88%),
+    linear-gradient(131deg,#176ab9 0%,#234aa7 54%,#5038b4 100%);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main::after{
+  content:"";position:absolute;z-index:0;inset:0;pointer-events:none;
+  border-radius:inherit;
+  background:
+    radial-gradient(1.5px 1.5px at 20% 15%,#d7fffc,transparent),
+    radial-gradient(1.5px 1.5px at 84% 22%,#e5ddff,transparent),
+    radial-gradient(1.5px 1.5px at 52% 78%,#d7fffc,transparent),
+    linear-gradient(135deg,rgba(255,255,255,.11),transparent 34%);
+  opacity:.72;
+  background-size:330px 240px,330px 240px,330px 240px,auto;
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main > *{position:relative;z-index:1}
+.game-shell[data-role="host"] > .host-lobby .lobby-main .lobby-badge{
+  color:#103d79;
+  font-weight:950;
+  letter-spacing:.012em;
+  border:1px solid #d3fff7;
+  background:linear-gradient(110deg,#8bfff1,#a2dfff);
+  box-shadow:0 3px 14px rgba(93,249,252,.31),inset 0 1px rgba(255,255,255,.65);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main h1{
+  letter-spacing:-.055em;
+  color:#fff;
+  text-shadow:0 3px 12px rgba(8,26,99,.28),0 1px 0 rgba(255,255,255,.12);
+}
+.game-shell[data-role="host"] > .host-lobby .stage-stat-line span{
+  background:linear-gradient(120deg,rgba(30,113,188,.92),rgba(49,109,194,.9));
+  border:1px solid rgba(160,237,255,.72);
+  color:#f7ffff;
+  box-shadow:inset 0 1px rgba(255,255,255,.2),0 4px 10px rgba(10,57,118,.14);
+}
+.game-shell[data-role="host"] > .host-lobby .voice-setup-panel.ready{
+  background:linear-gradient(105deg,rgba(14,104,151,.94),rgba(41,102,191,.95));
+  border-color:#8cfff3;
+  box-shadow:0 7px 19px rgba(2,42,105,.24),inset 0 1px rgba(255,255,255,.38);
+}
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid rgba(161,231,255,.88);
+  background:
+    radial-gradient(ellipse 54% 90% at 5% 45%,rgba(49,204,253,.38),transparent 77%),
+    radial-gradient(ellipse 75% 80% at 100% 0,rgba(153,117,255,.25),transparent),
+    linear-gradient(124deg,#154b9a,#2844a5 65%,#5032a5);
+  box-shadow:0 11px 30px rgba(12,44,112,.32),inset 0 1px rgba(255,255,255,.32);
+}
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  width:min(45vw,510px);aspect-ratio:1;left:-17%;top:50%;
+  transform:translateY(-50%);
+  border:1px solid rgba(140,244,255,.16);
+  border-radius:50%;
+  background:
+    repeating-radial-gradient(circle,
+      transparent 0 38px,rgba(131,242,255,.13) 39px 40px,transparent 41px 66px);
+  opacity:.8;
+}
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket::after{
+  content:"";position:absolute;z-index:-1;inset:-100% -55%;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 43%,rgba(200,250,255,.10) 49%,transparent 55%);
+  transform:translateX(-24%);
+}
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket .qr{
+  isolation:isolate;
+  background:#fff;
+  border:5px solid #fff;
+  border-radius:14px;
+  padding:5px;
+  box-shadow:0 0 0 2px #83fff4,0 0 0 6px rgba(98,251,255,.11),0 0 30px rgba(84,255,244,.66);
+  justify-self:center;
+}
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket .qr img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-start;
+  gap:clamp(5px,.9svh,10px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:4px 8px;border:1px solid rgba(127,255,243,.6);border-radius:99px;
+  background:rgba(48,216,216,.14);
+  font-size:clamp(.57rem,.67vw,.72rem);
+  line-height:1.15;letter-spacing:.11em;
+  font-weight:950;color:#96fff1;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{
+  color:#fff;
+  font-weight:950;
+  font-size:clamp(1.18rem,1.75vw,2rem);
+  line-height:1.16;
+  margin:0;
+  text-shadow:0 2px 8px #10276d70;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content p{
+  margin:0;
+  line-height:1.36;
+  font-size:clamp(.76rem,.84vw,1rem);
+  color:#d8f9ff;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps{
+  display:flex;
+  width:100%;
+  min-width:0;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:clamp(4px,.35vw,7px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+  flex:0 1 auto;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  min-width:0;
+  padding:5px 8px 5px 5px;
+  background:rgba(12,49,116,.5);
+  border:1px solid rgba(136,207,255,.48);
+  border-radius:8px;
+  color:#fff;
+  font-weight:800;
+  font-size:clamp(.65rem,.76vw,.84rem);
+  line-height:1.2;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps span b{
+  display:inline-grid;
+  place-items:center;
+  flex:none;
+  min-width:22px;
+  height:23px;
+  color:#133f85;
+  background:linear-gradient(135deg,#7cfdf0,#c9e7ff);
+  border-radius:6px;
+  font-weight:950;
+  font-size:.62rem;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content .button.secondary{
+  margin-top:clamp(1px,.6svh,6px);
+  color:#fff;
+  background:linear-gradient(115deg,#147baf,#435ac0);
+  border:1px solid rgba(165,247,255,.88);
+  box-shadow:0 5px 12px rgba(10,29,97,.2);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main > .button.primary:not(:disabled){
+  background:linear-gradient(105deg,#5bffe6,#8adcff 50%,#bee2ff);
+  border:1px solid #f4ffff;
+  color:#0e3979;
+  box-shadow:0 8px 20px rgba(43,238,235,.4);
+}
+.game-shell[data-role="host"] > .host-lobby .lobby-main > .button.primary:disabled{
+  background:linear-gradient(110deg,#406c9b,#4b68ae);
+  border:1px solid rgba(158,202,245,.65);
+  color:#e8f6ff;
+  opacity:1;
+  box-shadow:inset 0 1px rgba(255,255,255,.2);
+}
+/* Stadium-like right panel. Real participants replace the welcome composition. */
+.game-shell[data-role="host"] > .host-lobby .roster-panel{
+  background:
+    radial-gradient(ellipse 75% 57% at 50% 105%,rgba(79,228,250,.22),transparent 84%),
+    radial-gradient(ellipse 80% 63% at 100% 0,rgba(154,107,255,.29),transparent 90%),
+    linear-gradient(146deg,#245bad 0%,#274d9e 56%,#513caa 100%);
+}
+.game-shell[data-role="host"] > .host-lobby .roster-panel h2{
+  color:#fff;
+  border-bottom:1px solid rgba(172,221,255,.4);
+}
+.game-shell[data-role="host"] > .host-lobby .roster-panel h2 span{
+  color:#e4fff8;
+  background:linear-gradient(110deg,#0f9891,#2284b6);
+  border:1px solid #8affea;
+  box-shadow:0 1px 10px rgba(59,255,231,.2);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+  min-height:20px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance-track{
+  display:block;
+  flex:1 1 auto;
+  min-width:0;
+  height:6px;
+  overflow:hidden;
+  border:1px solid rgba(152,225,255,.45);
+  border-radius:99px;
+  background:rgba(11,45,111,.52);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance-track i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#65fff3,#ffdd91);
+  box-shadow:0 0 11px rgba(98,255,240,.65);
+  transition:width .45s ease;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance small{
+  flex:0 0 auto;
+  font-size:clamp(.64rem,.7vw,.78rem);
+  font-weight:900;
+  color:#d8faff;
+}
+/* Replace old oversized radar on empty board with a purposeful living stage. */
+.game-shell[data-role="host"] > .host-lobby .roster-panel:has(.arena-empty-stage)::after{
+  display:none!important;
+}
+.game-shell[data-role="host"] > .host-lobby .roster-panel .roster:empty{
+  display:none;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-stage{
+  display:flex;
+  flex:1 1 auto;
+  min-height:0;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:clamp(8px,1.55svh,16px);
+  padding:clamp(5px,1vw,14px);
+  text-align:center;
+  border-radius:16px;
+  background:
+    linear-gradient(180deg,transparent,rgba(44,118,185,.16) 55%,rgba(114,93,217,.18)),
+    radial-gradient(ellipse 73% 49% at 50% 55%,rgba(68,233,255,.14),transparent 75%);
+  border:1px solid rgba(129,210,255,.19);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+  position:relative;
+  isolation:isolate;
+  flex:0 1 auto;
+  width:min(88%,350px);
+  height:clamp(128px,23svh,232px);
+  min-height:100px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(7px,1.5vw,19px);
+  border-radius:50% 50% 20% 20%;
+  background:
+    radial-gradient(ellipse 70% 68% at 50% 55%,rgba(74,208,255,.22),transparent 77%);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual::before{
+  content:"";position:absolute;z-index:-1;
+  inset:9% 10% 0;
+  background:
+    repeating-radial-gradient(ellipse at 50% 57%,transparent 0 30px,rgba(112,242,255,.16) 31px 32px,transparent 33px 54px);
+  border-radius:50%;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual::after{
+  content:"";position:absolute;left:12%;right:12%;bottom:8%;
+  height:2px;
+  background:linear-gradient(90deg,transparent,#87fff6,transparent);
+  box-shadow:0 0 17px 6px rgba(82,255,251,.35);
+  border-radius:50%;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person{
+  position:relative;
+  display:block;
+  flex:0 1 auto;
+  width:clamp(50px,5.5vw,78px);
+  height:clamp(93px,15svh,142px);
+  border-radius:45% 45% 22% 22%;
+  border:1px solid rgba(125,245,255,.28);
+  background:linear-gradient(180deg,rgba(126,228,255,.12),rgba(121,180,252,.09));
+  filter:drop-shadow(0 0 10px rgba(76,227,255,.24));
+  opacity:.88;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person::before{
+  content:"";
+  position:absolute;
+  top:12%;
+  left:50%;
+  width:40%;
+  aspect-ratio:1;
+  border:2px solid #a7f6ff;
+  border-radius:48% 48% 46% 46%;
+  transform:translateX(-50%);
+  box-shadow:0 0 14px rgba(76,234,255,.44),inset 0 0 8px rgba(116,220,255,.19);
+  background:rgba(126,235,255,.15);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person::after{
+  content:"";
+  position:absolute;
+  bottom:5%;
+  left:12%;
+  right:12%;
+  height:49%;
+  border:2px solid #8aeeff;
+  border-radius:44% 44% 14% 14%;
+  background:linear-gradient(180deg,rgba(85,206,251,.22),rgba(148,157,255,.1));
+  box-shadow:0 0 15px rgba(57,223,255,.38);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(2){
+  height:clamp(110px,18svh,166px);
+  border-color:rgba(173,255,247,.5);
+  opacity:1;
+  filter:drop-shadow(0 0 14px rgba(96,255,236,.39));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(3){
+  opacity:.7;transform:scale(.9);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-copy{
+  display:flex;flex-direction:column;gap:5px;align-items:center;
+  min-width:0;max-width:460px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-live-kicker{
+  display:flex;align-items:center;gap:7px;
+  font-size:clamp(.62rem,.72vw,.78rem);
+  letter-spacing:.13em;
+  font-weight:950;
+  color:#90fff3;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-live-kicker i{
+  display:block;width:7px;height:7px;
+  border-radius:50%;background:#5dffe9;
+  box-shadow:0 0 9px #50ffe2;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+  color:#fff;
+  font-size:clamp(1.23rem,1.75vw,2.1rem);
+  line-height:1.21;
+  font-weight:950;
+  text-shadow:0 3px 15px rgba(18,38,111,.45);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-copy p{
+  margin:0;
+  color:#ddf9ff;
+  font-size:clamp(.75rem,.88vw,1rem);
+  line-height:1.45;
+  max-width:33ch;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-chips{
+  display:flex;flex-wrap:wrap;justify-content:center;
+  gap:6px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-chips span{
+  display:block;
+  border:1px solid rgba(130,223,255,.53);
+  border-radius:20px;
+  padding:4px 10px;
+  background:rgba(23,65,143,.52);
+  color:#d6faff;
+  font-size:clamp(.66rem,.71vw,.82rem);
+  font-weight:800;
+}
+/* Incoming avatars are the hero of the right panel, never covered by welcome art. */
+.game-shell[data-role="host"] > .host-lobby .roster-panel:has(.mini-player) .roster{
+  padding:3px;
+  min-height:0;
+}
+.game-shell[data-role="host"] > .host-lobby .roster-panel .mini-player{
+  background:linear-gradient(150deg,#257bb8,#4054b2);
+  border:1px solid rgba(128,224,255,.87);
+  box-shadow:inset 0 1px rgba(255,255,255,.36),0 2px 8px rgba(10,40,97,.21);
+}
+.game-shell[data-role="host"] > .host-lobby .roster-panel .mini-player strong{
+  color:#fff;
+  text-shadow:0 1px 5px #1a316f;
+}
+/* Slow atmospheric movement with compositor transforms only. */
+@keyframes arena-holo-float{
+  from{translate:0 2px}
+  to{translate:0 -5px}
+}
+@keyframes arena-empty-glimmer{
+  0%,100%{opacity:.7}
+  50%{opacity:1}
+}
+@keyframes arena-qr-sheen{
+  from{transform:translateX(-24%)}
+  to{transform:translateX(24%)}
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .arena-holo-person{
+  animation:arena-holo-float 3.3s ease-in-out infinite alternate;
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(2){
+  animation-duration:4.1s;
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .arena-live-kicker i{
+  animation:arena-empty-glimmer 2.2s ease-in-out infinite;
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .simple-join-ticket::after{
+  animation:arena-qr-sheen 16s ease-in-out infinite alternate;
+}
+
+/* QR is functional information, never an animated blurry decoration.
+   Keep the white QR pixels immediately sharp even on the first frame. */
+.game-shell.motion-on[data-role="host"] > .host-lobby .simple-join-ticket .qr,
+.game-shell.motion-off[data-role="host"] > .host-lobby .simple-join-ticket .qr{
+  animation:none!important;filter:none!important;opacity:1!important;transform:none!important;
+}
+/* Large live cast must never visually "disappear" during staggered entrance.
+   Animate a tiny spatial lift only, without zero-opacity keyframes. */
+@keyframes arena-lobby-player-appear{
+  from{opacity:1;transform:translateY(3px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .roster-panel:has(.mini-player:nth-child(n+12)) .mini-player{
+  opacity:1!important;
+  animation:arena-lobby-player-appear .22s ease-out both!important;
+  animation-delay:0s!important;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance-track i{
+  transition:none;
+}
+/* The middle hologram is the leading silhouette. */
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(2){
+  opacity:.88;
+  height:clamp(93px,15svh,142px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(3){
+  opacity:1;transform:none;
+  height:clamp(110px,18svh,166px);
+  border-color:rgba(173,255,247,.5);
+  filter:drop-shadow(0 0 14px rgba(96,255,236,.39));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(4){
+  opacity:.72;transform:scale(.93);
+}
+
+/* Laptop/projector sizing: don't sacrifice the all-in-one-screen guarantee. */
+@media(min-width:1000px) and (min-height:675px) and (max-height:760px){
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{padding:3px 6px 3px 4px;font-size:.68rem}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span b{min-width:20px;height:20px}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{gap:4px}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-eyebrow{padding:2px 7px}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{height:clamp(107px,20svh,156px)}
+  .game-shell[data-role="host"] > .host-lobby .arena-holo-person{height:clamp(80px,14svh,119px)}
+  .game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(2){height:clamp(97px,16svh,133px)}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-stage{gap:7px}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{font-size:clamp(1.15rem,1.5vw,1.5rem)}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-chips span{padding:3px 7px}
+}
+@media(min-width:1000px) and (max-width:1250px){
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{font-size:.63rem}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps{gap:3px}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{font-size:1.13rem}
+}
+/* In portrait/mobile view the lobby follows normal scroll flow, no clipping. */
+@media(max-width:999px){
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-stage{min-height:310px}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{height:160px}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{align-items:center;text-align:center}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps{justify-content:center}
+}
+@media(max-width:650px){
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps{justify-content:center}
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket .qr{width:min(100%,235px)}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-chips{gap:4px}
+}
+.game-shell.motion-off[data-role="host"] > .host-lobby .arena-holo-person,
+.game-shell.motion-off[data-role="host"] > .host-lobby .arena-live-kicker i,
+.game-shell.motion-off[data-role="host"] > .host-lobby .simple-join-ticket::after{
+  animation:none!important;
+}
+/* Small high-contrast projectors should remain legible, with no motion if disabled. */
+@media(prefers-reduced-motion:reduce){
+  .game-shell[data-role="host"] > .host-lobby .arena-holo-person,
+  .game-shell[data-role="host"] > .host-lobby .arena-live-kicker i,
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket::after,
+  .game-shell[data-role="host"] > .host-lobby .arena-attendance-track i{
+    animation:none!important;transition:none!important;
+  }
+}
