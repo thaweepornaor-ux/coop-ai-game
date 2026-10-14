@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import Image from 'next/image';
 import { Avatar, AVATAR_OPTIONS } from './components/avatar';
+import { GameMascot, StaffArtwork } from './components/game-art';
 import { normalizeWardrobe } from '../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
 import { SimpleWardrobe } from './components/simple-wardrobe';
@@ -695,7 +696,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {!session&&role==='choose'&&<section className="welcome entry-stage enter">
       <div className="entry-copy"><div className="eyebrow"><i/> COOPERATIVE • AI ARENA</div><h1>ประเมิน<br/><em>ความเข้าใจ AI</em></h1><p className="entry-description">เข้าเวทีแห่งไอเดีย ท้าทายความเข้าใจ<br/>และเรียนรู้พลังของ AI ไปด้วยกัน</p><RulesStrip/><div className="entry-actions"><a className="button primary" href="/play">เข้าร่วมภารกิจ <span>↗</span></a><a className="button secondary" href="/host">เปิดเวทีผู้สอน <span>→</span></a></div><p className="small-note">เล่นผ่านมือถือ · ไม่ต้องสมัครสมาชิก</p></div>
-      <div className="hero-stage"><div className="orbit-ring"/><span className="stage-label">YOUR NEXT MISSION</span><Avatar options={initialAvatar()} className="hero-avatar" interactive motion={motion}/><div className="stage-platform"/><div className="stage-id"><i/> AI EXPLORER <span>01</span></div></div>
+      <div className="hero-stage"><div className="orbit-ring"/><GameMascot pose="welcome" className="entry-friendly-robot"/><span className="stage-label">YOUR NEXT MISSION</span><Avatar options={initialAvatar()} className="hero-avatar" interactive motion={motion}/><div className="stage-platform"/><div className="stage-id"><i/> AI EXPLORER <span>01</span></div></div>
     </section>}
     {!session&&role==='host'&&<section className="single-host-welcome card" aria-label="หน้าผู้สอน">
       <div className="eyebrow">สำหรับผู้สอน · แสดงขึ้นโปรเจคเตอร์</div>
@@ -715,7 +716,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="customizer-preview">
         <div className="eyebrow">สำหรับผู้เรียน</div>
         <h1>เลือกตัวละคร<br/><em>แล้วเข้าเล่นเลย</em></h1>
-        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false}/></div>
+        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false}/><GameMascot pose="welcome" className="selection-helper-robot"/></div>
         <div className="character-name"><strong>{name.trim()||'ตัวละครของฉัน'}</strong></div>
       </div>
       <form className="wardrobe card" onSubmit={e=>{e.preventDefault();join()}}>
@@ -740,7 +741,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             </div>
           </details>
         </div>}
-        {isHost?<><div className="join-ticket simple-join-ticket"><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><div className="arena-ticket-content"><span className="arena-ticket-eyebrow">SCAN • CREATE • PLAY</span><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>ใช้มือถือสแกนแล้วเข้าร่วมได้ทันที</p><div className="arena-join-steps" aria-label="วิธีเข้าร่วม"><span><b>01</b> สแกน QR</span><span><b>02</b> เลือกตัวละคร</span><span><b>03</b> ตั้งชื่อ</span></div><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'(ไม่มีเสียงโจทย์)'} →</button></>
+        {isHost?<><div className="join-ticket simple-join-ticket"><div className="arena-qr-zone"><span className="arena-qr-title">สแกนเพื่อเข้าร่วม</span><div className="qr">{qr?<img src={qr} alt="QR สำหรับผู้เล่นเข้าห้อง"/>:<span>กำลังสร้าง QR…</span>}</div><span className="arena-qr-caption">เปิดกล้องมือถือแล้วสแกนได้เลย</span></div><div className="arena-ticket-content"><span className="arena-ticket-eyebrow">SCAN • CREATE • PLAY</span><h2>สแกน QR Code เพื่อเข้าเล่น</h2><p>ใช้มือถือสแกนแล้วเข้าร่วมได้ทันที</p><div className="arena-join-steps" aria-label="วิธีเข้าร่วม"><span><b>01</b> สแกน QR</span><span><b>02</b> เลือกตัวละคร</span><span><b>03</b> ตั้งชื่อ</span></div><strong className="room-code sr-only">{session.room}</strong><button className="button secondary" type="button" onClick={()=>void copyJoin()}>{copied?'คัดลอกแล้ว ✓':'คัดลอกลิงก์สำหรับผู้เรียน'}</button><input className="join-url sr-only" aria-label="ลิงก์ผู้เล่น" value={joinUrl} readOnly onFocus={e=>e.target.select()}/></div><GameMascot pose="scan" className="qr-guide-mascot"/></div><button className="button primary" disabled={!canInteract||snapshot.players.length===0} onClick={()=>void send('start')}>เริ่มเกมกับผู้เล่น {snapshot.players.length} คน {voiceReady?'พร้อมเสียงพากย์ ✓':'(ไม่มีเสียงโจทย์)'} →</button></>
         :<>{editingProfile?<form className="inline-profile-form" onSubmit={e=>{e.preventDefault();void saveProfile()}}>
           <h2>แก้ไขตัวละครและชื่อ</h2>
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
@@ -750,14 +751,14 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>เปลี่ยนชื่อ / ตัวละคร</button>
           <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
-      <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong title={p.name}>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&(isHost?<div className="arena-empty-stage" role="status"><div className="arena-empty-visual" aria-hidden="true"><span className="arena-stage-halo"/><span className="arena-holo-person"/><span className="arena-holo-person"/><span className="arena-holo-person"/></div><div className="arena-empty-copy"><span className="arena-live-kicker"><i/> READY FOR PLAYERS</span><strong>เวทีพร้อมต้อนรับ!</strong><p>เมื่อผู้เรียนสแกน QR Code ตัวละครจะปรากฏบนเวทีนี้ทันที</p></div><div className="arena-empty-chips"><span>✦ ร่วมเล่นแบบสด</span><span>✦ แสดงตัวละครสด</span></div></div>:<p>รอผู้เรียนสแกน QR Code ครับ</p>)}</div>
+      <div className="card roster-panel"><h2>ผู้เข้าร่วม <span>{snapshot.players.length} คน</span></h2><div className="roster">{snapshot.players.map(p=><div className="mini-player" key={p.id}><Avatar options={p.avatar}/><strong title={p.name}>{p.name}</strong></div>)}</div>{snapshot.players.length===0&&(isHost?<div className="arena-empty-stage" role="status"><div className="arena-empty-visual arena-empty-art" aria-hidden="true"><span className="arena-stage-halo"/><StaffArtwork className="lobby-staff-illustration" title=""/><GameMascot pose="welcome" className="roster-welcome-robot"/></div><div className="arena-empty-copy"><span className="arena-live-kicker"><i/> READY FOR PLAYERS</span><strong>เวทีพร้อมต้อนรับ!</strong><p>เมื่อผู้เรียนสแกน QR Code ตัวละครจะปรากฏบนเวทีนี้ทันที</p></div><div className="arena-empty-chips"><span>✦ ร่วมเล่นแบบสด</span><span>✦ แสดงตัวละครสด</span></div></div>:<p>รอผู้เรียนสแกน QR Code ครับ</p>)}</div>
     </section>}
 
     {session&&snapshot&&snapshot.room.phase!=='lobby'&&!finished&&<section className={'question-layout '+(isHost?'host-question':'player-question')+(isHost&&reveal?' reveal-mode':'')+(isHost&&denseQuestion&&!reveal?' dense-question':'')+(isHost&&packedRoster&&!reveal?' packed-roster':'')}>
       <div className="card question-card enter" key={snapshot.room.roundId+':'+snapshot.room.questionIndex}>
         <div className="question-meta"><span className="badge">ข้อ {(snapshot.question?.number||snapshot.room.questionIndex+1)} / 15</span>{isHost?<div className="narration-controls"><button type="button" className={'narrate-button '+(narrationEnabled?'enabled':'')} aria-pressed={narrationEnabled} onClick={toggleNarration}>{narrationEnabled?'🔊 เสียงพากย์เปิด':'🔇 เปิดเสียงพากย์'}</button>{narrationEnabled&&<button type="button" className="narrate-button" onClick={repeatNarration}>↻ อ่านซ้ำ</button>}{narrationBusy&&<span className="narration-speaking">🔊 กำลังอ่านโจทย์…</span>}</div>:countdownNode}</div>
         <div className="mission-progress" aria-label={'ความคืบหน้า ข้อ '+(snapshot.room.questionIndex+1)+' จาก 15'}>{Array.from({length:15},(_,i)=><i key={i} className={i<snapshot.room.questionIndex?'complete':i===snapshot.room.questionIndex?'current':''}/>)}</div>
-        <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p><h1>{snapshot.question?.question}</h1>
+        <p className="topic"><span>คำถาม {String(snapshot.room.questionIndex+1).padStart(2,'0')}</span> {snapshot.question?.topic}</p>{isHost&&!reveal&&<GameMascot pose="think" className="question-corner-mascot"/>}<h1>{snapshot.question?.question}</h1>
         <div className="answer-grid">{snapshot.question?.options.map((option,i)=>{
           const picked=snapshot.ownAnswer?.choice===i||pendingChoice===i;
           const correct=reveal&&snapshot.correctAnswer===i;
@@ -765,7 +766,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         })}</div>
         {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย' :narrationRemaining>0?'กำลังฟังเสียงโจทย์ · จากนั้นมีเวลาตอบเต็ม 10 วินาที':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
         {isHost&&!reveal&&<div className="host-controls"><span>ตอบแล้ว <strong>{answered} / {snapshot.players.length}</strong> คน</span><button className="button primary" disabled={!canInteract} onClick={()=>void send('reveal')}>{timeOpen?'ปิดรับคำตอบและเปิดเฉลย':'เปิดเฉลย ✦'}</button></div>}
-        {reveal&&<div className="explanation"><h2>คำตอบ: {letters[snapshot.correctAnswer??0]} · {snapshot.question?.options[snapshot.correctAnswer??0]}</h2><p>{snapshot.explanation}</p></div>}
+        {reveal&&<div className="explanation"><GameMascot pose="explain" className="answer-guide-mascot"/><h2>คำตอบ: {letters[snapshot.correctAnswer??0]} · {snapshot.question?.options[snapshot.correctAnswer??0]}</h2><p>{snapshot.explanation}</p></div>}
         {reveal&&isHost&&<div className={'reveal-audio-panel '+(answerVoiceReady?'ready':'missing')} role="group" aria-label="เสียงเฉลยคำตอบ">
           <span>{answerVoiceReady?'🎙 เสียงเฉลย R'+String(snapshot.room.questionIndex+1).padStart(2,'0')+' พร้อม':'⚠ ยังไม่มีเสียงเฉลยผู้หญิง R01–R15 บนเครื่องนี้'}</span>
           {answerVoiceReady?<button className="button secondary" type="button" disabled={!narrationEnabled} onClick={repeatNarration}>▶ เล่นเสียงเฉลยข้อนี้</button>:
@@ -813,7 +814,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     </section>}
 
     {session&&snapshot&&finished&&<section className="results-page">
-      <div className="card finish-heading enter"><div className="eyebrow">สรุปผลการประเมิน</div><h1>ทุกไอเดียมีพลัง <em>นี่คือทีมของเรา</em></h1><p>ผลคะแนนสะท้อนความเข้าใจพื้นฐาน AI ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
+      <div className="card finish-heading enter"><div className="finish-celebration-art" aria-hidden="true"><StaffArtwork className="finish-staff-illustration" title=""/><GameMascot pose="celebrate" className="finish-robot-illustration"/></div><div className="eyebrow">สรุปผลการประเมิน</div><h1>ทุกไอเดียมีพลัง <em>นี่คือทีมของเรา</em></h1><p>ผลคะแนนสะท้อนความเข้าใจพื้นฐาน AI ไม่ใช่การรับรองทักษะปฏิบัติหรือความเชี่ยวชาญ</p>
         {isHost&&<div className="result-host-actions"><button className="button primary result-reset-button" type="button" disabled={busy} onClick={()=>setResetDialog(true)}>↻ เริ่มเกมใหม่</button><button className="button secondary" type="button" onClick={downloadResults}>↓ ดาวน์โหลดคะแนน CSV</button></div>}
         <div className="result-level-overview" aria-label="เกณฑ์ระดับความเข้าใจ AI และจำนวนผู้เรียนแต่ละระดับ">
           <div className="result-level-summary tier-explorer"><strong>นักสำรวจ AI</strong><span>0–5 คะแนน · {snapshot.leaderboard?.filter(p=>p.score<=5).length||0} คน</span></div>

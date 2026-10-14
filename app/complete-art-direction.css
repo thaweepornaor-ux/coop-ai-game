@@ -1,0 +1,255 @@
+/*
+ * AI GAME / ARTWORK INTEGRATION — original user assets + contextual robots
+ * Use late-loaded, scope-tight selectors. Do not change audio, game timing,
+ * avatar wardrobe/logo pixels, reset, scoring, or 25-person cards.
+ */
+.game-shell .game-staff-art{
+  display:block;width:100%;height:auto;object-fit:contain;
+  image-rendering:auto;pointer-events:none;user-select:none;
+}
+.game-shell .game-mascot{display:block;overflow:visible;pointer-events:none;user-select:none}
+.game-shell .game-mascot .mascot-sparkles{filter:drop-shadow(0 0 5px rgba(104,245,230,.5))}
+@keyframes game-art-gentle-float{
+  0%,100%{transform:translate3d(0,2px,0)}
+  50%{transform:translate3d(0,-5px,0)}
+}
+@keyframes game-art-trophy-glint{
+  0%,100%{filter:drop-shadow(0 4px 15px rgba(73,231,235,.15))}
+  50%{filter:drop-shadow(0 4px 18px rgba(106,250,232,.34))}
+}
+.game-shell.motion-on .game-mascot{
+  animation:game-art-gentle-float 4.2s ease-in-out infinite;
+}
+.game-shell.motion-off .game-mascot{animation:none!important;}
+/* Welcome artwork decorates the existing 3D selectable avatar, never replaces it. */
+.game-shell .hero-stage{isolation:isolate;position:relative}
+.game-shell .entry-friendly-robot{
+  position:absolute;z-index:3;bottom:10%;right:1%;
+  width:clamp(80px,9vw,155px);max-height:28%;opacity:.95;
+  filter:drop-shadow(0 8px 22px rgba(17,44,125,.32));
+}
+.game-shell .character-stage{position:relative;isolation:isolate}
+.game-shell .selection-helper-robot{
+  width:clamp(58px,19%,105px);height:auto;
+  position:absolute;right:2%;bottom:4%;z-index:3;
+  filter:drop-shadow(0 4px 14px rgba(12,60,116,.23));
+}
+/* QR stage: the *QR* is optically centered in its own left visual field,
+ * not stuck in the card's top-left corner. Instructions fill the other half. */
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+  position:relative;
+  isolation:isolate;
+  grid-template-columns:minmax(0,38%) minmax(0,1fr);
+  column-gap:clamp(10px,1.55vw,28px);
+  align-items:center;
+  justify-items:stretch;
+  padding-inline:clamp(12px,1.7vw,29px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone{
+  position:relative;z-index:1;min-width:0;min-height:0;height:100%;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:clamp(4px,.7svh,9px);
+  border-radius:18px;padding:clamp(4px,.6vw,11px);
+  background:radial-gradient(ellipse 65% 55% at 50% 52%,
+    rgba(149,241,255,.17),transparent 80%);
+  border:1px solid rgba(153,222,255,.25);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone::before,
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone::after{
+  content:"";position:absolute;pointer-events:none;
+  width:22px;height:22px;opacity:.7;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone::before{
+  left:5px;top:5px;border-top:2px solid #a0f3f5;border-left:2px solid #a0f3f5;border-top-left-radius:9px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone::after{
+  right:5px;bottom:5px;border-bottom:2px solid #a0f3f5;border-right:2px solid #a0f3f5;border-bottom-right-radius:9px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone .qr{
+  position:relative;z-index:2;
+  width:min(100%,clamp(172px,24svh,238px))!important;
+  max-width:238px!important;max-height:min(56svh,238px)!important;
+  aspect-ratio:1;height:auto;
+  margin:0 auto;display:grid;place-items:center;
+  padding:5px;border:5px solid #fff!important;
+  background:#fff!important;filter:none!important;
+  opacity:1!important;transform:none!important;
+  box-shadow:0 0 0 2px #91e4e8,0 10px 24px rgba(5,31,92,.22)!important;
+  animation:none!important;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-zone .qr img{
+  display:block;width:100%;height:100%;object-fit:contain;
+  filter:none!important;opacity:1!important;image-rendering:auto;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-title{
+  color:#dffeff;letter-spacing:.08em;text-transform:uppercase;
+  font-size:clamp(.66rem,.78vw,.9rem);font-weight:900;text-align:center;line-height:1.1;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-qr-caption{
+  color:#c5efff;font-size:clamp(.62rem,.72vw,.8rem);font-weight:700;
+  text-align:center;line-height:1.25;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+  position:relative;z-index:3;align-items:flex-start;justify-content:center;
+  gap:clamp(5px,1svh,12px);
+  padding:6px 0;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{
+  font-size:clamp(1.14rem,1.7vw,2rem);line-height:1.18;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps{
+  display:flex;align-items:center;justify-content:flex-start;gap:clamp(4px,.5vw,9px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+  flex:0 1 auto;
+}
+.game-shell[data-role="host"] > .host-lobby .qr-guide-mascot{
+  position:absolute;z-index:2;right:clamp(2px,.6vw,14px);bottom:1px;
+  width:clamp(70px,7vw,130px);max-height:44%;opacity:.72;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content .button{
+  position:relative;z-index:4;
+  align-self:flex-start;
+  max-width:calc(100% - 80px);
+}
+/* In the waiting room ONLY, show the user's original characters and a
+ * welcoming mascot; replace the decoration immediately when anyone joins. */
+.game-shell[data-role="host"] > .host-lobby .arena-empty-art{
+  position:relative;isolation:isolate;
+  width:min(94%,390px);
+  min-width:0;
+  height:clamp(126px,24svh,243px);
+  border-radius:18px;
+  overflow:visible;
+  background:radial-gradient(ellipse 75% 50% at 50% 90%,rgba(81,226,249,.24),transparent 88%);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-art .lobby-staff-illustration{
+  position:absolute;z-index:2;bottom:5px;left:50%;
+  transform:translateX(-50%);
+  width:min(95%,370px);height:100%;max-height:100%;
+  object-fit:contain;object-position:center bottom;
+  filter:drop-shadow(0 7px 17px rgba(9,36,98,.22));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-art .roster-welcome-robot{
+  position:absolute;z-index:3;right:-6%;bottom:-7%;
+  width:clamp(55px,7.2vw,97px);height:auto;
+  filter:drop-shadow(0 4px 10px rgba(13,44,96,.24));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-stage{
+  gap:clamp(4px,.8svh,10px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+  font-size:clamp(1.12rem,1.6vw,1.8rem);
+}
+/* Contextual illustration on the question is a small presenter cue,
+ * never part of the player board or quiz controls. */
+.game-shell .host-question .question-card{position:relative;isolation:isolate}
+.game-shell .question-corner-mascot{
+  position:absolute;top:58px;right:clamp(12px,1.2vw,22px);
+  width:clamp(48px,4.7vw,75px);height:auto;
+  opacity:.86;z-index:1;
+  filter:drop-shadow(0 2px 10px rgba(46,115,202,.18));
+}
+.game-shell .host-question .question-card :is(.question-meta,.topic,h1,.answer-grid,.host-controls,.explanation){
+  position:relative;z-index:2;
+}
+.game-shell .host-question:not(.reveal-mode) .topic{
+  padding-right:clamp(52px,5vw,90px);
+}
+.game-shell .host-question.reveal-mode .explanation{position:relative;isolation:isolate}
+.game-shell .answer-guide-mascot{
+  position:absolute;z-index:1;right:5px;bottom:0;
+  width:clamp(44px,5vw,74px);height:auto;opacity:.72;
+}
+.game-shell .host-question.reveal-mode .explanation h2,
+.game-shell .host-question.reveal-mode .explanation p{
+  position:relative;z-index:2;
+  padding-right:clamp(28px,5vw,72px);
+}
+/* Endgame: a celebratory composition anchored on the right, no changes to
+ * podium scores or the full participant results table. */
+.game-shell .results-page .finish-heading{position:relative;isolation:isolate}
+.game-shell .finish-celebration-art{
+  position:absolute;z-index:3;top:0;right:clamp(12px,2vw,34px);
+  width:clamp(156px,19vw,300px);height:clamp(110px,17vw,228px);
+  pointer-events:none;overflow:visible;
+}
+.game-shell .finish-staff-illustration{
+  width:100%;height:100%;object-fit:contain;object-position:center bottom;
+  filter:drop-shadow(0 5px 12px rgba(28,55,125,.28));
+}
+.game-shell .finish-robot-illustration{
+  position:absolute;right:-5%;bottom:-4%;
+  width:clamp(65px,8vw,115px);height:auto;
+}
+.game-shell .results-page .finish-heading > :not(.finish-celebration-art){
+  position:relative;z-index:1;
+}
+.game-shell .results-page .finish-heading > :is(.eyebrow,h1,p){
+  max-width:calc(100% - clamp(110px,20vw,310px));
+}
+.game-shell.motion-on .finish-robot-illustration{
+  animation:game-art-gentle-float 3.3s ease-in-out infinite,game-art-trophy-glint 2.2s ease-in-out infinite;
+}
+/* Keep 720p fullscreen classroom geometry and the scannable QR.
+ * Reduce purely decorative artwork before shrinking functional content. */
+@media(min-width:1000px) and (max-height:800px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+    padding-inline:clamp(8px,1vw,14px);
+    column-gap:clamp(8px,.8vw,12px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-zone{gap:3px;padding:4px}
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-zone .qr{
+    width:min(100%,clamp(156px,22svh,176px))!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-title,
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-caption{font-size:.63rem}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{gap:4px}
+  .game-shell[data-role="host"] > .host-lobby .qr-guide-mascot{display:none}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content .button{max-width:100%}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-art{height:clamp(104px,17svh,144px)}
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-art .roster-welcome-robot{width:61px}
+  /* A small illustrated cue fits the blank header slot on a 720p display.
+     Keep it away from both the question and the narration controls. */
+  .game-shell .question-corner-mascot{
+    display:block;top:8px;left:clamp(175px,19vw,235px);right:auto;
+    width:40px;max-height:42px;opacity:.85;z-index:1;
+  }
+  .game-shell .answer-guide-mascot{display:none}
+}
+@media(min-width:1000px) and (max-width:1279px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{grid-template-columns:minmax(0,35%) minmax(0,1fr)}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{font-size:.63rem;padding:3px 4px}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span b{min-width:19px;height:19px}
+}
+@media(max-width:999px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+    grid-template-columns:minmax(0,37%) minmax(0,1fr);
+    padding:12px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-zone{height:auto;padding:6px;gap:7px}
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-zone .qr{
+    width:min(100%,220px)!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-guide-mascot{display:none}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content .button{max-width:100%}
+  .game-shell .question-corner-mascot{display:none}
+  .game-shell .finish-celebration-art{width:150px;height:125px;opacity:.75}
+}
+@media(max-width:650px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+    grid-template-columns:minmax(0,1fr);justify-items:stretch;text-align:center;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-qr-zone{justify-content:center}
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{align-items:center;text-align:center}
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps{justify-content:center}
+  .game-shell .finish-celebration-art{display:none}
+  .game-shell .results-page .finish-heading > :is(.eyebrow,h1,p){max-width:100%}
+  .game-shell .answer-guide-mascot{display:none}
+  .game-shell .host-question.reveal-mode .explanation :is(h2,p){padding-right:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell .game-mascot,.game-shell .finish-robot-illustration{
+    animation:none!important;transition:none!important;
+  }
+}
