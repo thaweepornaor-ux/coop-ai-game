@@ -1,19 +1,22 @@
-# ภารกิจ AI ในสหกรณ์
+# ภารกิจ AI ในสหกรณ์ — Cooperative AI Game
 
-Recovery source for the existing cooperative AI training game.
+Existing game source (do not rebuild from scratch). The active host/learner game is operated through the existing Cloudflare Staging deployment. Changes are reviewed in GitHub PRs before publication.
 
-## Verified execution
+## Current game contract (14 October 2026)
+- 15 multiple-choice scenario questions; **10-second answer window** per question.
+- Up to 25 learners in a room, QR join without entering a manual room code; learners choose a character and enter a name.
+- Teacher screen: join QR, live roster, 15 question recordings Q01–Q15, 15 answer recordings R01–R15, reveal/next, ranking, score CSV and new-room reset.
+- Visual theme: original rich blue/violet game-show palette with moderated glow. Never change submitted character uniforms, colors or logos through CSS recoloring or regenerated art.
+- Original image wrappers: `public/art/nhk-welcome-original.svg`, `nhk-presenter-original.svg`, `nhk-celebrate-original.svg`.
+- `main` includes merged PR #36; PR #37 is additional mobile/instructor polish on a **separate review branch**.
 
-The recovery branch has run successfully on GitHub Actions with Node 22.23.3 and the frozen pnpm lockfile. The GLB validator self-test passed 46 cases. Eight game-rule unit tests, local D1 integration, the recovered renderer geometry checks, and character reload/reset persistence checks passed.
+## Verification boundaries
+GitHub Game Smoke Tests and Browser Proof check code/integration and simulated browser behavior. A passing check does **not** certify physical mobile devices, visual design quality, audio audibility in a classroom, a real group of 25 people or Excel's rendering of an exported CSV. Review screenshots and manually test the full learner journey before merging/deploying.
 
-These results cover the recovered source. They do **not** approve the new character art, prove physical iPhone/Android compatibility, or constitute a new deployed game.
+## Safe delivery workflow
+1. Make changes on a branch and open a PR.
+2. Run Game Smoke Tests and Browser Proof (local, disposable data).
+3. Inspect actual 720p/1080p/phone screenshots and make sure 25 real learner tiles are not obstructed.
+4. Only then merge and trigger the existing explicit staging deploy; confirm release identifier and scanability.
 
-## Work in progress
-
-- Build a real independent preview from the recovered source while preserving the original Sites configuration.
-- Inspect the official Snow and Rain Blender source models with automatic script execution disabled. Verify the Blender binary against its official SHA-256 manifest.
-- Replace the rejected puppet-like renderer with detailed adult characters, actual rig animation and compatible clothing. Inspect actual renders and exported GLBs before acceptance.
-- Preserve 10 male and 10 female characters, 11 independent dress fields, server-controlled 15-second questions, host permissions, score and reset behavior.
-- Verify responsive browser layouts, reduced-motion behavior, and subtle studio lighting, sparkles and celebrations.
-
-The main branch and existing published game are unchanged. The recovery work is on `codex/game-recovery`. No credentials, learner data, signed download links, or original private model checkpoints are stored here.
+Avoid replacing the existing Cloudflare deployment, altering question scores/timing/audio, or presenting tests as approval of artwork without actual visual inspection.
