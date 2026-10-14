@@ -1,0 +1,145 @@
+/*
+ * LIVE CAST | ROOM FOR 25 PEOPLE
+ * Keep the RIGHT-HAND player stage permanently sized for a real class.
+ * Earlier 1–3-player spotlight filled the entire narrow stage with one body,
+ * giving an incorrect visual impression that the class has no room to grow.
+ * Never alter score, join, sound, countdown or 25-person rendering logic.
+ */
+@media(min-width:1121px){
+  /* Higher specificity than arena-cast-stage's packed-stage 540px clamp. */
+  .game-shell:has(.host-question.packed-roster) .host-question.question-layout:not(.reveal-mode),
+  .game-shell .host-question.question-layout:not(.reveal-mode){
+    grid-template-columns:minmax(0,1fr) clamp(415px,37vw,620px)!important;
+    gap:clamp(8px,.75vw,15px)!important;
+  }
+  .game-shell .host-question:not(.reveal-mode) .question-roster{
+    min-width:0!important;
+  }
+}
+@media(min-width:901px) and (max-width:1120px){
+  .game-shell .host-question.question-layout:not(.reveal-mode){
+    grid-template-columns:minmax(0,1fr) minmax(315px,37%)!important;
+    gap:8px!important;
+  }
+}
+/* One participant should be recognisable, not blown up to full-stage height.
+ * This compact cast card makes the capacity and the other future slots obvious.
+ */
+@media(min-width:901px){
+  .game-shell .host-question:not(.reveal-mode) .score-spotlight{
+    display:flex!important;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:stretch;
+    flex:1 1 auto;
+    gap:clamp(5px,.65svh,9px);
+    min-height:0;
+    padding:3px 1px;
+    overflow:hidden;
+    background:
+      radial-gradient(ellipse 65% 35% at 50% 92%,rgba(84,224,255,.1),transparent 80%);
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-person{
+    display:grid;
+    grid-template-columns:clamp(68px,25%,115px) minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) auto;
+    align-items:center;
+    flex:0 1 auto;
+    min-width:0;
+    min-height:clamp(88px,11svh,130px);
+    height:clamp(88px,12.4svh,142px);
+    max-height:142px;
+    padding:clamp(4px,.55vw,9px);
+    gap:3px 10px;
+    border-radius:13px;
+    overflow:hidden;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-avatar{
+    grid-column:1;
+    grid-row:1/3;
+    align-self:center;
+    width:100%;
+    height:min(100%,136px);
+    max-height:136px;
+    min-height:0;
+    aspect-ratio:3/4;
+    overflow:hidden;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-avatar>div{
+    max-height:100%;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-meta{
+    grid-column:2;
+    grid-row:1;
+    gap:0;
+    justify-self:start;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-meta strong{
+    font-size:clamp(.9rem,1.02vw,1.2rem);
+    line-height:1.14;
+    max-width:100%;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-meta b{
+    font-size:clamp(1.1rem,1.55vw,1.8rem);
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-state{
+    grid-column:2;
+    grid-row:2;
+    padding:4px 8px;
+    line-height:1.1;
+    align-self:start;
+    font-size:clamp(.62rem,.68vw,.75rem);
+  }
+  /* Reserved arena below 1–3 participants: ornamental only, never fake players.
+     The 4–25-person roster swaps in immediately on joining. */
+  .game-shell .host-question:not(.reveal-mode) .score-spotlight::after{
+    content:"เวทีพร้อมต้อนรับผู้เล่นเพิ่มเติม";
+    display:flex;
+    flex:1 1 auto;
+    min-height:25px;
+    align-items:center;
+    justify-content:center;
+    color:#bbecff;
+    opacity:.82;
+    border-radius:13px;
+    border:1px dashed rgba(133,230,255,.38);
+    background:
+      radial-gradient(ellipse 65% 85% at 50% 100%,rgba(70,219,255,.13),transparent 75%),
+      repeating-linear-gradient(90deg,transparent 0 48px,rgba(142,217,255,.048) 49px 50px);
+    letter-spacing:.02em;
+    text-align:center;
+    font-size:clamp(.65rem,.74vw,.83rem);
+    font-weight:750;
+  }
+}
+/* 720p: 3 compact spotlight cards still fit above the fold; names and
+ * state stay readable without stealing the area reserved for late entrants. */
+@media(min-width:901px) and (max-height:790px){
+  .game-shell .host-question:not(.reveal-mode) .spotlight-person{
+    height:clamp(82px,12svh,105px);
+    min-height:82px;
+    max-height:105px;
+    padding:3px 6px;
+  }
+  .game-shell .host-question:not(.reveal-mode) .spotlight-avatar{
+    height:min(100%,96px);
+    max-height:96px;
+  }
+  .game-shell .host-question:not(.reveal-mode) .score-spotlight::after{
+    min-height:15px;
+    font-size:.67rem;
+  }
+}
+/* Do NOT turn compact participant cards into giant portraits on reveal or on
+ * the mobile learner view; use existing dedicated responsive layouts there. */
+@media(prefers-reduced-motion:reduce){
+  .game-shell .host-question:not(.reveal-mode) .score-spotlight::after{
+    transition:none!important;
+    animation:none!important;
+  }
+}

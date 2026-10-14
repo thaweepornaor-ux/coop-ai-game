@@ -587,6 +587,24 @@ async function realRoom(browser, browserName) {
         assert.ok(timerSize && timerSize.width>=130 && timerSize.height>=130,'Projector countdown must be large and visible');
         const titleSize=await host.locator('.question-card h1').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
         assert.ok(titleSize>=35,'Projector question must have a prominently readable font');
+        const liveCast=await host.evaluate(()=>{
+          const panel=document.querySelector('.host-question:not(.reveal-mode) .question-roster');
+          const person=document.querySelector('.score-spotlight .spotlight-person');
+          const portrait=document.querySelector('.score-spotlight .spotlight-avatar');
+          const board=document.querySelector('.host-question:not(.reveal-mode) .question-layout');
+          const root=document.querySelector('.host-question:not(.reveal-mode)');
+          const rect=el=>el?.getBoundingClientRect();
+          return {panelWidth:rect(panel)?.width,portraitHeight:rect(portrait)?.height,
+            personHeight:rect(person)?.height,stageWidth:rect(root)?.width,
+            viewport:innerWidth,bodyScroll:document.documentElement.scrollHeight>innerHeight+4};
+        });
+        assert.ok(liveCast.panelWidth/liveCast.viewport>.29,
+          'Live player stage should reserve >=29% of display even with just 1 contestant '+JSON.stringify(liveCast));
+        assert.ok(liveCast.personHeight<=180&&liveCast.personHeight>=72,
+          'One player should be a compact named card, not a giant full-height avatar '+JSON.stringify(liveCast));
+        assert.ok(liveCast.portraitHeight<=145,'One avatar should not dominate the entire stage '+JSON.stringify(liveCast));
+        assert.equal(liveCast.bodyScroll,false,'Compact 1-player stage should not require projector scroll');
+        row.checks.push({singlePlayerStageWidth:liveCast.panelWidth,portraitHeight:liveCast.portraitHeight});
         await shot(player,browserName+'-question-player');await shot(host,browserName+'-question-host');
       }
       await stage('reveal-' + number);
@@ -974,6 +992,38 @@ async function realTwentyFive(browser,browserName){
    const answeredWrong=await action(joined[1].token,0);
    assert.equal(answeredRight.status(),200);
    assert.equal(answeredWrong.status(),200);
+   // Test the live 25-player board BEFORE reveal, not only the answer tiles.
+   await stage('25-real-players-question-stage');
+   await host.locator('.host-question.packed-roster .host-scored-roster .mini-player').first().waitFor({timeout:15000});
+   for(const vp of [{width:1280,height:720},{width:1920,height:1080}]){
+     await host.setViewportSize(vp);
+     const cast=await host.evaluate(()=>{
+       const root=document.querySelector('.host-question:not(.reveal-mode)');
+       const panel=root?.querySelector('.question-roster');
+       const grid=root?.querySelector('.host-scored-roster.packed-players');
+       const items=[...(grid?.querySelectorAll('.mini-player')||[])];
+       const board=grid?.getBoundingClientRect();
+       const bounds=items.map(item=>item.getBoundingClientRect());
+       return {columns:grid?getComputedStyle(grid).gridTemplateColumns.split(' ').length:0,
+         rows:grid?getComputedStyle(grid).gridTemplateRows.split(' ').length:0,
+         players:items.length,
+         rightRatio:panel.getBoundingClientRect().width/innerWidth,
+         minCardWidth:Math.min(...bounds.map(r=>r.width)),
+         minCardHeight:Math.min(...bounds.map(r=>r.height)),
+         clipped:bounds.map((r,i)=>({r,i})).filter(({r})=>r.left<board.left-2||r.right>board.right+2||r.top<board.top-2||r.bottom>board.bottom+2).map(x=>x.i),
+         pageScroll:document.documentElement.scrollHeight>innerHeight+4};
+     });
+     assert.equal(cast.players,25,'All 25 real player avatars must appear on question screen');
+     assert.equal(cast.columns,5,'25 learners must have five stage columns');
+     assert.equal(cast.rows,5,'25 learners must have five stage rows');
+     assert.ok(cast.rightRatio>=.30,'The right board must have enough real estate '+JSON.stringify(cast));
+     assert.ok(cast.minCardWidth>=65&&cast.minCardHeight>=40,'Every contestant must get visible card space '+JSON.stringify(cast));
+     assert.deepEqual(cast.clipped,[],'Every cast tile must remain inside the visible board '+JSON.stringify(cast));
+     assert.equal(cast.pageScroll,false,'25 player live question stage must not create document scrolling');
+     await shot(host,browserName+'-25-live-stage-'+vp.width+'x'+vp.height);
+     row.checks.push({fullCast:vp.width+'x'+vp.height,columns:cast.columns,rows:cast.rows,minWidth:cast.minCardWidth});
+   }
+   await host.setViewportSize({width:1280,height:720});
    await stage('reveal-genuine-25-player-result-board');
    await host.locator('.host-controls button').click();
    await host.locator('.reveal-tiles .reveal-person').first().waitFor({timeout:15000});
