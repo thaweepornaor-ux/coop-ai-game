@@ -241,3 +241,42 @@
   .question-guide-art img,.wardrobe-mascot-art,.qr-visual-stage .qr){
   animation:none!important;transition:none!important;
 }
+
+/* POST-PR36: compact learner screens retain a readable answer/result area.
+ * Decorations never intercept clicks or make the mobile content wider. */
+@media(max-width:480px){
+  .game-shell .own-result:has(> .learner-reveal-art){
+    padding-right:max(58px,18%)!important;
+    min-width:0;
+  }
+  .game-shell .own-result .learner-reveal-art{
+    right:6px;
+    bottom:6px;
+    max-width:48px;
+    max-height:70px;
+  }
+  .game-shell .wardrobe-heading{
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+    width:min(100%,260px);
+    gap:5px;
+    padding:4px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,215px)!important;
+    max-height:215px!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-label,
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-caption{
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
+@media(max-width:360px){
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,190px)!important;
+    max-height:190px!important;
+  }
+}
