@@ -157,7 +157,11 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const playingNumber=state.room.questionIndex+1;
     const answerSource=answerVoiceUrls.current[playingNumber-1];
     const wantedSource=mode==='reveal'&&answerSource?answerSource:(voiceUrls.current[playingNumber-1]||'/voice/Q'+String(playingNumber).padStart(2,'0')+'.mp3');
-    if((mode==='question'||(mode==='reveal'&&!!answerSource))&&voiceTrack.current?.src===new URL(wantedSource,window.location.href).href)return true;
+    // A blocked/failed .play() leaves an Audio object paused: NEVER treat its
+    // matching URL as proof that speech was heard.
+    if((mode==='question'||(mode==='reveal'&&!!answerSource))&&
+       voiceTrack.current?.src===new URL(wantedSource,window.location.href).href&&
+       !voiceTrack.current.paused&&!voiceTrack.current.ended&&!voiceTrack.current.error)return true;
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current=null;}
     if('speechSynthesis' in window)window.speechSynthesis.cancel();
     setNarrationBusy(false);setNarrationNotice('');
@@ -177,23 +181,16 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       track.preload='auto';track.volume=1;
       track.onplaying=()=>setNarrationBusy(true);
       track.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null};
-      track.onerror=()=>{setNarrationBusy(false);setNarrationNotice('ไม่พบเสียงเฉลย R'+String(playingNumber).padStart(2,'0'))};
+      track.onerror=()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null;setNarrationNotice('เสียงเฉลย R'+String(playingNumber).padStart(2,'0')+' เล่นไม่ได้ กรุณาติดตั้ง ZIP ใหม่')};
       voiceTrack.current=track;
-      void track.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่ออนุญาตเปิดเสียงเฉลย'));
+      void track.play().catch(()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null;setNarrationNotice('เบราว์เซอร์ไม่อนุญาตเปิดเสียง กรุณากด ▶ เล่นเสียงเฉลยข้อนี้')});
       return true;
     }
-    if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window))return false;
-    const q=state.question;
-    const spoken='เฉลยข้อที่ '+q.number+'. คำตอบที่ถูกต้องคือ '+letters[state.correctAnswer??0]+'. '+q.options[state.correctAnswer??0]+'. '+(state.explanation||'');
-    const utterance=new SpeechSynthesisUtterance(spoken);
-    utterance.lang='th-TH';utterance.rate=1.18;
-    const thai=window.speechSynthesis.getVoices().find(v=>v.lang.toLowerCase().startsWith('th'));
-    if(thai)utterance.voice=thai;
-    utterance.onstart=()=>setNarrationBusy(true);
-    utterance.onend=()=>setNarrationBusy(false);
-    utterance.onerror=()=>setNarrationBusy(false);
-    window.speechSynthesis.speak(utterance);
-    return true;
+    // Do not fall back to unreliable browser TTS when R01–R15 is missing:
+    // it can read only a short fragment or be completely silent on some systems.
+    // A clear missing-audio message is preferable to a misleading sound effect.
+    setNarrationNotice('ยังไม่ได้ติดตั้งเสียงเฉลย R01–R15 บนเครื่องนี้ กรุณาเลือก ZIP เสียงเฉลย แล้วกด ▶ เล่นเสียงเฉลยข้อนี้');
+    return false;
   },[]);
 
 
@@ -283,7 +280,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       answerVoiceUrls.current=files.map(file=>URL.createObjectURL(file));
       answerVoiceLoaded.current=true;
       setAnswerVoiceReady(true);
-      setNarrationNotice('ติดตั้งเสียงเฉลยผู้หญิง R01–R15 สำเร็จ ✓ ใช้เสียงนี้แทนเสียงเฉลยระบบและจำไว้ในเบราว์เซอร์เครื่องนี้');
+      // Import can finish after the reveal screen is already open.
+      // Do not autoplay after asynchronous storage: browsers may reject it.
+      // The large Play button remains visible in the reveal panel.
+      setNarrationNotice('ติดตั้งเสียงเฉลย R01–R15 แล้ว ✓ หากอยู่หน้าเฉลย ให้กด ▶ เล่นเสียงเฉลยข้อนี้');
     }catch(cause){
       setNarrationNotice(cause instanceof Error?cause.message:'อ่านไฟล์เสียงเฉลยไม่สำเร็จ');
     }finally{setAnswerVoiceImporting(false)}
@@ -462,7 +462,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(timeOpen&&timer<=5&&stamp!==lastBeep.current){lastBeep.current=stamp;beep(440+(5-timer)*70,.1)}
     if(snapshot?.room.phase==='reveal'){
       const key=snapshot.room.roundId+':'+snapshot.room.questionIndex;
-      if(lastEffect.current!==key){lastEffect.current=key;beep(740,.2)}
+      // Do not play the 0.2-second chirp over the recorded female answer voice.
+      if(lastEffect.current!==key)lastEffect.current=key;
     }
   },[timer,timeOpen,snapshot?.room.roundId,snapshot?.room.questionIndex,snapshot?.room.phase,beep]);
   useEffect(()=>{
@@ -497,6 +498,10 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     }
     // Start recorded answer during the teacher's Reveal click to satisfy
     // browser user-gesture audio policies (especially WebKit/iOS).
+    if(action==='reveal'&&sessionRef.current?.role==='host'&&narrationEnabled&&
+       !answerVoiceUrls.current[(snapshotRef.current?.room.questionIndex??0)]){
+      setNarrationNotice('⚠ ยังไม่มีเสียงเฉลย R01–R15 บนเครื่องผู้สอน โปรดนำเข้า ZIP เสียงเฉลยที่หน้าผลคำตอบ');
+    }
     if(action==='reveal'&&sessionRef.current?.role==='host'&&narrationEnabled){
       const questionNumber=(snapshotRef.current?.room.questionIndex??0)+1;
       const source=answerVoiceUrls.current[questionNumber-1];
@@ -508,7 +513,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         track.onended=()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null};
         track.onerror=()=>setNarrationNotice('ไม่พบเสียงเฉลย R'+String(questionNumber).padStart(2,'0'));
         voiceTrack.current=track;
-        void track.play().catch(()=>setNarrationNotice('กด “อ่านซ้ำ” เพื่อเปิดเสียงเฉลย'));
+        void track.play().catch(()=>{setNarrationBusy(false);if(voiceTrack.current===track)voiceTrack.current=null;setNarrationNotice('เปิดเสียงไม่สำเร็จ กรุณากด ▶ เล่นเสียงเฉลยข้อนี้')});
       }
     }
     const requestGeneration=generation.current,requestSession=sessionRef.current;
@@ -728,7 +733,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{voiceImporting?'กำลังติดตั้ง…':voiceReady?'เปลี่ยนชุดเสียง ZIP':'🎙 เลือก ZIP เสียงโจทย์'}</label>
           <button type="button" className="voice-setup-test" disabled={!voiceReady||voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองฟังข้อ 1'}</button>
           <details className="reveal-voice-settings">
-            <summary>{answerVoiceReady?'🎧 เสียงเฉลยใหม่พร้อม ✓':'🎧 ตั้งเสียงเฉลยใหม่'}</summary>
+            <summary aria-label={answerVoiceReady?'เสียงเฉลยใหม่พร้อม':'ยังไม่ได้ติดตั้งเสียงเฉลย R01 ถึง R15'}>{answerVoiceReady?'🎧 เสียงเฉลย R01–R15 พร้อม ✓':'⚠ ยังไม่มีเสียงเฉลย · เลือก ZIP'}</summary>
             <div className="reveal-voice-settings-body">
               <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={answerVoiceImporting} onChange={e=>{void importAnswerSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{answerVoiceImporting?'กำลังติดตั้ง…':'เลือก ZIP R01–R15'}</label>
               <button type="button" className="voice-setup-test" disabled={!answerVoiceReady||answerVoiceImporting} onClick={testAnswerVoice}>{answerVoiceTesting?'🔊 กำลังเล่น…':'▶ ทดลอง R01'}</button>
@@ -761,6 +766,12 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย' :narrationRemaining>0?'กำลังฟังเสียงโจทย์ · จากนั้นมีเวลาตอบเต็ม 10 วินาที':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
         {isHost&&!reveal&&<div className="host-controls"><span>ตอบแล้ว <strong>{answered} / {snapshot.players.length}</strong> คน</span><button className="button primary" disabled={!canInteract} onClick={()=>void send('reveal')}>{timeOpen?'ปิดรับคำตอบและเปิดเฉลย':'เปิดเฉลย ✦'}</button></div>}
         {reveal&&<div className="explanation"><h2>คำตอบ: {letters[snapshot.correctAnswer??0]} · {snapshot.question?.options[snapshot.correctAnswer??0]}</h2><p>{snapshot.explanation}</p></div>}
+        {reveal&&isHost&&<div className={'reveal-audio-panel '+(answerVoiceReady?'ready':'missing')} role="group" aria-label="เสียงเฉลยคำตอบ">
+          <span>{answerVoiceReady?'🎙 เสียงเฉลย R'+String(snapshot.room.questionIndex+1).padStart(2,'0')+' พร้อม':'⚠ ยังไม่มีเสียงเฉลยผู้หญิง R01–R15 บนเครื่องนี้'}</span>
+          {answerVoiceReady?<button className="button secondary" type="button" disabled={!narrationEnabled} onClick={repeatNarration}>▶ เล่นเสียงเฉลยข้อนี้</button>:
+          <label className="button secondary reveal-audio-import"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={answerVoiceImporting} onChange={e=>{void importAnswerSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{answerVoiceImporting?'กำลังติดตั้ง…':'เลือก ZIP เสียงเฉลย'}</label>}
+          {!narrationEnabled&&<button className="button secondary" type="button" onClick={toggleNarration}>เปิดเสียงพากย์</button>}
+        </div>}
         {reveal&&!isHost&&<div className={'own-result '+(ownResult?.status||'unanswered')} role="status"><strong>{ownResult?.status==='correct'?'ตอบถูก! เก่งมาก ✦':ownResult?.status==='incorrect'?'ข้อนี้ยังไม่ถูก ลองดูเฉลยกัน':'ข้อนี้ไม่ได้ตอบ ไม่เป็นไร เรียนรู้ไปด้วยกัน'}</strong><span>คะแนนตอนนี้ {ownResult?.score??own?.score??0} / 15</span><Avatar options={own?.avatar||avatar}/><p>รอผู้สอนเริ่มข้อถัดไป</p></div>}
         {reveal&&isHost&&<div className="host-controls"><span>อ่านเฉลยและคุยทบทวนได้เต็มที่</span><button className="button primary" disabled={!canInteract} onClick={()=>void send(snapshot.room.questionIndex===14?'finish':'next')}>{snapshot.room.questionIndex===14?'ดูสรุปคะแนน 🏆':'เริ่มข้อถัดไป →'}</button></div>}
       </div>

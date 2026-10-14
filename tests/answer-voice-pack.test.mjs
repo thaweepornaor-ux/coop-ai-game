@@ -60,14 +60,31 @@ test('Voice files are persisted separately and used for reveal in place of TTS',
     assert.ok(game.includes(token.replaceAll("\\'","'")),'Missing reveal voice contract: '+token);
   }
   assert.ok(game.includes("if(answerSource){"));
-  assert.ok(game.includes("if(!('speechSynthesis' in window)"),'Graceful fallback for instructors not yet imported');
+  assert.ok(!game.includes('SpeechSynthesisUtterance'),'Browser TTS is no longer a fake answer narrator');
+  assert.ok(game.includes('ยังไม่ได้ติดตั้งเสียงเฉลย R01–R15'),'Missing R pack must be clear, not silent');
+  assert.ok(!game.includes('beep(740,.2)'),'Reveal must not play a short intrusive chirp');
+  assert.ok(game.includes('!voiceTrack.current.paused'),'A paused/blocked recording must not count as playing');
   assert.ok(game.includes("Q'+String(nextNumber).padStart(2,'0')+'.mp3"),'Question playback must stay unchanged');
 });
 test('New voice selector is compact and honors existing show layout',()=>{
   assert.ok(layout.includes("import './answer-voice-controls.css';"));
   assert.ok(game.includes('className="reveal-voice-settings"'));
-  assert.ok(game.includes("เสียงเฉลยใหม่พร้อม ✓"));
+  assert.ok(game.includes("เสียงเฉลย R01–R15 พร้อม ✓"));
   assert.ok(css.includes('prefers-reduced-motion:reduce'));
   assert.ok(css.includes('max-width:1260px'));
   let n=0;for(const ch of css){if(ch==='{')n++;if(ch==='}')n--;}assert.equal(n,0);
+});
+
+test('Teacher can import or replay answer voice DURING reveal, without new room',()=>{
+ const css2=readFileSync(new URL('../app/reveal-audio-status.css',import.meta.url),'utf8');
+ assert.ok(layout.includes("import './reveal-audio-status.css';"));
+ for(const text of ['className={\'reveal-audio-panel \'','เลือก ZIP เสียงเฉลย','▶ เล่นเสียงเฉลยข้อนี้',
+    "onClick={repeatNarration}","onChange={e=>{void importAnswerSelection("]){
+   assert.ok(game.includes(text),'Missing in-game repair control '+text);
+ }
+ assert.ok(css2.includes('.reveal-audio-panel'));
+ assert.ok(css2.includes('.reveal-audio-import'));
+ assert.ok(css2.includes('max-height:800px'));
+ let depth=0;for(const ch of css2){if(ch==='{')depth++;if(ch==='}')depth--;assert.ok(depth>=0)}
+ assert.equal(depth,0);
 });

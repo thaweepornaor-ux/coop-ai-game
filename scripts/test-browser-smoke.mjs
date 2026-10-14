@@ -407,6 +407,27 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
   });
 }
 
+/** A disposable R ZIP with playable MP3 bytes from the existing Q sample.
+ * Browser test only: NEVER use generated fixture voices on published staging. */
+function zipTestRevealAudio(mp3){
+  const locals=[],central=[];let offset=0;
+  for(let i=1;i<=15;i++){
+    const name=Buffer.from('R'+String(i).padStart(2,'0')+'.mp3');
+    const local=Buffer.alloc(30);local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(20,4);
+    local.writeUInt32LE(mp3.length,18);local.writeUInt32LE(mp3.length,22);
+    local.writeUInt16LE(name.length,26);
+    locals.push(local,name,mp3);
+    const cd=Buffer.alloc(46);cd.writeUInt32LE(0x02014b50,0);cd.writeUInt16LE(20,4);cd.writeUInt16LE(20,6);
+    cd.writeUInt32LE(mp3.length,20);cd.writeUInt32LE(mp3.length,24);
+    cd.writeUInt16LE(name.length,28);cd.writeUInt32LE(offset,42);
+    central.push(cd,name);offset+=local.length+name.length+mp3.length;
+  }
+  const directory=Buffer.concat(central),end=Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(15,8);end.writeUInt16LE(15,10);
+  end.writeUInt32LE(directory.length,12);end.writeUInt32LE(offset,16);
+  return Buffer.concat([...locals,directory,end]);
+}
+
 async function realRoom(browser, browserName) {
   return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage }, row) => {
     const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
@@ -424,6 +445,42 @@ async function realRoom(browser, browserName) {
     const joinUrl = new URL(await urlInput.inputValue());
     assert.equal(joinUrl.origin, preview.origin); assert.equal(joinUrl.pathname, '/play');
     assert.deepEqual([...joinUrl.searchParams.keys()], ['room']); assert.equal(joinUrl.searchParams.get('room'), room);
+    // Prove the REAL 15-track ZIP import works on an instructor browser and
+    // gets persisted. No release binary is fabricated: use the Q sample solely
+    // as playable synthetic audio inside the disposable CI preview.
+    if(browserName==='chromium'){
+      await stage('install-and-test-new-answer-voice-pack');
+      const q=await host.request.get(preview.origin+'/voice/Q01.mp3');
+      assert.equal(q.status(),200,'Preview must have real playable MP3 bytes');
+      const mp3=await q.body();
+      assert.ok(mp3.byteLength>50_000);
+      const selector=host.locator('.reveal-voice-settings');
+      assert.match(await selector.locator('summary').innerText(),/ยังไม่มีเสียงเฉลย/);
+      await selector.locator('summary').click();
+      await selector.locator('input[type=file]').setInputFiles({
+        name:'ci-only-R01-R15.zip',mimeType:'application/zip',buffer:zipTestRevealAudio(mp3)
+      });
+      await host.getByText('เสียงเฉลย R01–R15 พร้อม ✓').waitFor({timeout:20000});
+      const count=await host.evaluate(async()=>{
+        const db=await new Promise((resolve,reject)=>{
+          const r=indexedDB.open('coop-ai-answer-recorded-voice',1);
+          r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+        });
+        try{
+          const blobs=await Promise.all(Array.from({length:15},(_,i)=>new Promise(resolve=>{
+            const r=db.transaction('tracks','readonly').objectStore('tracks')
+              .get('R'+String(i+1).padStart(2,'0')+'.mp3');
+            r.onsuccess=()=>resolve(r.result);r.onerror=()=>resolve(null);
+          })));
+          return blobs.filter(x=>x instanceof Blob&&x.size>50_000).length;
+        }finally{db.close()}
+      });
+      assert.equal(count,15,'All 15 answer MP3 recordings must persist in IndexedDB');
+      await selector.getByRole('button',{name:'▶ ทดลอง R01'}).click();
+      await selector.getByRole('button',{name:/กำลังเล่น/}).waitFor({timeout:15000});
+      await selector.locator('summary').click();
+      row.checks.push('Teacher imported 15 playable reveal MP3 files and auditioned R01 in real browser');
+    }
     await stage('player-join-real-room');
     await player.goto(joinUrl.href, { waitUntil: 'domcontentloaded' });
     await player.locator('.quick-characters').waitFor({timeout:20000});
@@ -535,6 +592,18 @@ async function realRoom(browser, browserName) {
       await stage('reveal-' + number);
       await host.locator('.host-controls button').click();
       await host.locator('.explanation').waitFor(); await player.locator('.explanation').waitFor();
+      if(number===1){
+        const answerPanel=host.locator('.reveal-audio-panel');
+        await answerPanel.waitFor();
+        if(browserName==='chromium'){
+          assert.equal(await answerPanel.getByRole('button',{name:'▶ เล่นเสียงเฉลยข้อนี้'}).count(),1,
+            'An installed R pack must expose manual replay during reveal');
+        }else{
+          assert.match(await answerPanel.innerText(),/ยังไม่มีเสียงเฉลย/);
+          assert.equal(await answerPanel.locator('input[type=file]').count(),1,
+            'Without R pack, instructor must be able to import it DURING reveal');
+        }
+      }
       const correctChoice = await player.locator('.answer-grid button').evaluateAll(buttons => buttons.findIndex(button => button.classList.contains('correct')));
       assert(correctChoice >= 0 && correctChoice <= 2, 'One visible correct choice after reveal');
       assert.equal(await player.locator('.answer.correct').count(), 1);

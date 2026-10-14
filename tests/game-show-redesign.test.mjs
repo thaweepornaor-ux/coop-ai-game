@@ -76,14 +76,14 @@ test('25-player presenter switches to compact no-scroll grid without changing th
  assert.match(css,/\.host-scored-roster\.packed-players/);
 });
 
-test('Presenter plays each real MP3 and only the revealed explanation uses TTS',()=>{
+test('Presenter plays original question MP3 and recorded reveal audio without TTS',()=>{
  assert.ok(game.includes("new Audio(voiceUrls.current["));
  assert.match(game,/voiceTrack=useRef<HTMLAudioElement\|null>/);
  assert.match(game,/track\.onplaying/);
  assert.match(game,/track\.onended/);
  assert.match(game,/track\.onerror/);
- assert.match(game,/SpeechSynthesisUtterance/);
- assert.match(game,/utterance\.lang='th-TH'/);
+ assert.doesNotMatch(game,/SpeechSynthesisUtterance/);
+ assert.match(game,/answerVoiceUrls\.current\[playingNumber-1\]/);
  assert.match(game,/narrationEnabled,setNarrationEnabled/);
  assert.match(game,/narrationKey\.current===key/);
  assert.match(game,/aria-pressed=\{narrationEnabled\}/);
