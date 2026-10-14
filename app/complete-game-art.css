@@ -1,0 +1,243 @@
+/*
+ * AI COOPERATIVE — ORIGINAL CHARACTER ART + SMART QR STAGE
+ * True pixel-faithful artwork extracted from the user's supplied images:
+ * costumes, colors and printed logos are NEVER redrawn in this stylesheet.
+ * Art is decorative and does not represent live participants.
+ * Keep all game logic, active 25-person board, speech and projectors intact.
+ */
+.game-shell .hero-stage{isolation:isolate;}
+.game-shell .hero-stage .intro-artwork{
+  position:absolute;z-index:3;pointer-events:none;
+  left:0;bottom:clamp(4px,3%,25px);
+  width:clamp(130px,20vw,310px);height:auto;max-height:44%;
+  object-fit:contain;object-position:bottom left;
+  filter:drop-shadow(0 7px 11px rgba(5,25,67,.42));
+}
+/* Center the scan target inside a deliberate area, rather than sticking
+ * its left edge to the corner of the join ticket. */
+.game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+  grid-template-columns:minmax(0,41%) minmax(0,1fr)!important;
+  align-items:center;
+  gap:clamp(7px,1vw,18px);
+}
+.game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+  align-self:center;justify-self:center;
+  width:100%;height:100%;max-height:100%;
+  min-width:0;min-height:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(3px,.7svh,9px);
+  padding:clamp(2px,.5vw,7px);
+  border-radius:18px;
+  background:radial-gradient(ellipse at center,rgba(85,233,248,.16),transparent 75%);
+  position:relative;isolation:isolate;
+}
+.game-shell[data-role="host"] > .host-lobby .qr-visual-stage::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  width:min(100%,260px);aspect-ratio:1;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  border-radius:26px;
+  background:linear-gradient(145deg,rgba(123,236,255,.16),rgba(187,145,255,.08));
+  outline:1px solid rgba(170,225,255,.2);
+}
+.game-shell[data-role="host"] > .host-lobby .qr-stage-label{
+  color:#b9fff7;font-size:clamp(.62rem,.78vw,.93rem);
+  letter-spacing:.14em;line-height:1.1;font-weight:950;
+  text-shadow:0 1px 7px rgba(3,34,71,.65);
+  white-space:nowrap;
+}
+.game-shell[data-role="host"] > .host-lobby .qr-stage-caption{
+  color:#e2f9ff;font-size:clamp(.62rem,.72vw,.82rem);
+  line-height:1.15;white-space:nowrap;font-weight:800;text-align:center;
+}
+.game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+  flex:0 1 auto;
+  width:min(100%,clamp(170px,24svh,232px))!important;
+  height:auto!important;
+  aspect-ratio:1!important;max-width:232px!important;
+  max-height:min(34svh,232px)!important;
+  margin:0!important;
+  place-items:center;
+  background:#fff!important;
+  border-color:#fff!important;
+  filter:none!important;
+  transform:none;
+}
+.game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr img{
+  width:100%!important;height:100%!important;
+  object-fit:contain!important;
+  filter:none!important;animation:none!important;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-ticket-content{position:relative;z-index:1}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+  box-shadow:inset 0 1px rgba(255,255,255,.13);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-join-steps span b{
+  box-shadow:0 1px 4px rgba(2,38,98,.25)
+}
+/* A real, source-faithful illustration takes the place of indistinct holograms.
+ * It appears ONLY while the live board is empty; real learner slots take
+ * over the full panel as soon as the first participant joins. */
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual .empty-stage-art{
+  position:relative;z-index:2;pointer-events:none;
+  display:block;object-fit:contain;
+  width:100%;height:100%;max-width:100%;max-height:100%;
+  filter:drop-shadow(0 8px 14px rgba(8,30,87,.36));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+  border-radius:24px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+  letter-spacing:-.015em
+}
+/* Decorative mascot in learner onboarding, never replacing selected avatar. */
+.game-shell .wardrobe-heading{position:relative;padding-right:clamp(50px,7vw,80px);}
+.game-shell .wardrobe-heading .wardrobe-mascot-art{
+  position:absolute;right:4px;top:0;pointer-events:none;
+  height:clamp(50px,6.2vw,76px);width:clamp(33px,5vw,51px);
+  object-fit:contain;object-position:top center;
+  filter:drop-shadow(0 3px 6px rgba(10,37,82,.28));
+}
+.game-shell .question-card{position:relative;isolation:isolate;}
+/* Large projector only: illustration is outside the spoken question flow. */
+.game-shell .question-guide-art{display:none;}
+@media(min-width:1480px) and (min-height:790px){
+  .game-shell .host-question:not(.reveal-mode):not(.dense-question) .question-guide-art{
+    position:absolute;top:clamp(54px,8svh,94px);right:14px;z-index:1;
+    display:flex;flex-direction:column;align-items:center;
+    justify-content:flex-end;gap:2px;pointer-events:none;
+    width:clamp(84px,7.2vw,121px);height:clamp(95px,15svh,170px);
+    border-radius:14px;
+    background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(77,213,231,.17),transparent);
+  }
+  .game-shell .question-guide-art img{
+    height:calc(100% - 20px);width:100%;object-fit:contain;
+    filter:drop-shadow(0 8px 10px rgba(5,20,66,.25))
+  }
+  .game-shell .question-guide-art span{
+    color:#b4fff0;font-size:.62rem;letter-spacing:.15em;font-weight:900
+  }
+  .game-shell .host-question:not(.reveal-mode):not(.dense-question) .question-card>h1{
+    padding-right:clamp(100px,9vw,144px);
+  }
+}
+/* Correct-answer explainer never overlays actual answer text. */
+.game-shell .explanation{position:relative;}
+.game-shell .reveal-guide-art{display:none;}
+@media(min-width:1450px) and (min-height:800px){
+  .game-shell .host-question.reveal-mode .explanation{
+    padding-right:clamp(76px,6.8vw,110px)!important;
+  }
+  .game-shell .host-question.reveal-mode .reveal-guide-art{
+    display:block;position:absolute;z-index:1;pointer-events:none;
+    right:8px;bottom:0;width:clamp(58px,5.8vw,94px);height:100%;
+    max-height:112px;object-fit:contain;object-position:bottom center;
+    filter:drop-shadow(0 2px 7px rgba(5,30,72,.31));
+  }
+}
+.game-shell .own-result{position:relative;}
+.game-shell .learner-reveal-art{
+  position:absolute;right:5px;bottom:7px;
+  width:clamp(43px,11vw,66px);height:clamp(65px,15vw,98px);
+  max-height:35%;pointer-events:none;object-fit:contain;
+  filter:drop-shadow(0 5px 10px rgba(2,31,73,.25));
+}
+.game-shell .results-page .finish-heading{position:relative;isolation:isolate;}
+.game-shell .final-celebration-art{display:none;}
+@media(min-width:1380px) and (min-height:790px){
+  .game-shell .results-page .final-celebration-art{
+    display:block;position:absolute;pointer-events:none;z-index:0;
+    right:clamp(10px,2vw,36px);top:clamp(10px,2svh,28px);
+    width:clamp(140px,14vw,230px);height:clamp(100px,14svh,174px);
+    object-fit:contain;
+    filter:drop-shadow(0 7px 12px rgba(6,29,79,.35));
+  }
+  .game-shell .results-page .finish-heading>.eyebrow,
+  .game-shell .results-page .finish-heading>h1,
+  .game-shell .results-page .finish-heading>p{
+    max-width:calc(100% - clamp(154px,16vw,254px));
+  }
+  .game-shell .results-page .finish-heading>:not(.final-celebration-art){
+    position:relative;z-index:1;
+  }
+}
+/* Graceful compact 720p projector: priorities are QR, player roster and CTA. */
+@media(min-width:1000px) and (min-height:675px) and (max-height:760px){
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+    gap:2px;padding:1px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,clamp(155px,23svh,177px))!important;
+    max-height:177px!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-label,
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-caption{
+    font-size:.6rem;line-height:1.05;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    height:clamp(100px,18svh,136px);
+  }
+}
+/* Smaller host screens follow a single column and give QR centered focus. */
+@media(max-width:999px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+    grid-template-columns:minmax(0,1fr)!important;
+    justify-items:center;gap:11px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+    height:auto;width:min(100%,300px);padding:8px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,255px)!important;max-height:255px!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+    align-items:center;text-align:center;
+  }
+  .game-shell .hero-stage .intro-artwork{
+    width:clamp(85px,24vw,160px);max-height:32%;
+  }
+}
+@media(max-width:480px){
+  .game-shell .wardrobe-heading .wardrobe-mascot-art{
+    height:53px;width:34px;
+  }
+  .game-shell .wardrobe-heading{padding-right:45px;}
+  .game-shell .learner-reveal-art{width:42px;height:65px;opacity:.85;}
+}
+/* Motion is confined to illustrations and borders, not sensitive QR pixels or
+ * the actual answer text.  Motion switch and OS accessibility are honored. */
+@keyframes cast-art-hover{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+}
+@keyframes cast-art-enter{
+  from{opacity:0;transform:translateY(8px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes qr-frame-breathe{
+  0%,100%{box-shadow:0 0 0 2px #83fff4,0 0 14px rgba(84,255,244,.2)}
+  50%{box-shadow:0 0 0 2px #83fff4,0 0 22px rgba(84,255,244,.33)}
+}
+.game-shell.motion-on .intro-artwork,
+.game-shell.motion-on .empty-stage-art,
+.game-shell.motion-on .final-celebration-art{
+  animation:cast-art-enter .52s both,cast-art-hover 5.6s ease-in-out .6s infinite;
+}
+.game-shell.motion-on .question-guide-art img,
+.game-shell.motion-on .wardrobe-mascot-art{
+  animation:cast-art-hover 5.2s ease-in-out infinite;
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+  animation:qr-frame-breathe 4s ease-in-out infinite!important;
+}
+/* No animated transforms on the QR image itself. */
+@media(prefers-reduced-motion:reduce){
+  .game-shell :is(.intro-artwork,.empty-stage-art,.final-celebration-art,
+    .question-guide-art img,.wardrobe-mascot-art,.qr-visual-stage .qr){
+    animation:none!important;transition:none!important;
+  }
+}
+.game-shell.motion-off :is(.intro-artwork,.empty-stage-art,.final-celebration-art,
+  .question-guide-art img,.wardrobe-mascot-art,.qr-visual-stage .qr){
+  animation:none!important;transition:none!important;
+}

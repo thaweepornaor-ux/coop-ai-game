@@ -23,7 +23,7 @@ test('Prominent QR and real join steps remain interactive',()=>{
 });
 test('Empty-player visual must disappear once real learners join',()=>{
  assert.ok(game.includes('snapshot.players.length===0&&(isHost?'));
- for(const v of ['arena-empty-stage','arena-holo-person','arena-empty-copy','arena-live-kicker',
+ for(const v of ['arena-empty-stage','empty-stage-art','arena-empty-copy','arena-live-kicker',
    'ผู้เข้าร่วม <span>{snapshot.players.length} คน</span>']){
   assert.ok(game.includes(v),'missing state UI '+v);
  }
