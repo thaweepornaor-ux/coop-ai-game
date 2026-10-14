@@ -419,6 +419,42 @@
 .game-shell.motion-on[data-role="host"] > .host-lobby .simple-join-ticket::after{
   animation:arena-qr-sheen 16s ease-in-out infinite alternate;
 }
+
+/* QR is functional information, never an animated blurry decoration.
+   Keep the white QR pixels immediately sharp even on the first frame. */
+.game-shell.motion-on[data-role="host"] > .host-lobby .simple-join-ticket .qr,
+.game-shell.motion-off[data-role="host"] > .host-lobby .simple-join-ticket .qr{
+  animation:none!important;filter:none!important;opacity:1!important;transform:none!important;
+}
+/* Large live cast must never visually "disappear" during staggered entrance.
+   Animate a tiny spatial lift only, without zero-opacity keyframes. */
+@keyframes arena-lobby-player-appear{
+  from{opacity:1;transform:translateY(3px) scale(.98)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+.game-shell.motion-on[data-role="host"] > .host-lobby .roster-panel:has(.mini-player:nth-child(n+12)) .mini-player{
+  opacity:1!important;
+  animation:arena-lobby-player-appear .22s ease-out both!important;
+  animation-delay:0s!important;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-attendance-track i{
+  transition:none;
+}
+/* The middle hologram is the leading silhouette. */
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(2){
+  opacity:.88;
+  height:clamp(93px,15svh,142px);
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(3){
+  opacity:1;transform:none;
+  height:clamp(110px,18svh,166px);
+  border-color:rgba(173,255,247,.5);
+  filter:drop-shadow(0 0 14px rgba(96,255,236,.39));
+}
+.game-shell[data-role="host"] > .host-lobby .arena-holo-person:nth-of-type(4){
+  opacity:.72;transform:scale(.93);
+}
+
 /* Laptop/projector sizing: don't sacrifice the all-in-one-screen guarantee. */
 @media(min-width:1000px) and (min-height:675px) and (max-height:760px){
   .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{padding:3px 6px 3px 4px;font-size:.68rem}
