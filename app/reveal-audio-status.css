@@ -1,0 +1,79 @@
+/* Host answer narration must be unmistakable even after game begins. */
+.game-shell[data-role="host"] .reveal-audio-panel{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+  margin-top:7px;
+  padding:6px 10px;
+  border-radius:11px;
+  border:1px solid #8df7df;
+  background:linear-gradient(110deg,#164f76,#26558e);
+  color:#efffff;
+  font-weight:800;
+  line-height:1.22;
+  font-size:clamp(.71rem,.8vw,.91rem);
+  box-shadow:0 4px 14px #091f4d33;
+}
+.game-shell[data-role="host"] .reveal-audio-panel.missing{
+  border-color:#ffe39a;
+  background:linear-gradient(112deg,#715728,#62508b);
+}
+.game-shell[data-role="host"] .reveal-audio-panel .button{
+  min-height:32px;
+  padding:5px 10px;
+  font-weight:850;
+  font-size:.77rem;
+  border:1px solid #c0fff7;
+  background:#1e6d9a;
+  color:#fff;
+  border-radius:8px;
+  flex:none;
+}
+.game-shell[data-role="host"] .reveal-audio-import{
+  display:inline-flex;
+  position:relative;
+  overflow:hidden;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.game-shell[data-role="host"] .reveal-audio-import input{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  width:100%;
+  height:100%;
+  padding:0;
+  margin:0;
+  min-height:0;
+  cursor:pointer;
+}
+.game-shell[data-role="host"] .reveal-audio-import:focus-within{
+  outline:3px solid #fff1aa;
+  outline-offset:2px;
+}
+.game-shell[data-role="host"] .reveal-audio-panel.missing >span{
+  color:#fff3c5;
+}
+.game-shell[data-role="host"] .reveal-voice-settings:not([open]) summary[aria-label^="ยังไม่ได้"]{
+  background:linear-gradient(110deg,#92632b,#76509d);
+  border-color:#ffdf8d;
+  color:#fff4cb;
+}
+/* Compact panels do not steal critical 720p projector space. */
+@media(min-width:1000px) and (max-height:800px){
+  .game-shell[data-role="host"] .reveal-audio-panel{
+    margin-top:4px;padding:4px 7px;gap:5px;font-size:.7rem;
+  }
+  .game-shell[data-role="host"] .reveal-audio-panel .button{
+    min-height:29px;padding:4px 7px;font-size:.7rem;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell[data-role="host"] .reveal-audio-panel,
+  .game-shell[data-role="host"] .reveal-audio-panel *{
+    animation:none!important;transition:none!important;
+  }
+}
