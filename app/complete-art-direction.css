@@ -170,7 +170,7 @@
  * podium scores or the full participant results table. */
 .game-shell .results-page .finish-heading{position:relative;isolation:isolate}
 .game-shell .finish-celebration-art{
-  position:absolute;z-index:0;top:0;right:clamp(12px,2vw,34px);
+  position:absolute;z-index:3;top:0;right:clamp(12px,2vw,34px);
   width:clamp(156px,19vw,300px);height:clamp(110px,17vw,228px);
   pointer-events:none;overflow:visible;
 }
@@ -209,7 +209,13 @@
   .game-shell[data-role="host"] > .host-lobby .arena-ticket-content .button{max-width:100%}
   .game-shell[data-role="host"] > .host-lobby .arena-empty-art{height:clamp(104px,17svh,144px)}
   .game-shell[data-role="host"] > .host-lobby .arena-empty-art .roster-welcome-robot{width:61px}
-  .game-shell .question-corner-mascot,.game-shell .answer-guide-mascot{display:none}
+  /* A small illustrated cue fits the blank header slot on a 720p display.
+     Keep it away from both the question and the narration controls. */
+  .game-shell .question-corner-mascot{
+    display:block;top:8px;left:clamp(175px,19vw,235px);right:auto;
+    width:40px;max-height:42px;opacity:.85;z-index:1;
+  }
+  .game-shell .answer-guide-mascot{display:none}
 }
 @media(min-width:1000px) and (max-width:1279px){
   .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{grid-template-columns:minmax(0,35%) minmax(0,1fr)}
