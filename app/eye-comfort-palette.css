@@ -528,7 +528,20 @@ body::before{
 }
 .game-shell .reset-modal :is(h2,p){color:#304d67!important;}
 /* Tone down light emission, not semantic emphasis. */
-.game-shell.motion-on .countdown.urgent{animation:none!important;}
+/* Last-five-seconds urgency: retain a recognizable, gentle pulse,
+ * not the previous high-saturation red flash and heavy brightness jumps. */
+@keyframes arena-last-five{
+  0%,100%{box-shadow:0 0 0 3px rgba(186,136,103,.14);filter:brightness(1)}
+  50%{box-shadow:0 0 0 6px rgba(186,136,103,.26);filter:brightness(1)}
+}
+.game-shell.motion-on .countdown.urgent{
+  animation:arena-last-five 1.8s ease-in-out infinite!important;
+  text-shadow:none!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell.motion-on .countdown.urgent{animation:none!important}
+}
+
 .game-shell.motion-on .quick-character.selected,
 .game-shell.motion-on .podium-person.rank-1{filter:none!important;box-shadow:none!important;}
 .game-shell.motion-on .host-question .question-card::after,
