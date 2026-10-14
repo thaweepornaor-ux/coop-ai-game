@@ -316,6 +316,14 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
       await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
       row.checks.push({hostEntry:await noOverflow(page,label+' host')});
+      assert.equal(await page.locator('.host-lobby .arena-empty-stage').count(),1,
+        'Empty host lobby must show the welcoming broadcast artwork');
+      assert.equal(await page.locator('.host-lobby .arena-holo-person').count(),3,
+        'Show three holographic placeholder contestants only while lobby is empty');
+      assert.equal(await page.locator('.host-lobby .arena-join-steps span').count(),3,
+        'Scannable onboarding keeps all three join steps visible');
+      assert.equal(await page.locator('.host-lobby .arena-attendance').getAttribute('aria-valuenow'),'0');
+      row.checks.push({premiumLobbyEmptyStage:true,joinSteps:3,attendance:0});
       if(browserName==='chromium'||browserName==='webkit'){
         await stage('host-lobby-fits-viewport');
         for(const vp of [{width:1280,height:720},{width:1366,height:768},{width:1600,height:780},{width:1920,height:1080}]){
@@ -806,6 +814,10 @@ async function realTwentyFive(browser,browserName){
    }
    await host.waitForFunction(()=>document.querySelectorAll('.host-lobby .mini-player').length===25,null,{timeout:18000});
    assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
+   assert.equal(await host.locator('.host-lobby .arena-empty-stage').count(),0,
+     'Holograms must disappear once real players appear');
+   assert.equal(await host.locator('.host-lobby .arena-attendance').getAttribute('aria-valuenow'),'25',
+     'Live capacity indicator must reflect 25 actual authenticated participants');
    const uniqueWardrobes=await host.locator('.host-lobby .mini-player svg').evaluateAll(nodes=>
      new Set(nodes.map(node=>node.outerHTML)).size);
    assert.ok(uniqueWardrobes>=18,'At least 18 visibly distinct full-wardrobe SVGs must render on the host');
