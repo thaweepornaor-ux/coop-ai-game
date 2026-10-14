@@ -55,7 +55,7 @@ test('Original question voice parser still accepts the unmodified Q01–Q15 form
 test('Voice files are persisted separately and used for reveal in place of TTS',()=>{
   for(const token of ['coop-ai-answer-recorded-voice','saveAnswerVoicePack',
     'loadAnswerVoicePack','answerVoiceUrls.current[playingNumber-1]',
-    "mode==='reveal'&&answerSource",'action===\\'reveal\\'',
+    "mode==='reveal'&&answerSource","action==='reveal'",
     'narrateSnapshot(snapshot,currentMode)','unpackAnswerVoiceZip(chosen[0])']){
     assert.ok(game.includes(token.replaceAll("\\'","'")),'Missing reveal voice contract: '+token);
   }
