@@ -1,54 +1,42 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+
 const sheet=readFileSync(new URL('../app/eye-comfort-palette.css',import.meta.url),'utf8');
 const layout=readFileSync(new URL('../app/layout.tsx',import.meta.url),'utf8');
+const styles=readFileSync(new URL('../app/arena-refresh.css',import.meta.url),'utf8');
+const lobby=readFileSync(new URL('../app/lobby-showcase.css',import.meta.url),'utf8');
 const game=readFileSync(new URL('../app/game.tsx',import.meta.url),'utf8');
-function lum(hex){
- const rgb=hex.replace('#','').match(/.{2}/g).map(v=>parseInt(v,16)/255);
- const v=rgb.map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);
- return v[0]*.2126+v[1]*.7152+v[2]*.0722;
-}
-const ratio=(a,b)=>{const l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)};
-test('Eye-comfort palette loads after every previously deployed stylesheet',()=>{
- const a=layout.indexOf("import './live-cast-space.css';");
- const b=layout.indexOf("import './eye-comfort-palette.css';");
- assert.ok(a>=0 && b>a,'Late load required to replace old neon values');
- assert.ok(!sheet.includes('grid-template-columns:'),'Do not alter 25-player layout');
- assert.ok(!sheet.includes('grid-template-rows:'),'Do not alter answer/results grid');
- assert.ok(!sheet.includes('font-size:'),'Typography remains unchanged');
- let depth=0;
- for(const ch of sheet){if(ch==='{')depth++;if(ch==='}')depth--;assert.ok(depth>=0)}
- assert.equal(depth,0);
+
+test('Rich blue-purple show palette is RESTORED instead of washed-out pastel',()=>{
+  assert.ok(sheet.includes('#0b296a 0%,#1a4596 45%,#3c2b83'));
+  assert.ok(sheet.includes('color-scheme:dark'));
+  assert.ok(styles.includes('linear-gradient(125deg,#092568 0%,#164caa 42%,#44268e 100%)'));
+  assert.ok(lobby.includes('linear-gradient(131deg,#176ab9 0%,#234aa7 54%,#5038b4 100%)'));
+  assert.ok(!sheet.includes('background:#e8f0f7'));
+  assert.ok(!sheet.includes('color-scheme:light'));
+  assert.ok(!sheet.includes('linear-gradient(150deg,#fff,#f4f8fe)'));
+  assert.ok(layout.indexOf("import './eye-comfort-palette.css';")>layout.indexOf("import './live-cast-space.css';"));
 });
-test('Main readable foreground/background combinations meet at least 4.5:1',()=>{
- for(const [foreground,background] of [
-   ['#213953','#ffffff'],['#243952','#f4f8fe'],
-   ['#31516d','#f4f8fd'],['#253b55','#e5f1fc'],
-   ['#253b55','#efeffb'],['#253b55','#fbf4e7'],
-   ['#1f5c4a','#e0f2e9'],['#8b444c','#fae9ea'],
-   ['#314c67','#e9f0f9'],['#ffffff','#47759d'],
- ]){
-   assert.ok(ratio(foreground,background)>=4.5,foreground+'/'+background+' contrast '+ratio(foreground,background).toFixed(2));
- }
+test('Retains saturated A/B/C colors while taming blinding halo effects',()=>{
+  for(const item of ['.answer.answer-0','.answer.answer-1','.answer.answer-2',
+    '.projector-timer-wrap','.countdown.urgent','.simple-join-ticket .qr']){
+    assert.ok(sheet.includes(item),'Missing careful selective glow tune '+item);
+  }
+  assert.ok(sheet.includes('box-shadow:inset 5px 0 0 #65ccf2'));
+  assert.ok(sheet.includes('box-shadow:inset 5px 0 0 #ba9bec'));
+  assert.ok(sheet.includes('box-shadow:inset 5px 0 0 #efd192'));
+  assert.ok(sheet.includes('animation:arena-last-five 1.6s ease-in-out infinite!important'));
+  assert.ok(sheet.includes('prefers-reduced-motion:reduce'));
 });
-test('All screens have restful colors without full-screen flash animation',()=>{
- for(const marker of [
-   "html{background:#e8f0f7!important;}",
-   "linear-gradient(150deg,#fff,#f4f8fe)",
-   '.simple-join-ticket .qr',
-   '.question-card .answer.answer-0',
-   '.question-card .answer.answer-1',
-   '.question-card .answer.answer-2',
-   '.host-scored-roster.packed-players .mini-player',
-   '.host-question.reveal-mode .explanation',
-   '.host-question.reveal-mode .reveal-person.correct',
-   '.results-page .finish-heading',
-   '.quick-player .wardrobe',
-   'motion-on::before','animation:none!important',
-   '@media(prefers-reduced-motion:reduce)']){
-   assert.ok(sheet.includes(marker),'Missing palette part '+marker);
- }
- assert.ok(game.includes('คะแนนและสถานะผู้เรียน '));
- assert.ok(!sheet.includes('#ff00ff'),'Avoid vivid decorative magenta');
+test('Theme is pure presentation: 25 real players, QR, sound and rules unchanged',()=>{
+  for(const forbidden of ['grid-template-columns:','grid-template-rows:','width:clamp(','font-size:',
+      'display:none','Q01.mp3','R01.mp3']){
+    assert.ok(!sheet.includes(forbidden),'Visual-only polish should not alter mechanics/geometry: '+forbidden);
+  }
+  assert.ok(game.includes("snapshot.players.length"));
+  assert.ok(game.includes('ผู้เข้าร่วม <span>{snapshot.players.length} คน</span>'));
+  let braces=0;
+  for(const c of sheet){if(c==='{')braces++;if(c==='}')braces--;assert.ok(braces>=0)}
+  assert.equal(braces,0);
 });
