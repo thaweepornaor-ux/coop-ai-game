@@ -318,13 +318,32 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       row.checks.push({hostEntry:await noOverflow(page,label+' host')});
       assert.equal(await page.locator('.host-lobby .arena-empty-stage').count(),1,
         'Empty host lobby must show the welcoming broadcast artwork');
-      assert.equal(await page.locator('.host-lobby .arena-holo-person').count(),3,
-        'Show three holographic placeholder contestants only while lobby is empty');
+      assert.equal(await page.locator('.host-lobby .arena-holo-person').count(),0,
+        'Use original character artwork, not generic hologram placeholders');
+      assert.equal(await page.locator('.host-lobby .lobby-staff-illustration').count(),1,
+        'Approved user-supplied staff artwork must be visible in empty classroom');
+      assert.equal(await page.locator('.host-lobby .roster-welcome-robot').count(),1,
+        'Welcome mascot must be visible only in empty classroom');
+      await page.waitForFunction(()=>{
+        const staff=document.querySelector('.host-lobby .lobby-staff-illustration');
+        return staff instanceof HTMLImageElement&&staff.complete&&staff.naturalWidth>0;
+      },null,{timeout:10000});
+      const qrStage=await page.evaluate(()=>{
+        const zone=document.querySelector('.host-lobby .arena-qr-zone');
+        const qr=zone?.querySelector('.qr');
+        const a=zone?.getBoundingClientRect(),b=qr?.getBoundingClientRect();
+        return {zone:a&&{cx:a.left+a.width/2,w:a.width},qr:b&&{cx:b.left+b.width/2,w:b.width},
+          scanImg:!!document.querySelector('.host-lobby .arena-qr-zone .qr img')};
+      });
+      assert.equal(qrStage.scanImg,true,'Real QR must remain scannable');
+      assert.ok(Math.abs(qrStage.zone.cx-qrStage.qr.cx)<18,
+        'QR should be centered in its visual panel '+JSON.stringify(qrStage));
+      assert.ok(qrStage.qr.w>=145,'QR must not shrink below phone-readable size');
       assert.equal(await page.locator('.host-lobby .arena-join-steps span').count(),3,
         'Scannable onboarding keeps all three join steps visible');
       assert.match(await page.locator('.host-lobby .roster-panel h2').innerText(),/ผู้เข้าร่วม\s*0 คน/);
       assert.equal(await page.locator('.host-lobby .arena-attendance').count(),0,'No fixed quota meter in lobby');
-      row.checks.push({premiumLobbyEmptyStage:true,joinSteps:3,displayedPlayers:0});
+      row.checks.push({premiumLobbyEmptyStage:true,originalStaffArtwork:true,centeredQr:true,joinSteps:3,displayedPlayers:0});
       if(browserName==='chromium'||browserName==='webkit'){
         await stage('host-lobby-fits-viewport');
         for(const vp of [{width:1280,height:720},{width:1366,height:768},{width:1600,height:780},{width:1920,height:1080}]){
@@ -903,7 +922,11 @@ async function realTwentyFive(browser,browserName){
    await host.waitForFunction(()=>document.querySelectorAll('.host-lobby .mini-player').length===25,null,{timeout:18000});
    assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
    assert.equal(await host.locator('.host-lobby .arena-empty-stage').count(),0,
-     'Holograms must disappear once real players appear');
+     'Decorative empty-stage artwork must disappear once real players appear');
+   assert.equal(await host.locator('.host-lobby .lobby-staff-illustration').count(),0,
+     'Do not display staff artwork on top of real players');
+   assert.equal(await host.locator('.host-lobby .roster-welcome-robot').count(),0,
+     'Do not display the welcome mascot when the 25 real player cards fill the stage');
    assert.match(await host.locator('.host-lobby .roster-panel h2').innerText(),/ผู้เข้าร่วม\s*25 คน/);
    assert.equal(await host.locator('.host-lobby .arena-attendance').count(),0,'No fixed quota meter for 25 participants');
    const uniqueWardrobes=await host.locator('.host-lobby .mini-player svg').evaluateAll(nodes=>
