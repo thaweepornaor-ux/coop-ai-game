@@ -551,7 +551,7 @@ async function realRoom(browser, browserName) {
         assert.ok(flash.name.includes('arena-last-five'),'Last five seconds should visibly pulse in motion-enabled mode');
         assert.match(flash.label,/เร็วเข้า/);
         await shot(host,browserName+'-urgent-five-seconds');
-        row.checks.push('Large red flashing countdown on the instructor projector during the final five seconds');
+        row.checks.push('Legible instructor countdown with a subtle warm pulse during the final five seconds');
         await player.waitForFunction(() => document.querySelector('.countdown .timer-value')?.textContent?.trim() === '0', undefined, { timeout: 20_000 });
         assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
         assert.equal(await player.locator('.explanation').count(), 0);
