@@ -322,8 +322,9 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
         'Show three holographic placeholder contestants only while lobby is empty');
       assert.equal(await page.locator('.host-lobby .arena-join-steps span').count(),3,
         'Scannable onboarding keeps all three join steps visible');
-      assert.equal(await page.locator('.host-lobby .arena-attendance').getAttribute('aria-valuenow'),'0');
-      row.checks.push({premiumLobbyEmptyStage:true,joinSteps:3,attendance:0});
+      assert.match(await page.locator('.host-lobby .roster-panel h2').innerText(),/ผู้เข้าร่วม\s*0 คน/);
+      assert.equal(await page.locator('.host-lobby .arena-attendance').count(),0,'No fixed quota meter in lobby');
+      row.checks.push({premiumLobbyEmptyStage:true,joinSteps:3,displayedPlayers:0});
       if(browserName==='chromium'||browserName==='webkit'){
         await stage('host-lobby-fits-viewport');
         for(const vp of [{width:1280,height:720},{width:1366,height:768},{width:1600,height:780},{width:1920,height:1080}]){
@@ -816,8 +817,8 @@ async function realTwentyFive(browser,browserName){
    assert.equal(await host.locator('.host-lobby .mini-player').count(),25);
    assert.equal(await host.locator('.host-lobby .arena-empty-stage').count(),0,
      'Holograms must disappear once real players appear');
-   assert.equal(await host.locator('.host-lobby .arena-attendance').getAttribute('aria-valuenow'),'25',
-     'Live capacity indicator must reflect 25 actual authenticated participants');
+   assert.match(await host.locator('.host-lobby .roster-panel h2').innerText(),/ผู้เข้าร่วม\s*25 คน/);
+   assert.equal(await host.locator('.host-lobby .arena-attendance').count(),0,'No fixed quota meter for 25 participants');
    const uniqueWardrobes=await host.locator('.host-lobby .mini-player svg').evaluateAll(nodes=>
      new Set(nodes.map(node=>node.outerHTML)).size);
    assert.ok(uniqueWardrobes>=18,'At least 18 visibly distinct full-wardrobe SVGs must render on the host');
@@ -836,18 +837,15 @@ async function realTwentyFive(browser,browserName){
          return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,opacity:Number(styles.opacity)};
        });
        const columns=getComputedStyle(board).gridTemplateColumns.split(' ').filter(Boolean).length;
-       const track=document.querySelector('.arena-attendance-track').getBoundingClientRect();
-       const fill=document.querySelector('.arena-attendance-track i').getBoundingClientRect();
        const qr=document.querySelector('.simple-join-ticket .qr');
        return {columns,bounds:{left:bounds.left,right:bounds.right,top:bounds.top,bottom:bounds.bottom},
          outside:slots.filter(x=>x.left<bounds.left-2||x.right>bounds.right+2||x.top<bounds.top-2||x.bottom>bounds.bottom+2),
-         invisible:slots.filter(x=>x.opacity<.95),progress:track.width?fill.width/track.width:0,
+         invisible:slots.filter(x=>x.opacity<.95),
          qrFilter:getComputedStyle(qr).filter,qrOpacity:Number(getComputedStyle(qr).opacity)};
      });
      assert.equal(cast.columns,5,'All 25 people must be laid out in five visible columns '+vp.width);
      assert.deepEqual(cast.outside,[],'All 25 lobby cards must be inside scoreboard viewport '+vp.width);
      assert.deepEqual(cast.invisible,[],'All 25 cast members must be immediately visible '+vp.width);
-     assert.ok(cast.progress>.97,'Capacity indicator shows 25/25 without transition lag '+vp.width);
      assert.equal(cast.qrFilter,'none','QR must never be blurred for scanning '+vp.width);
      assert.equal(cast.qrOpacity,1,'QR must be fully visible for scanning '+vp.width);
      if(vp.width===1280||vp.width===1600)await shot(host,browserName+'-full-lobby-25-'+vp.width+'x'+vp.height);

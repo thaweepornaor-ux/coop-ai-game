@@ -24,7 +24,7 @@ test('Prominent QR and real join steps remain interactive',()=>{
 test('Empty-player visual must disappear once real learners join',()=>{
  assert.ok(game.includes('snapshot.players.length===0&&(isHost?'));
  for(const v of ['arena-empty-stage','arena-holo-person','arena-empty-copy','arena-live-kicker',
-   'arena-attendance','aria-valuenow={Math.min(snapshot.players.length,25)}']){
+   'ผู้เข้าร่วม <span>{snapshot.players.length} คน</span>']){
   assert.ok(game.includes(v),'missing state UI '+v);
  }
  assert.ok(css.includes('.roster-panel:has(.arena-empty-stage)::after'));
@@ -37,4 +37,12 @@ test('Motion respects accessibility settings and fitted viewports',()=>{
   '@keyframes arena-holo-float','@keyframes arena-qr-sheen']){
   assert.ok(css.includes(v),'missing safeguard '+v);
  }
+});
+
+test('Only actual attendees are displayed; no confusing /25 capacity display',()=>{
+ assert.ok(game.includes('ผู้เข้าร่วม <span>{snapshot.players.length} คน</span>'));
+ for(const quota of ['arena-attendance','aria-valuemax={25}',' / 25 ผู้เล่น','ผู้เล่นสูงสุด 25 คน']){
+  assert.ok(!game.includes(quota),'fixed quota element still visible: '+quota);
+ }
+ assert.ok(!css.includes('arena-attendance'),'unused quota meter styles remain');
 });
