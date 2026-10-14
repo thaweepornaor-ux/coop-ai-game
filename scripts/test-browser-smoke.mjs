@@ -158,6 +158,50 @@ async function noOverflow(page, label) {
   assert(result.document <= result.viewport + 1 && result.body <= result.viewport + 1, label + ': horizontal page overflow ' + JSON.stringify(result));
   return result;
 }
+/** Keep both the TOP controls and BOTTOM Start/Exit buttons visible.
+ * Verify actual screen geometry, not just stylesheet presence.
+ * Participant cards may scroll inside the scoreboard when there are many.
+ */
+async function assertHostLobbyFits(page, label) {
+  const geometry=await page.evaluate(()=>{
+    const rect=selector=>{
+      const el=document.querySelector(selector);
+      if(!el)return null;
+      const r=el.getBoundingClientRect();
+      return {top:Math.round(r.top),bottom:Math.round(r.bottom),left:Math.round(r.left),
+        right:Math.round(r.right),width:Math.round(r.width),height:Math.round(r.height)};
+    };
+    return {
+      viewport:{width:innerWidth,height:innerHeight},
+      docHeight:document.documentElement.scrollHeight,
+      scrollY:window.scrollY,
+      header:rect('.game-shell > .topbar'),
+      connection:rect('.game-shell > .connection'),
+      lobby:rect('.host-lobby'),
+      left:rect('.host-lobby .lobby-main'),
+      right:rect('.host-lobby .roster-panel'),
+      qr:rect('.host-lobby .qr'),
+      start:rect('.host-lobby .lobby-main > button.primary'),
+      footer:rect('.game-shell > .session-footer'),
+      playerCount:document.querySelectorAll('.host-lobby .roster-panel .mini-player').length,
+    };
+  });
+  const {viewport,header,connection,lobby,left,right,qr,start,footer,docHeight}=geometry;
+  for(const [key,box] of Object.entries({header,connection,lobby,left,right,qr,start,footer})){
+    assert.ok(box,'Missing host control: '+key+' '+JSON.stringify(geometry));
+    assert.ok(box.top>=-1 && box.bottom<=viewport.height+2 &&
+      box.left>=-1 && box.right<=viewport.width+2,
+      label+' '+key+' must be FULLY on screen '+JSON.stringify(geometry));
+  }
+  assert.ok(docHeight<=viewport.height+3,label+' must not require page vertical scrolling '+JSON.stringify(geometry));
+  assert.ok(right.width/viewport.width>=.35,
+    label+' live participant stage must not be squeezed '+JSON.stringify(geometry));
+  assert.ok(qr.width>=146&&qr.height>=146,
+    label+' QR must remain scannable '+JSON.stringify(geometry));
+  assert.ok(start.height>=35,label+' start button must be usable '+JSON.stringify(geometry));
+  return geometry;
+}
+
 // Read the pixels actually presented to the user; a hidden/transparent canvas is
 // not accepted as successful rendering. A documented thumbnail fallback is.
 function rasterProbe(selector) {
@@ -272,6 +316,17 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       await page.goto(preview.origin+'/host',{waitUntil:'domcontentloaded'});
       await page.locator('.host-lobby .qr img').waitFor({timeout:20000});
       row.checks.push({hostEntry:await noOverflow(page,label+' host')});
+      if(browserName==='chromium'||browserName==='webkit'){
+        await stage('host-lobby-fits-viewport');
+        for(const vp of [{width:1280,height:720},{width:1366,height:768},{width:1600,height:780},{width:1920,height:1080}]){
+          await page.setViewportSize(vp);
+          const fit=await assertHostLobbyFits(page,'Empty host lobby '+vp.width+'x'+vp.height);
+          row.checks.push({lobbyFit:vp.width+'x'+vp.height,participantWidth:fit.right.width,qrWidth:fit.qr.width});
+          if(browserName==='chromium'&&(vp.width===1280||vp.width===1600))
+            await shot(page,browserName+'-empty-host-lobby-'+vp.width+'x'+vp.height);
+        }
+        await page.setViewportSize({width:size.width,height:size.height});
+      }
       // Recover a genuinely unusable saved instructor session with one tap.
       // This runs in the disposable D1 preview, not the public staging site.
       if(browserName==='chromium'){
@@ -755,6 +810,14 @@ async function realTwentyFive(browser,browserName){
      new Set(nodes.map(node=>node.outerHTML)).size);
    assert.ok(uniqueWardrobes>=18,'At least 18 visibly distinct full-wardrobe SVGs must render on the host');
    row.checks.push('25 real players with 20 character presets and >=18 visibly distinct wardrobe renders');
+   await stage('full-lobby-25-participants-fits-projector');
+   for(const vp of [{width:1280,height:720},{width:1366,height:768},{width:1600,height:780},{width:1920,height:1080}]){
+     await host.setViewportSize(vp);
+     const fit=await assertHostLobbyFits(host,'Twenty-five-person lobby '+vp.width+'x'+vp.height);
+     assert.equal(fit.playerCount,25,'Full classroom must still show all 25 participant DOM cards');
+     if(vp.width===1280||vp.width===1600)await shot(host,browserName+'-full-lobby-25-'+vp.width+'x'+vp.height);
+   }
+   await host.setViewportSize({width:1280,height:720});
    await shot(host,browserName+'-25-real-lobby');
    await stage('begin-game-with-25-players');
    await host.getByRole('button',{name:/เริ่มเกมกับผู้เล่น 25 คน/}).click();
