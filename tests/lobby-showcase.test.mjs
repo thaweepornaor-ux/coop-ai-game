@@ -23,13 +23,16 @@ test('Prominent QR and real join steps remain interactive',()=>{
 });
 test('Empty-player visual must disappear once real learners join',()=>{
  assert.ok(game.includes('snapshot.players.length===0&&(isHost?'));
- for(const v of ['arena-empty-stage','arena-holo-person','arena-empty-copy','arena-live-kicker',
+ for(const v of ['arena-empty-stage','lobby-staff-illustration','roster-welcome-robot','arena-empty-copy','arena-live-kicker',
    'ผู้เข้าร่วม <span>{snapshot.players.length} คน</span>']){
   assert.ok(game.includes(v),'missing state UI '+v);
  }
  assert.ok(css.includes('.roster-panel:has(.arena-empty-stage)::after'));
  assert.ok(css.includes('.roster:empty'));
  assert.ok(css.includes('.roster-panel .mini-player'));
+ const artwork=readFileSync(new URL('../app/complete-art-direction.css',import.meta.url),'utf8');
+ assert.ok(artwork.includes('lobby-staff-illustration'));
+ assert.ok(artwork.includes('arena-qr-zone'));
 });
 test('Motion respects accessibility settings and fitted viewports',()=>{
  for(const v of ['@media(min-width:1000px) and (min-height:675px) and (max-height:760px)',
