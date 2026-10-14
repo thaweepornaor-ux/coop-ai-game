@@ -1,0 +1,65 @@
+/*
+ * Reveal narration controls, compact and subordinate to the classroom layout.
+ * Keeps the existing Q01–Q15 question pack untouched.
+ */
+.game-shell[data-role="host"] > .host-lobby .voice-setup-panel{
+  position:relative;
+  overflow:visible;
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings{
+  position:relative;flex:0 0 auto;min-width:0;
+  z-index:55;font-size:clamp(.67rem,.75vw,.82rem);
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings summary{
+  display:flex;align-items:center;justify-content:center;
+  min-height:33px;max-width:185px;
+  padding:5px 9px;border-radius:10px;
+  background:linear-gradient(125deg,#196f97,#604cb4);
+  color:#f3ffff;border:1px solid #91fff1;
+  font-weight:850;line-height:1.24;cursor:pointer;
+  list-style:none;text-align:center;white-space:normal;
+  box-shadow:inset 0 1px rgba(255,255,255,.28);
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings summary::-webkit-details-marker{display:none}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings summary:focus-visible{
+  outline:3px solid #fff9af;outline-offset:2px
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings-body{
+  position:absolute;top:calc(100% + 7px);right:0;
+  z-index:80;min-width:min(280px,65vw);
+  padding:10px;border-radius:13px;
+  display:flex;flex-direction:column;gap:8px;
+  border:1px solid #a7faff;
+  background:linear-gradient(145deg,#214b9f,#44378c);
+  box-shadow:0 15px 28px rgba(6,23,77,.55)
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings-body > *{
+  flex:none;width:100%;min-width:0
+}
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings-body .voice-setup-upload,
+.game-shell[data-role="host"] > .host-lobby .reveal-voice-settings-body .voice-setup-test{
+  min-height:35px;padding:7px 9px;font-size:.79rem
+}
+@media(min-width:1000px) and (max-width:1260px){
+  .game-shell[data-role="host"] > .host-lobby .voice-setup-panel{
+    gap:4px;padding-left:5px;padding-right:5px
+  }
+  .game-shell[data-role="host"] > .host-lobby .voice-setup-copy span{display:none}
+  .game-shell[data-role="host"] > .host-lobby .reveal-voice-settings summary{
+    padding:4px 6px;max-width:130px;font-size:.66rem
+  }
+}
+@media(max-width:999px){
+  .game-shell[data-role="host"] > .host-lobby .reveal-voice-settings{
+    flex:0 1 180px
+  }
+  .game-shell[data-role="host"] > .host-lobby .reveal-voice-settings summary{
+    max-width:none
+  }
+}
+@media(prefers-reduced-motion:reduce){
+ .game-shell[data-role="host"] > .host-lobby .reveal-voice-settings,
+ .game-shell[data-role="host"] > .host-lobby .reveal-voice-settings *{
+   transition:none!important;animation:none!important
+ }
+}
