@@ -162,15 +162,18 @@ export function renderAvatar(options = {}) {
     : `<path d="M57 143Q80 149 103 143L101 187Q94 191 84 187L82 162H78L76 187Q68 191 59 187Z" fill="url(#${materialPrefix}-pants-lit)"/><path d="M58 145Q80 151 102 145" fill="none" stroke="${shade(bottomColor)}" stroke-width="4"/><path d="M80 151V161M64 157L65 180M96 157L95 180" stroke="${shade(bottomColor)}" stroke-width="2" stroke-linecap="round"/><path d="M59 185Q68 189 77 185M84 185Q93 189 101 185" fill="none" stroke="${shade(bottomColor)}" stroke-width="3"/>`;
   // A pose is a rendering-only choice: it never changes the persisted outfit.
   const pose = ['wave','celebrate','think','confident'].includes(input.pose) ? input.pose : 'stand';
-  const armShape = pose === 'wave'
-    ? `<path d="M50 107Q43 100 39 94L26 75Q21 67 26 63Q31 61 35 68L48 85L59 108Z"/><path d="M110 108Q115 108 116 118L122 143Q124 150 119 153Q113 154 111 147L104 119Z"/>`
-    : pose === 'celebrate'
-    ? `<path d="M50 107Q44 103 38 90L26 61Q21 54 26 50Q32 48 36 57L59 106Z"/><path d="M110 107Q116 103 122 90L134 61Q139 54 134 50Q128 48 124 57L101 106Z"/>`
-    : pose === 'think'
-    ? `<path d="M50 108Q45 108 44 119L38 143Q37 151 43 153Q49 154 51 146L57 119Z"/><path d="M108 108Q117 109 120 116L112 138Q110 142 104 139L89 91Q85 85 91 83Q97 82 99 89L110 121Z"/>`
-    : pose === 'confident'
-    ? `<path d="M50 107Q44 110 42 123L36 137Q36 143 42 145L59 145Q65 141 59 137L49 133L59 113Z"/><path d="M110 107Q116 110 118 123L124 137Q124 143 118 145L101 145Q95 141 101 137L111 133L101 113Z"/>`
-    : `<path d="M50 108Q45 108 44 118L38 143Q36 150 41 153Q47 154 49 147L56 119Z"/><path d="M110 108Q115 108 116 118L122 143Q124 150 119 153Q113 154 111 147L104 119Z"/>`;
+  // Dedicated complete arm + visible palm/fingers geometry per pose.
+  // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
+  const leftRest = `<path d="M53 103 Q43 106 43 118 L39 138 Q38 144 42 146 L46 146 Q50 143 51 138 L58 116 Z"/><g transform="translate(42 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 7L-5 15M-1 8L-1 16M2 8L3 15M5 6L7 12" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
+  const rightRest = `<path d="M107 103 Q117 106 117 118 L121 138 Q122 144 118 146 L114 146 Q110 143 109 138 L102 116 Z"/><g transform="translate(118 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 6L-6 12M-2 8L-3 15M1 8L1 16M4 7L5 15" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
+  const waveArm = `<path d="M53 105Q42 103 38 94L28 78Q25 73 27 70Q31 67 35 73L51 92L58 111Z"/><g transform="translate(27 68) rotate(-15)"><ellipse cy="-5" rx="5.5" ry="7"/><path d="M-4 -7L-7 -17M-1 -9L-2 -21M2 -9L3 -21M5 -7L8 -17" fill="none" stroke="${skin}" stroke-width="3.1" stroke-linecap="round"/><path d="M-6 -1L-12 -6" stroke="${skin}" stroke-width="3.1" stroke-linecap="round"/></g>`;
+  const cheerLeft = `<path d="M53 105Q45 102 41 91L32 68Q29 63 32 60Q37 57 40 64L57 106Z"/><g transform="translate(31 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -5L-6 -11M-1 -6L-2 -13M2 -6L3 -13M5 -4L7 -10" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
+  const cheerRight = `<path d="M107 105Q115 102 119 91L128 68Q131 63 128 60Q123 57 120 64L103 106Z"/><g transform="translate(129 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -4L-7 -10M-2 -6L-3 -13M1 -6L2 -13M4 -5L6 -11" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
+  const armShape = pose === 'wave' ? waveArm+rightRest
+    : pose === 'celebrate' ? cheerLeft+cheerRight
+    : pose === 'think' ? leftRest+`<path d="M108 106Q117 110 116 121L106 134Q102 137 98 133L91 91Q90 86 94 84Q99 84 101 90L108 119Z"/><g transform="translate(93 86)"><ellipse rx="4.5" ry="6"/><path d="M-2 -3L-3 -10M1 -5L2 -12" stroke="${skinShade}" stroke-width="1.3" stroke-linecap="round"/></g>`
+    : pose === 'confident' ? `<path d="M53 105Q44 108 44 121L42 133Q42 138 47 139L60 138Q64 135 60 133L51 131L57 112Z"/><ellipse cx="60" cy="135" rx="5" ry="4"/>`+`<path d="M107 105Q116 108 116 121L118 133Q118 138 113 139L100 138Q96 135 100 133L109 131L103 112Z"/><ellipse cx="100" cy="135" rx="5" ry="4"/>`
+    : leftRest+rightRest;
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
   // All fills still derive from the user's exact selected outfit palette.
