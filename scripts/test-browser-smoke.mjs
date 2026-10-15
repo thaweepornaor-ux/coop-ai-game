@@ -287,13 +287,21 @@ async function wardrobe(page) {
  assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
  const options=page.locator('.quick-options fieldset');
  assert.equal(await options.count(),8,'All eight wardrobe groups including hair color are displayed');
- const styles=options.nth(2).locator('button');
+ const hairColors=options.nth(2).locator('button');
+ await hairColors.nth(1).click();
+ assert.equal(await hairColors.nth(1).getAttribute('aria-pressed'),'true','Hair color can be customized');
+ const styles=options.nth(3).locator('button');
  await styles.nth(1).click();
  assert.equal(await styles.nth(1).getAttribute('aria-pressed'),'true');
- const shirtColors=options.nth(3).locator('button');
+ const shirtColors=options.nth(4).locator('button');
  await shirtColors.nth(2).click();
  assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'),'true');
  assert.equal(await livePreview.isVisible(),true,'Live selected avatar stays visible after a wardrobe change');
+ const poseButtons=livePreview.locator('.wardrobe-pose-choices button');
+ assert.equal(await poseButtons.count(),5,'Five live poses are immediately selectable');
+ await poseButtons.nth(1).click();
+ assert.equal(await poseButtons.nth(1).getAttribute('aria-pressed'),'true','Pose preview changes immediately');
+ await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
  assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
 }
