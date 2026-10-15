@@ -55,7 +55,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       <span className="quick-character-portrait"><Avatar options={{...avatar,
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
-        hatStyle:'none'}} pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
+        hatStyle:'none'}} svgOnly pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
       <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
@@ -63,7 +63,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
    <div className="quick-customize-title"><strong>ปรับแต่งตัวละคร</strong><span>เลือกทรงผม เสื้อผ้า สีผิว และแว่นตาได้เลย</span></div>
    <div className="quick-options">
      <div className="wardrobe-live-preview" aria-label="ตัวละครตัวอย่างที่เปลี่ยนตามการปรับแต่ง">
-       <div className="wardrobe-live-avatar"><Avatar options={avatar} pose={previewPose} motion={false}/></div>
+       <div className="wardrobe-live-avatar"><Avatar options={avatar} svgOnly pose={previewPose} motion={false}/></div>
        <div className="wardrobe-live-caption"><strong>ตัวละครของฉัน{activePreset?' — '+activePreset.label:''}</strong><span>ท่า{activePoseLabel} · แต่งตัวและตรวจแขนเสื้อ มือ นิ้ว ได้ทันที</span></div>
        <span className="wardrobe-live-indicator">● เปลี่ยนทันที</span>
        <div className="wardrobe-pose-choices" role="group" aria-label="ทดลองท่าทางตัวละคร">
