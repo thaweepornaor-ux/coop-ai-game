@@ -37,24 +37,24 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
  return <div className="quick-wardrobe" aria-label="เลือกตัวละครและแต่งตัว">
    <div className="quick-title"><strong>1. เลือกตัวละคร</strong><span>แตะรูปที่ชอบได้เลย</span></div>
    <div className="quick-gender" role="group" aria-label="เลือกตัวละครชายหรือหญิง">
-     <button type="button" aria-pressed={gender==='male'} onClick={()=>chooseGender('male')}>ผู้ชาย · 10 แบบ</button>
-     <button type="button" aria-pressed={gender==='female'} onClick={()=>chooseGender('female')}>ผู้หญิง · 10 แบบ</button>
+     <button type="button" aria-pressed={gender==='male'} onClick={()=>chooseGender('male')}>ตัวละครชาย</button>
+     <button type="button" aria-pressed={gender==='female'} onClick={()=>chooseGender('female')}>ตัวละครหญิง</button>
    </div>
    <div className="quick-characters" aria-label={gender==='male'?'ตัวละครผู้ชาย':'ตัวละครผู้หญิง'}>
     {CHARACTERS.filter(c=>c.gender===gender).map(c=><button type="button" key={c.id}
       className={'quick-character'+(selectedId===c.id?' selected':'')}
-      aria-label={c.id+' '+c.label+(selectedId===c.id?' เลือกอยู่':'')}
+      aria-label={c.label+(selectedId===c.id?' เลือกอยู่':'')}
       aria-pressed={selectedId===c.id} onClick={()=>selectPreset(c)}>
       <span className="quick-character-portrait"><Avatar options={{...avatar,
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
         hatStyle:'none'}} motion={false}/></span>
-      <strong>{c.id}</strong><small>{c.label}</small>
+      <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
    </div>
    <button type="button" className="quick-more-toggle" aria-expanded={more} onClick={()=>setMore(v=>!v)}>
-      {more?'ซ่อนตัวเลือกแต่งตัว −':'อยากเปลี่ยนผม สีผิว หรือเสื้อผ้าเพิ่มเติม +'}
+      {more?'ซ่อนการปรับแต่ง −':'ปรับแต่งตัวละคร +'}
    </button>
    {more&&<div className="quick-options">
      {choices.map(({key,label})=><fieldset key={key}>
