@@ -577,3 +577,55 @@
     max-height:min(24svh,195px);
   }
 }
+
+
+/* QR lobby polish — keep QR and join guidance as one visually balanced unit.
+   Applied only to instructor lobby, preserving active game and player screens. */
+@media(min-width:1000px){
+ .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+   display:grid!important;
+   grid-template-columns:minmax(190px,41%) minmax(0,59%)!important;
+   column-gap:clamp(16px,2vw,34px)!important;
+   align-items:center!important;
+   justify-items:stretch!important;
+   padding:clamp(14px,2vw,28px)!important;
+ }
+ .game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+   align-self:center!important;
+   justify-self:center!important;
+   width:100%!important;
+   min-width:0!important;
+   max-width:290px!important;
+   margin:0!important;
+   transform:none!important;
+ }
+ .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+   align-self:center!important;
+   justify-self:stretch!important;
+   min-width:0!important;
+   max-width:100%!important;
+   text-align:left!important;
+   align-items:flex-start!important;
+   justify-content:center!important;
+   gap:clamp(8px,1.1svh,13px)!important;
+   transform:none!important;
+ }
+ .game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{
+   font-size:clamp(1.32rem,1.75vw,2rem)!important;
+   line-height:1.24!important;
+   max-width:21ch;
+ }
+ .game-shell[data-role="host"] > .host-lobby .arena-join-steps{
+   justify-content:flex-start!important;
+   gap:6px!important;
+ }
+ .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+   padding:7px 10px 7px 6px!important;
+   font-size:clamp(.72rem,.78vw,.96rem)!important;
+ }
+}
+@media(min-width:1000px) and (max-height:760px){
+ .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{padding:12px 17px!important;column-gap:18px!important}
+ .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{gap:6px!important}
+ .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{padding:5px 7px 5px 5px!important}
+}
