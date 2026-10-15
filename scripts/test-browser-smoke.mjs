@@ -595,7 +595,7 @@ async function realRoom(browser, browserName) {
       row.checks.push('Question '+number+' fits 720p with no Thai text clipping, all answer choices and presenter actions');
       if (number === 1) {
         await noOverflow(player,'mobile active question');
-        if (size.mobile && size.width<=430) {
+        if ((await player.evaluate(()=>innerWidth))<=430) {
           const frame=await player.evaluate(()=>{
             const card=document.querySelector('.player-question .question-card');
             const answers=[...document.querySelectorAll('.player-question .answer-grid .answer')];
@@ -653,7 +653,7 @@ async function realRoom(browser, browserName) {
       await player.locator('.own-result').filter({ hasText: 'คะแนนตอนนี้ ' + expectedScore + ' / 15' }).waitFor();
       assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
       if (number === 1) {
-        if(size.mobile && size.width<=430){
+        if((await player.evaluate(()=>innerWidth))<=430){
           await noOverflow(player,'mobile reveal frame');
           const result=await player.evaluate(()=>{
             const card=document.querySelector('.player-question .question-card');
