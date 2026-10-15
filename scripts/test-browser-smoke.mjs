@@ -382,7 +382,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       });
       await page.reload({waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>{
-        const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ผู้หญิง'));
+        const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ตัวละครหญิง'));
         return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character:nth-child(3).selected') !== null;
       },null,{timeout:15000});
       assert.equal(await page.getByLabel(nameLabel,{exact:true}).inputValue(),syntheticName);
@@ -510,7 +510,7 @@ async function realRoom(browser, browserName) {
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
     await stage('edit-profile-without-duplicate-join');
-    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
+    await player.getByRole('button',{name:'แก้ไขตัวละคร',exact:true}).click();
     await player.locator('.inline-profile-form').waitFor();
     await player.getByRole('button',{name:'ตัวละครชาย'}).click();
     await player.locator('.inline-profile-form .quick-character').nth(1).click();
@@ -518,17 +518,17 @@ async function realRoom(browser, browserName) {
     await player.locator('#edit-player-name').fill(interimName);
     const [edited] = await Promise.all([
       player.waitForRequest(req=>req.method()==='POST'&&new URL(req.url()).pathname==='/api/game'&&req.postDataJSON()?.action==='profile'),
-      player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click()
+      player.getByRole('button',{name:'บันทึกการเปลี่ยนแปลง'}).click()
     ]);
     assert.equal(edited.postDataJSON().avatar.presetId,'M02');
     await player.getByRole('heading',{name:interimName,exact:true}).waitFor();
     await host.locator('.roster .mini-player').filter({hasText:interimName}).waitFor();
     assert.equal(await host.locator('.roster .mini-player').count(),1,'Editing an existing player cannot create a duplicate roster entry');
-    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
+    await player.getByRole('button',{name:'แก้ไขตัวละคร',exact:true}).click();
     await player.getByRole('button',{name:'ตัวละครหญิง'}).click();
     await player.locator('.inline-profile-form .quick-character').nth(2).click();
     await player.locator('#edit-player-name').fill(syntheticName);
-    await player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click();
+    await player.getByRole('button',{name:'บันทึกการเปลี่ยนแปลง'}).click();
     await player.getByRole('heading',{name:syntheticName,exact:true}).waitFor();
     await host.locator('.roster .mini-player').filter({hasText:syntheticName}).waitFor();
     assert.equal(await host.locator('.roster .mini-player').count(),1);
