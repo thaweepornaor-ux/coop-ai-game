@@ -454,6 +454,132 @@ def load_reference(path, npz_path):
     return reference, arrays
 
 
+def validate_identity_reference(reference, arrays):
+    """Validate writer-native-guarded zero-binding provenance, not source bpy data."""
+    joints = reference["joints"]
+    kinds = [joint.get("kind") for joint in joints]
+    if any(kind not in ("native", "auxiliary_identity") for kind in kinds):
+        fail("joint_kind_missing_or_unknown")
+    auxiliary = [i for i, kind in enumerate(kinds) if kind == "auxiliary_identity"]
+    if len(auxiliary) > 1 or not any(kind == "native" for kind in kinds):
+        fail("identity_joint_count")
+    if not auxiliary:
+        if reference.get("identity_proof") is not None:
+            fail("identity_proof_without_helper")
+        return {"index": None, "meshes": {}, "summary": {
+            "auxiliary_identity_joint_count": 0, "native_joint_count": len(joints),
+            "classification_provenance": "not_applicable",
+            "independently_decoded_source_weights": False}}
+    index = auxiliary[0]
+    if (index != len(joints)-1 or joints[index]["parent_index"] != -1
+            or joints[index]["node_name"] != "exportaux_identityjoint"
+            or any(joint["parent_index"] == index for joint in joints)):
+        fail("identity_joint_not_explicit_last_root")
+    proof = reference.get("identity_proof")
+    if not isinstance(proof, dict) or proof.get("schema") != "coop-armature-zero-identity-v1" or proof.get("joint_index") != index:
+        fail("identity_proof_schema")
+    membership, pre = proof.get("membership", {}), proof.get("pre_armature", {})
+    if (membership.get("raw_source_raw_clone_evaluated_equal") is not True
+            or membership.get("full_membership_compared") is not True
+            or membership.get("poses_checked") != 159
+            or pre.get("poses_checked") != 159
+            or pre.get("tolerance_world_m") != 1e-6
+            or pre.get("all_zero_eligible_vertices_compared") is not True):
+        fail("identity_provenance_guards_missing")
+    error = pre.get("maximum_world_error")
+    if type(error) not in (int, float) or not math.isfinite(error) or not 0 <= error <= 1e-6:
+        fail("identity_pre_armature_error_exceeded")
+    proofs = proof.get("meshes", [])
+    if not isinstance(proofs, list) or len(proofs) != len(reference["meshes"]):
+        fail("identity_mesh_proofs_missing")
+    by_mesh, compact = {}, []
+    for item in proofs:
+        mesh_index = integer(item.get("index"), 0, len(reference["meshes"])-1)
+        if mesh_index in by_mesh:
+            fail("identity_mesh_proof_duplicate")
+        ref = reference["meshes"][mesh_index]
+        ids = item.get("source_point_ids", [])
+        if not isinstance(ids, list) or any(type(v) is not int or not 1 <= v <= 0xffffffff for v in ids):
+            fail("identity_source_point_ids")
+        count = integer(item.get("zero_eligible_count"), 0, ref["vertex_count"])
+        if len(ids) != count or len(set(ids)) != count or not set(ids).issubset(ref["source_point_ids"]):
+            fail("identity_source_point_ids_correspondence")
+        packed = struct.pack("<" + str(len(ids)) + "I", *ids) if ids else b""
+        ids_hash = hashlib.sha256(packed).hexdigest()
+        if item.get("ids_hash_encoding") != "uint32_le" or item.get("ids_sha256") != ids_hash:
+            fail("identity_source_point_ids_hash")
+        hashes = [item.get(key) for key in ("raw_source_sha256", "raw_clone_sha256", "evaluated_sha256")]
+        if (any(not isinstance(value, str) or len(value) != 64
+                or any(c not in "0123456789abcdef" for c in value) for value in hashes)
+                or len(set(hashes)) != 1):
+            fail("identity_full_membership_hashes")
+        by_mesh[mesh_index] = set(ids)
+        compact.append({"mesh_index": mesh_index, "zero_eligible_count": count,
+                        "source_point_ids_sha256": ids_hash,
+                        "full_membership_sha256": hashes[0]})
+    if sum(len(ids) for ids in by_mesh.values()) == 0:
+        fail("identity_helper_without_zero_vertices")
+    for key in ("joint_world", "fractional_joint_world"):
+        if not np.array_equal(arrays[key][:, index], np.broadcast_to(np.eye(4), arrays[key][:, index].shape)):
+            fail("identity_native_reference_not_identity")
+    return {"index": index, "meshes": by_mesh, "summary": {
+        "auxiliary_identity_joint_count": 1, "native_joint_count": len(joints)-1,
+        "classification_provenance": "writer-native-guarded full membership and pre-Armature comparison",
+        "independently_decoded_source_weights": False,
+        "native_pre_armature_comparison_independently_recomputed": False,
+        "writer_membership_poses_checked": 159, "writer_pre_armature_poses_checked": 159,
+        "writer_pre_armature_tolerance_world_m": 1e-6,
+        "writer_pre_armature_maximum_world_error": float(error), "meshes": compact}}
+
+
+def validate_identity_node(glb, reference, joint_nodes, identity, animations):
+    index = identity["index"]
+    marked = [i for i, node in enumerate(glb.nodes)
+              if node.get("extras", {}).get("coop_joint_kind") == "auxiliary_identity"]
+    if index is None:
+        if marked:
+            fail("unreferenced_identity_node")
+        return
+    node_index = joint_nodes[index]
+    node = glb.nodes[node_index]
+    if (marked != [node_index] or glb.parents[node_index] != -1 or node.get("children")
+            or "mesh" in node or "skin" in node):
+        fail("identity_node_not_explicit_leaf_root")
+    kind, base = glb.base[node_index]
+    if kind != "trs" or not np.array_equal(trs(*base), np.eye(4)):
+        fail("identity_node_default_not_static_identity_trs")
+    for clip in CLIPS:
+        for path, track in animations[clip].get(node_index, {}).items():
+            values = track["values"]
+            if path == "translation":
+                valid = np.array_equal(values, np.zeros_like(values))
+            elif path == "scale":
+                valid = np.array_equal(values, np.ones_like(values))
+            elif path == "rotation":
+                valid = all(np.array_equal(rotation_matrix(q), np.eye(3)) for q in values)
+            else:
+                valid = False
+            if not valid:
+                fail("identity_node_animation_not_static_identity")
+
+
+def validate_identity_bindings(meshes, identity):
+    index = identity["index"]
+    if index is None:
+        return
+    for mesh in meshes:
+        if not np.array_equal(mesh["ibm"][index], np.eye(4)):
+            fail("identity_inverse_bind_not_identity")
+        proven_ids = identity["meshes"][mesh["reference"]["index"]]
+        zero = np.array([pid in proven_ids for pid in mesh["reference"]["source_point_ids"]], dtype=bool)
+        helper = mesh["joints"] == index
+        helper_weights = np.where(helper, mesh["weights"], 0.0).sum(axis=1)
+        if (not np.array_equal(helper_weights[zero], np.ones(int(np.count_nonzero(zero))))
+                or np.any(mesh["weights"][zero][~helper[zero]] != 0)
+                or np.any(helper_weights[~zero] != 0)):
+            fail("identity_weights_not_exact_proved_zero_binding")
+
+
 def read_meshes(glb, reference):
     d = glb.doc
     meshes, skins = d.get("meshes", []), d.get("skins", [])
@@ -587,7 +713,8 @@ def pose_mesh(mesh, worlds, morph_weights):
 
 
 def real_joint_motion(animations, reference, joint_nodes, meshes):
-    weighted = set(int(v) for mesh in meshes for v in mesh["joints"][mesh["weights"] > 0])
+    weighted = set(int(v) for mesh in meshes for v in mesh["joints"][mesh["weights"] > 0]
+                   if reference["joints"][int(v)]["kind"] == "native")
     useful = set(weighted)
     for index in list(weighted):
         parent = reference["joints"][index]["parent_index"]
@@ -602,7 +729,8 @@ def real_joint_motion(animations, reference, joint_nodes, meshes):
     for clip in CLIPS:
         moving = []
         for index in sorted(useful):
-            if reference["joints"][index]["parent_index"] == -1:
+            if (reference["joints"][index]["parent_index"] == -1
+                    or reference["joints"][index]["kind"] != "native"):
                 continue
             node = joint_nodes[index]
             changed = False
@@ -626,10 +754,13 @@ def validate(path, reference_json_path, reference_npz_path):
     """Return a JSON-only report. Numeric fidelity failures return passed=False."""
     glb = Glb(path)
     reference, arrays = load_reference(reference_json_path, reference_npz_path)
+    identity = validate_identity_reference(reference, arrays)
     meshes, joint_nodes = read_meshes(glb, reference)
+    validate_identity_bindings(meshes, identity)
     for mesh in meshes:
         mesh["joint_nodes"] = joint_nodes
     animations = glb.animations(meshes)
+    validate_identity_node(glb, reference, joint_nodes, identity, animations)
     motion = real_joint_motion(animations, reference, joint_nodes, meshes)
     authored_rows, fractional_rows = [], []
     stats = {mesh["name"]: {phase: {"maximum_world_error": 0.0, "squared_error_sum": 0.0,
@@ -646,6 +777,9 @@ def validate(path, reference_json_path, reference_npz_path):
         for record in records:
             row, clip, time = record["row"], record["clip"], float(record["time"])
             worlds, morph = glb.worlds(animations[clip], time)
+            if identity["index"] is not None and not np.array_equal(
+                    worlds[joint_nodes[identity["index"]]], np.eye(4)):
+                fail("identity_world_not_identity_at_sample")
             actual_joint = np.stack([worlds[node] for node in joint_nodes])
             joint_error = float(np.max(np.abs(actual_joint-arrays[joint_key][row])))
             joint_max[phase] = max(joint_max[phase], joint_error)
@@ -720,6 +854,7 @@ def validate(path, reference_json_path, reference_npz_path):
                "joint_matrix_max_abs_error": joint_max, "bind_idle0_max_abs_error": bind_error,
                "bind_idle0_passed": bind_passed, "skin_condition_cap": CONDITION_CAP,
                "real_joint_motion": motion, "real_joint_motion_passed": joint_motion_passed,
+               "zero_binding_identity": identity["summary"],
                "actual_mesh_clip_motion_m": clip_motion,
                "actual_mesh_clip_motion_passed": actual_motion_passed,
                "meshes": mesh_summary,

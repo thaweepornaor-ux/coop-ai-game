@@ -23,6 +23,8 @@ CLIPS=("idle","wave","celebrate")
 FRAMES=tuple(range(49))
 FRACTIONAL=(0.5,12.5,24.5,36.5)
 TAG="_coop_glb_source_point_id"
+AUXILIARY_NAME="exportaux_identityjoint"
+EXPECTED_BODY_ZERO_COUNT=792
 CAP=32*1024*1024
 TRS_TOL=1e-5
 JOINT_TOL=1e-4
@@ -127,6 +129,103 @@ def cleanup(bpy,owned,original):
                 raise ValueError("corrective_glb_owned_key_still_used")
             bpy.data.batch_remove(ids=[key])
 
+
+def positive_groups(vertex,group_names,rig):
+    records=[]
+    for entry in vertex.groups:
+        weight=float(entry.weight)
+        if not math.isfinite(weight) or weight<0 or entry.group not in group_names:
+            raise ValueError("corrective_glb_source_weight_invalid")
+        if weight==0:
+            continue
+        name=group_names[entry.group]
+        bone=rig.data.bones.get(name)
+        exists=bone is not None
+        use_deform=bool(bone.use_deform) if exists else False
+        records.append((int(entry.group),name,weight,exists and use_deform,exists,use_deform))
+    return sorted(records)
+
+def raw_membership(obj,rig):
+    names={g.index:g.name for g in obj.vertex_groups}
+    return [positive_groups(vertex,names,rig) for vertex in obj.data.vertices]
+
+def classify_membership(weights):
+    sums=[sum(row[2] for row in records if row[3]) for records in weights]
+    if not all(math.isfinite(value) and value>=0 for value in sums):
+        raise ValueError("corrective_glb_native_eligible_sum_invalid")
+    zero=[i+1 for i,value in enumerate(sums) if value==0]
+    tiny=[i+1 for i,value in enumerate(sums) if 0<value<=0.0001]
+    payload={"source_point_ids":list(range(1,len(weights)+1)),"positive_groups":weights,"eligible_sums":sums}
+    return {"sha256":digest(payload),"zero_ids":zero,"tiny_ids":tiny,"eligible_sums":sums,
+        "positive_records":sum(len(row) for row in weights)}
+
+def membership_examples(weights,classification,ids):
+    return [{"source_point_id":i,"positive_group_records":weights[i-1],
+        "eligible_sum":classification["eligible_sums"][i-1]} for i in ids[:16]]
+
+def ids_hash(ids):
+    return hashlib.sha256(np.asarray(ids,dtype="<u4").tobytes()).hexdigest()
+
+def prepare_membership(sources,duplicates,pre_body,rig,bind,out,audit):
+    baselines=[]
+    audit["native_binding_correspondence"]=[]
+    for i,(source,duplicate,mesh) in enumerate(zip(sources,duplicates,bind)):
+        raw=raw_membership(source,rig)
+        clone=raw_membership(duplicate,rig)
+        evaluated=mesh["weights"]
+        raw_info,clone_info,eval_info=[classify_membership(rows) for rows in (raw,clone,evaluated)]
+        report={"mesh_index":i,"mesh":source.name,"vertex_count":len(raw),
+            "raw_source_sha256":raw_info["sha256"],"raw_clone_sha256":clone_info["sha256"],
+            "evaluated_sha256":eval_info["sha256"],"raw_positive_records":raw_info["positive_records"],
+            "raw_clone_positive_records":clone_info["positive_records"],"evaluated_positive_records":eval_info["positive_records"],
+            "zero_eligible_count":len(raw_info["zero_ids"]),"zero_ids_sha256":ids_hash(raw_info["zero_ids"]),
+            "zero_ids_first":raw_info["zero_ids"][:16],"tiny_positive_count":len(raw_info["tiny_ids"]),
+            "tiny_ids_first":raw_info["tiny_ids"][:16],"correspondence_pose_count":0,
+            "full_membership_compared":True,"correspondence_passed":raw==clone==evaluated,
+            "examples":{"raw_source":membership_examples(raw,raw_info,list(range(1,len(raw)+1))),
+                "raw_clone":membership_examples(clone,clone_info,list(range(1,len(raw)+1))),
+                "evaluated":membership_examples(evaluated,eval_info,list(range(1,len(raw)+1)))}}
+        audit["native_binding_correspondence"].append(report)
+        if raw!=clone or raw!=evaluated:
+            bad=[j+1 for j,(a,b,c) in enumerate(zip(raw,clone,evaluated)) if a!=b or a!=c][:16]
+            report["offending_point_ids_first"]=bad
+            report["offending_examples"]={"raw_source":membership_examples(raw,raw_info,bad),
+                "raw_clone":membership_examples(clone,clone_info,bad),
+                "evaluated":membership_examples(evaluated,eval_info,bad)}
+            checkpoint(out,audit)
+            raise ValueError("corrective_glb_raw_clone_evaluated_membership_mismatch")
+        if raw_info["tiny_ids"]:
+            report["tiny_positive_examples"]=membership_examples(raw,raw_info,raw_info["tiny_ids"])
+            checkpoint(out,audit)
+            raise ValueError("corrective_glb_tiny_positive_native_binding_unsupported")
+        if i==0:
+            pre_raw=raw_membership(pre_body,rig)
+            report["pre_armature_raw_clone_sha256"]=classify_membership(pre_raw)["sha256"]
+            if pre_raw!=raw:
+                checkpoint(out,audit)
+                raise ValueError("corrective_glb_pre_armature_raw_membership_mismatch")
+        baselines.append({"weights":raw,"classification":raw_info})
+    if baselines[1]["classification"]["zero_ids"]:
+        checkpoint(out,audit)
+        raise ValueError("corrective_glb_non_body_zero_binding_unproved")
+    checkpoint(out,audit)
+    return baselines
+
+def verify_membership_pose(current,baseline,report,out,audit):
+    weights=current["weights"]
+    info=classify_membership(weights)
+    if weights!=baseline["weights"] or info["tiny_ids"] or info["zero_ids"]!=baseline["classification"]["zero_ids"]:
+        report["correspondence_passed"]=False
+        report["evaluated_sha256"]=info["sha256"]
+        bad=[i+1 for i,(a,b) in enumerate(zip(baseline["weights"],weights)) if a!=b][:16]
+        report["offending_point_ids_first"]=bad
+        report["offending_evaluated_first"]=membership_examples(weights,info,bad)
+        checkpoint(out,audit)
+        raise ValueError("corrective_glb_native_membership_changed_during_pose")
+    report["correspondence_pose_count"]+=1
+    report["evaluated_sha256"]=info["sha256"]
+
+
 def snapshot(bpy,duplicate,source,rig,C,triangles=False):
     if len(source.data.vertices)!=len(duplicate.data.vertices):
         raise ValueError("corrective_glb_duplicate_vertex_count_changed")
@@ -154,17 +253,7 @@ def snapshot(bpy,duplicate,source,rig,C,triangles=False):
             pid=ids[vertex.index]-1
             co=np.array((*vertex.co,1.0),dtype=np.float64)
             positions[pid]=(C@matrix@co)[:3]
-            records=[]
-            for entry in vertex.groups:
-                weight=float(entry.weight)
-                if not math.isfinite(weight) or weight<0 or entry.group not in group_names:
-                    raise ValueError("corrective_glb_source_weight_invalid")
-                if weight==0:
-                    continue
-                name=group_names[entry.group]
-                bone=rig.data.bones.get(name)
-                records.append((int(entry.group),name,weight,bool(bone is not None and bone.use_deform)))
-            full_weights[pid]=sorted(records)
+            full_weights[pid]=positive_groups(vertex,group_names,rig)
         polygons=[([ids[v] for v in p.vertices],int(p.material_index)) for p in mesh.polygons]
         edges=[sorted(ids[v] for v in e.vertices) for e in mesh.edges]
         uv=[{"name":layer.name,"values":[list(item.uv) for item in layer.data]} for layer in mesh.uv_layers]
@@ -174,7 +263,7 @@ def snapshot(bpy,duplicate,source,rig,C,triangles=False):
             mesh.calc_loop_triangles()
             indices=np.array([[ids[i]-1 for i in triangle.vertices] for triangle in mesh.loop_triangles],dtype=np.uint32).reshape(-1)
         return {"positions":require_finite(positions),"signature":signature,"weights":full_weights,
-            "indices":indices,"source_point_ids":list(range(1,n+1))}
+            "indices":indices,"source_point_ids":list(range(1,n+1)),"matrix_world":matrix.tolist()}
     finally:
         if mesh is not None:
             evaluated.to_mesh_clear()
@@ -186,8 +275,8 @@ def bind_palette(rig,meshes,audit,out):
         for weights in mesh["weights"]:
             eligible=[r for r in weights if r[3]]
             if not eligible:
-                raise ValueError("corrective_glb_unweighted_vertex_no_fallback")
-            for group,name,weight,deform in eligible:
+                continue  # No helper yet: true-zero classification and 159-pose proof are still pending.
+            for group,name,weight,deform,*classification in eligible:
                 weighted.add(name)
                 bone=rig.data.bones[name]
                 while bone is not None:
@@ -213,6 +302,8 @@ def bind_palette(rig,meshes,audit,out):
     return names,parents
 
 def native_joint_world(bpy,rig,names,C):
+    if AUXILIARY_NAME in names:
+        raise ValueError("corrective_glb_auxiliary_not_native_bone_lookup")
     evaluated=rig.evaluated_get(bpy.context.evaluated_depsgraph_get())
     world=np.array(evaluated.matrix_world,dtype=np.float64)
     return require_finite(np.array([C@world@np.array(evaluated.pose.bones[name].matrix,dtype=np.float64) for name in names]))
@@ -285,9 +376,10 @@ def world_from_trs(t,r,s,parents):
         world[i]=local if parent<0 else world[parent]@local
     return require_finite(world)
 
-def serialized_weights(mesh,names):
+def serialized_weights(mesh,names,zero_ids=(),helper_index=None):
+    zero_ids=set(zero_ids)
     bone_indices={name:i for i,name in enumerate(names)}
-    maximum=max(sum(1 for r in weights if r[3]) for weights in mesh["weights"])
+    maximum=max(1,max(sum(1 for r in weights if r[3]) for weights in mesh["weights"]))
     sets=(maximum+3)//4
     joints=np.zeros((len(mesh["weights"]),sets*4),dtype=np.uint16)
     weights=np.zeros((len(mesh["weights"]),sets*4),dtype=np.float32)
@@ -295,8 +387,13 @@ def serialized_weights(mesh,names):
         eligible=[r for r in full if r[3]]
         total=sum(r[2] for r in eligible)
         if total<=0:
-            raise ValueError("corrective_glb_unweighted_vertex_no_fallback")
-        for column,(group,name,weight,deform) in enumerate(eligible):
+            if total==0 and i+1 in zero_ids and helper_index is not None:
+                joints[i,0]=helper_index
+                weights[i,0]=1.0
+                continue
+            raise ValueError("corrective_glb_zero_vertex_identity_proof_missing")
+        for column,record in enumerate(eligible):
+            group,name,weight,deform=record[:4]
             joints[i,column]=bone_indices[name]
             weights[i,column]=weight/total
             if weights[i,column]<=0:
@@ -337,8 +434,10 @@ def write_glb(out,names,parents,meshes,trs,world_stored,ibm,joint_arrays,weight_
     joint_count=len(names)
     nodes=[]
     for i,name in enumerate(names):
-        node={"name":"SnowJoint:"+name,"translation":trs["translation"][0,i].tolist(),
+        node={"name":name if name==AUXILIARY_NAME else "SnowJoint:"+name,"translation":trs["translation"][0,i].tolist(),
             "rotation":trs["rotation"][0,i].tolist(),"scale":trs["scale"][0,i].tolist()}
+        if name==AUXILIARY_NAME:
+            node["extras"]={"coop_joint_kind":"auxiliary_identity"}
         children=[j for j,parent in enumerate(parents) if parent==i]
         if children:
             node["children"]=children
@@ -470,7 +569,7 @@ def select_pose(bpy,native,proof,rig,producer,clip,frame):
     bpy.context.scene.frame_set(integer,subframe=float(frame-integer))
     bpy.context.view_layer.update()
 
-def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources,duplicates,producer,C,out,audit):
+def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources,duplicates,pre_body,producer,C,out,audit):
     select_pose(bpy,native,proof,rig,producer,"idle",0)
     held=native.held_face_state(proof,rig)
     bind=[snapshot(bpy,d,s,rig,C,triangles=True) for d,s in zip(duplicates,sources)]
@@ -479,20 +578,26 @@ def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources
         "maximum_positive_eligible_weights":max(sum(1 for item in row if item[3]) for row in mesh["weights"]),
         "unweighted_vertices":sum(not any(item[3] for item in row) for row in mesh["weights"])} for i,mesh in enumerate(bind)]
     checkpoint(out,audit)
+    memberships=prepare_membership(sources,duplicates,pre_body,rig,bind,out,audit)
+    if len(memberships[0]["classification"]["zero_ids"])!=EXPECTED_BODY_ZERO_COUNT:
+        checkpoint(out,audit)
+        raise ValueError("corrective_glb_pinned_body_zero_count_mismatch")
     names,parents=bind_palette(rig,bind,audit,out)
     if not names:
         raise ValueError("corrective_glb_empty_actual_bone_palette")
-    serialized=[serialized_weights(mesh,names) for mesh in bind]
-    joint_arrays=[item[0] for item in serialized]
-    weight_arrays=[item[1] for item in serialized]
+    native_joint_count=len(names)
+    if AUXILIARY_NAME in names or AUXILIARY_NAME in rig.pose.bones:
+        raise ValueError("corrective_glb_auxiliary_joint_name_collision")
+    provisional_sets=[max(1,(max(sum(1 for r in row if r[3]) for row in mesh["weights"])+3)//4) for mesh in bind]
+    estimated_weight_bytes=sum(len(mesh["positions"])*sets*4*6 for mesh,sets in zip(bind,provisional_sets))
     vertices=sum(len(mesh["positions"]) for mesh in bind)
     targets_bytes=vertices*147*3*4
     estimate=(targets_bytes+vertices*3*4+sum(mesh["indices"].nbytes for mesh in bind)
-        +sum(j.nbytes+w.nbytes for j,w in zip(joint_arrays,weight_arrays))
-        +len(names)*16*4+len(names)*147*10*4+3*49*147*4+3*49*4+2097152+4096)
-    audit["preflight"]={"body_shirt_vertices":vertices,"joint_palette_count":len(names),
+        +estimated_weight_bytes
+        +(native_joint_count+1)*16*4+(native_joint_count+1)*147*10*4+3*49*147*4+3*49*4+2097152+4096)
+    audit["preflight"]={"body_shirt_vertices":vertices,"joint_palette_count_with_pending_identity":native_joint_count+1,
         "position_target_count":147,"position_target_bytes":targets_bytes,"conservative_glb_bytes":estimate,
-        "cap_bytes":CAP,"preflight_before_target_or_reference_allocation":True,"influence_set_counts":[item[2] for item in serialized]}
+        "cap_bytes":CAP,"preflight_before_target_or_reference_allocation":True,"influence_set_counts":provisional_sets}
     checkpoint(out,audit)
     if estimate>CAP:
         raise ValueError("corrective_glb_preflight_size_cap_exceeded")
@@ -503,6 +608,10 @@ def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources
     frame_map=[]
     fractional_map=[]
     maximum_face_drift=0.0
+    zero_ids=memberships[0]["classification"]["zero_ids"]
+    zero_indices=np.asarray(zero_ids,dtype=np.int64)-1
+    zero_rows=[]
+    zero_maximum=0.0
     for fractional in (False,True):
         samples=FRACTIONAL if fractional else FRAMES
         for clip_index,clip in enumerate(CLIPS):
@@ -511,12 +620,51 @@ def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources
                 audit["active_sample"]={"clip":clip,"frame":frame,"row":row,
                     "phase":"fractional_native_reference" if fractional else "authored_native_reference"}
                 select_pose(bpy,native,proof,rig,producer,clip,frame)
+                body_current=None
                 for i,(duplicate,source) in enumerate(zip(duplicates,sources)):
                     current=snapshot(bpy,duplicate,source,rig,C)
+                    verify_membership_pose(current,memberships[i],audit["native_binding_correspondence"][i],out,audit)
                     if current["signature"]!=bind[i]["signature"]:
                         raise ValueError("corrective_glb_ids_uv_topology_material_or_full_weights_changed")
                     destination=fractional_positions[i] if fractional else positions[i]
                     destination[row]=current["positions"].copy()
+                    if i==0:
+                        body_current=current
+                pre_current=snapshot(bpy,pre_body,sources[0],rig,C)
+                weights_equal=pre_current["weights"]==memberships[0]["weights"]
+                signature_equal=pre_current["signature"]==bind[0]["signature"]
+                pre_matrix=np.asarray(pre_current["matrix_world"])
+                native_matrix=np.asarray(body_current["matrix_world"])
+                source_matrix=np.asarray(sources[0].matrix_world)
+                maxpre_vs_native_matrix_error=float(np.max(np.abs(pre_matrix-native_matrix)))
+                maxpre_vs_source_matrix_error=float(np.max(np.abs(pre_matrix-source_matrix)))
+                if (not weights_equal or not signature_equal or maxpre_vs_native_matrix_error>1e-12
+                        or maxpre_vs_source_matrix_error>1e-12):
+                    audit["pre_armature_input_failure"]={"clip":clip,"frame":frame,"row":row,
+                        "weights_equal":weights_equal,"signature_equal":signature_equal,
+                        "maxpre_vs_native_matrix_error":maxpre_vs_native_matrix_error,
+                        "maxpre_vs_source_matrix_error":maxpre_vs_source_matrix_error,
+                        "pre_armature_matrix_world":pre_matrix.tolist(),
+                        "native_armature_matrix_world":native_matrix.tolist(),
+                        "source_matrix_world":source_matrix.tolist()}
+                    checkpoint(out,audit)
+                    raise ValueError("corrective_glb_pre_armature_identity_input_mismatch")
+                errors=np.linalg.norm(body_current["positions"][zero_indices]-pre_current["positions"][zero_indices],axis=1)
+                require_finite(errors)
+                worst=float(np.max(errors))
+                zero_maximum=max(zero_maximum,worst)
+                zero_rows.append({"clip":clip,"frame":frame,"row":row,"fractional":fractional,
+                    "zero_eligible_count":len(zero_ids),"maximum_world_error":worst,"membership_passed":True})
+                audit["zero_pre_armature_rows"]=zero_rows
+                if worst>1e-6:
+                    point=int(np.argmax(errors))
+                    pid=zero_ids[point]
+                    audit["zero_pre_armature_failure"]={"clip":clip,"frame":frame,"source_point_id":pid,
+                        "maximum_world_error":worst,"native_armature_world":body_current["positions"][pid-1].tolist(),
+                        "pre_armature_current_input_world":pre_current["positions"][pid-1].tolist(),
+                        "positive_group_records":memberships[0]["weights"][pid-1]}
+                    checkpoint(out,audit)
+                    raise ValueError("corrective_glb_true_zero_armature_effect_not_identity")
                 actual=native_joint_world(bpy,rig,names,C)
                 if fractional:
                     fractional_joint_world[row]=actual.copy()
@@ -537,6 +685,31 @@ def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources
                 record={"row":row,"clip":clip,"frame":frame,"time":frame/24}
                 (fractional_map if fractional else frame_map).append(record)
             checkpoint(out,audit)
+    if len(zero_rows)!=159 or any(report["correspondence_pose_count"]!=159 for report in audit["native_binding_correspondence"]):
+        raise ValueError("corrective_glb_zero_binding_pose_proof_incomplete")
+    # Only after the complete native membership+pre-Armature proof may ONE export-only identity joint exist.
+    helper_index=native_joint_count
+    identity_proof={"schema":"coop-armature-zero-identity-v1","joint_index":helper_index,
+        "membership":{"raw_source_raw_clone_evaluated_equal":True,"full_membership_compared":True,"poses_checked":159},
+        "pre_armature":{"poses_checked":159,"tolerance_world_m":1e-6,"maximum_world_error":zero_maximum,
+            "all_zero_eligible_vertices_compared":True},
+        "meshes":[{"index":i,"source_point_ids":membership["classification"]["zero_ids"],
+            "zero_eligible_count":len(membership["classification"]["zero_ids"]),
+            "ids_sha256":ids_hash(membership["classification"]["zero_ids"]),"ids_hash_encoding":"uint32_le",
+            "raw_source_sha256":audit["native_binding_correspondence"][i]["raw_source_sha256"],
+            "raw_clone_sha256":audit["native_binding_correspondence"][i]["raw_clone_sha256"],
+            "evaluated_sha256":audit["native_binding_correspondence"][i]["evaluated_sha256"]} for i,membership in enumerate(memberships)]}
+    audit["identity_proof_summary"]={"joint_index":helper_index,"native_joint_count":native_joint_count,
+        "poses_checked":159,"zero_count":len(zero_ids),"ids_sha256":ids_hash(zero_ids),
+        "maximum_pre_armature_world_error":zero_maximum,"membership_passed":True}
+    names=list(names)+[AUXILIARY_NAME]
+    parents=list(parents)+[-1]
+    joint_world=np.concatenate((joint_world,np.repeat(np.eye(4)[None,None,:,:],147,axis=0)),axis=1)
+    fractional_joint_world=np.concatenate((fractional_joint_world,np.repeat(np.eye(4)[None,None,:,:],12,axis=0)),axis=1)
+    serialized=[serialized_weights(mesh,names,membership["classification"]["zero_ids"],helper_index)
+        for mesh,membership in zip(bind,memberships)]
+    joint_arrays=[item[0] for item in serialized]
+    weight_arrays=[item[1] for item in serialized]
     # Immutable native references are saved/hash-anchored BEFORE any TRS reconstruction or corrective solve.
     npz_path=out/"native_reference.npz"
     with npz_path.open("xb") as file:
@@ -558,7 +731,9 @@ def collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources
         "meshes":[{"index":i,"node_name":MESH_NAMES[i]+":ArmatureStage","position_key":"mesh"+str(i)+"_positions",
             "fractional_position_key":"mesh"+str(i)+"_fractional_positions","vertex_count":len(mesh["positions"]),
             "source_point_ids":mesh["source_point_ids"]} for i,mesh in enumerate(bind)],
-        "joints":[{"index":i,"node_name":"SnowJoint:"+name,"parent_index":parents[i]} for i,name in enumerate(names)],
+        "joints":[{"index":i,"node_name":name if name==AUXILIARY_NAME else "SnowJoint:"+name,
+            "parent_index":parents[i],"kind":"auxiliary_identity" if name==AUXILIARY_NAME else "native"} for i,name in enumerate(names)],
+        "identity_proof":identity_proof,
         "native_joint_world_key":"joint_world","fractional_joint_world_key":"fractional_joint_world",
         "native_reference_captured_before_corrective_solve":True}
     raw=encode(metadata)
@@ -671,7 +846,8 @@ def main():
             "Fixed bind-polygon triangulation, not native deformed-quad surface or render equivalence.",
             "Native DQ and B-Bones remain unchanged; ordinary palette plus known-clip POSITION correctives is a bounded prototype.",
             "Independent GLB reader must validate authored/fractional positions and joints; writer residual is insufficient.",
-            "No arbitrary poses/costumes/face changes, optimization, image generation, material bake or .blend save."]}
+            "No arbitrary poses/costumes/face changes, optimization, image generation, material bake or .blend save.",
+            "Exactly one export-only identity joint is allowed only after all true-zero memberships and 159 pre-Armature checks pass; never a native rig edit."]}
     checkpoint(out,audit)
     failure=None
     rig=None
@@ -752,12 +928,20 @@ def main():
         if audit["input_driver_before"]["active_invalid"]!=0:
             raise ValueError("corrective_glb_input_native_driver_invalid")
         duplicates=[copy_stage(bpy,obj,rig,owned,audit,out) for obj in sources]
+        pre_body=copy_stage(bpy,sources[0],rig,owned,audit,out)
+        pre_body.name="COOP_GLB_PRE_ARMATURE_BODY"
+        for modifier in list(pre_body.modifiers):
+            pre_body.modifiers.remove(modifier)
         bpy.context.view_layer.update()
+        if helper.garment_geometry_signature(pre_body)!=helper.garment_geometry_signature(sources[0]):
+            raise ValueError("corrective_glb_pre_armature_raw_or_key_data_differs")
+        audit["pre_armature_copy"]={"owned_independent_mesh_and_key":True,"modifier_count":len(pre_body.modifiers),
+            "source_coordinate_key_data_equal":True,"original_modifiers_edited":False}
         for duplicate,source_obj in zip(duplicates,sources):
             if helper.garment_geometry_signature(duplicate)!=helper.garment_geometry_signature(source_obj):
                 raise ValueError("corrective_glb_copied_raw_or_key_data_differs")
         C=np.array(((1,0,0,0),(0,0,1,0),(0,-1,0,0),(0,0,0,1)),dtype=np.float64)
-        collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources,duplicates,producer,C,out,audit)
+        collect_and_write(bpy,native,natural,face,proof,soft,pair,helper,rig,sources,duplicates,pre_body,producer,C,out,audit)
     except Exception as error:
         failure=error
         code=error.args[0] if isinstance(error,ValueError) and len(error.args)==1 and isinstance(error.args[0],str) else None
@@ -797,6 +981,13 @@ def main():
                 "maximum_quantized_writer_residual","native_reference_hash_recheck","original_binding_restored",
                 "input_id_inventory_preserved","input_preservation_passed","input_driver_before","input_driver_after",
                 "input_key_count_before","input_key_count_after","input_file_recheck","readonly_cleanup_passed")}
+            summary["identity_proof_summary"]=audit.get("identity_proof_summary")
+            summary["zero_pre_armature_failure"]=audit.get("zero_pre_armature_failure")
+            summary["native_binding_correspondence"]=[{key:report.get(key) for key in (
+                "mesh_index","vertex_count","raw_source_sha256","raw_clone_sha256","evaluated_sha256",
+                "zero_eligible_count","zero_ids_sha256","zero_ids_first","tiny_positive_count","tiny_ids_first",
+                "correspondence_passed","correspondence_pose_count","offending_point_ids_first")}
+                for report in audit.get("native_binding_correspondence",[])]
             summary.update({"renders":0,"models_saved":0,"independent_reader_passed":False,
                 "overall_art_approved":False,"browser_animation_approved":False,"production_glb_approved":False})
             if len(encode(summary))>24000:
