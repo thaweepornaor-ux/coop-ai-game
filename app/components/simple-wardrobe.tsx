@@ -5,7 +5,7 @@ import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
 import {normalizeWardrobe} from '../../shared/avatar-registry';
 
 const choices: {key:AvatarOptionKey;label:string;max?:number}[]=[
- {key:'skinTone',label:'สีผิว'}, {key:'hairStyle',label:'ทรงผม'},
+ {key:'skinTone',label:'สีผิว'}, {key:'hairStyle',label:'ทรงผม'}, {key:'hairColor',label:'สีผม'},
  {key:'shirtStyle',label:'แบบเสื้อ'}, {key:'shirtColor',label:'สีเสื้อ'},
  {key:'bottomStyle',label:'กางเกง / กระโปรง'},{key:'shoeColor',label:'สีรองเท้า'},
  {key:'glassesStyle',label:'แว่นตา'}
@@ -52,7 +52,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       aria-pressed={selectedId===c.id} onClick={()=>selectPreset(c)}>
       <span className="quick-character-portrait"><Avatar options={{...avatar,
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
-        hairColor:c.hairColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
+        hairColor:c.hairColor,shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
         hatStyle:'none'}} pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
       <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
