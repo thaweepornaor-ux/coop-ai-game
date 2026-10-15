@@ -568,7 +568,7 @@ async function realRoom(browser, browserName) {
         assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
         assert.equal(await player.locator('.explanation').count(), 0);
         assert.equal(await host.locator('.explanation').count(), 0);
-        await question(host, 2); row.checks.push('10-second answer deadline after narration locks answers without revealing or advancing');
+        await question(host, 2); row.checks.push('8-second answer deadline after narration locks answers without revealing or advancing');
       }
       // Every real assessment question must fit the real 720p projector, not just samples.
       await host.setViewportSize({width:1280,height:720});

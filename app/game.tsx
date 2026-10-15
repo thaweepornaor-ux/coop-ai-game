@@ -58,7 +58,7 @@ async function saveVoicePack(tracks:File[]):Promise<void>{
 }
 
 /** Answer/reveal voice is stored separately: uploading R01–R15 can never
- * overwrite Q01–Q15 or change the 10-second question countdown. */
+ * overwrite Q01–Q15 or change the 8-second question countdown. */
 function openAnswerVoiceStorage():Promise<IDBDatabase>{
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open('coop-ai-answer-recorded-voice',1);
@@ -136,15 +136,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   const openingFreshHost=useRef(false);
   const snapshotRef=useRef<Snapshot|null>(null),busyRef=useRef(false);
   const audio=useRef<AudioContext|null>(null),lastBeep=useRef(''),lastEffect=useRef('');
-  const totalRemaining=snapshot?.room.deadline ? Math.max(0,Math.ceil((snapshot.room.deadline-(now+offset.current))/1000)):10;
-  const narrationRemaining=snapshot?.room.phase==='question'?Math.max(0,totalRemaining-10):0;
-  const timer=Math.min(10,totalRemaining);
+  const totalRemaining=snapshot?.room.deadline ? Math.max(0,Math.ceil((snapshot.room.deadline-(now+offset.current))/1000)):8;
+  const narrationRemaining=snapshot?.room.phase==='question'?Math.max(0,totalRemaining-8):0;
+  const timer=Math.min(8,totalRemaining);
   const timeOpen=snapshot?.room.phase==='question'&&timer>0;
   const isHost=session?.role==='host';
   const canInteract=network==='online'&&now-lastSync.current<4500&&!busy;
   // Q01–Q15 are the instructor's real ElevenLabs recordings.
   // When the host imported an MP3 pack, the server reserves its duration + a buffer
-  // before the full 10-second answer countdown begins.
+  // before the full 8-second answer countdown begins.
   const stopNarration=useCallback(()=>{
     if(voiceTrack.current){voiceTrack.current.pause();voiceTrack.current.currentTime=0;voiceTrack.current=null;}
     if(typeof window!=='undefined'&&'speechSynthesis' in window)window.speechSynthesis.cancel();
@@ -672,7 +672,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(!snapshot)return;
     narrateSnapshot(snapshot,snapshot.room.phase==='reveal'?'reveal':'question');
   }
-  const countdownNode=<div className={'countdown '+(timer<=5&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/10)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':narrationRemaining>0?'กำลังเปิดเสียงอ่านโจทย์': 'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':narrationRemaining>0?'🔊 กำลังพากย์':timer<=5?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':narrationRemaining>0?'♪':timer}</span><small>{reveal?'เฉลย':narrationRemaining>0?'ฟังโจทย์ก่อนเริ่มจับเวลา':'วินาที'}</small></div>;
+  const countdownNode=<div className={'countdown '+(timer<=3&&!reveal?'urgent':'')} style={{'--remaining':(reveal?1:timer/8)} as React.CSSProperties} role="timer" aria-label={reveal?'เฉลยแล้ว':narrationRemaining>0?'กำลังเปิดเสียงอ่านโจทย์': 'เหลือ '+timer+' วินาที'}><span className="timer-kicker" aria-hidden="true">{reveal?'เฉลยแล้ว':narrationRemaining>0?'🔊 กำลังพากย์':timer<=3?'⚡ เร็วเข้า!':'เวลาเหลือ'}</span><span className="timer-value">{reveal?'✓':narrationRemaining>0?'♪':timer}</span><small>{reveal?'เฉลย':narrationRemaining>0?'ฟังโจทย์ก่อนเริ่มจับเวลา':'วินาที'}</small></div>;
   return <main className={'game-shell '+(motion?'motion-on':'motion-off')} data-role={role}>
     <ArenaLights celebrate={reveal||finished}/>
     <header className="topbar">
@@ -746,7 +746,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
           <label htmlFor="edit-player-name">ชื่อผู้เล่น<input id="edit-player-name" maxLength={24} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อเล่นของคุณ"/></label>
           <div className="inline-profile-actions"><button className="button secondary" type="button" onClick={()=>setEditingProfile(false)}>ยกเลิก</button><button className="button primary" disabled={!canInteract||!name.trim()} type="submit">{busy?'กำลังบันทึก…':'บันทึกการเปลี่ยนแปลง'}</button></div>
-        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · หลังฟังโจทย์มีเวลาตอบ 10 วินาที</p>
+        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · หลังฟังโจทย์มีเวลาตอบ 8 วินาที</p>
           <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>แก้ไขตัวละคร</button>
           <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
@@ -763,7 +763,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           const correct=reveal&&snapshot.correctAnswer===i;
           return <button key={i} className={'answer answer-'+i+(picked?' picked':'')+(correct?' correct':'')+(reveal&&picked&&!correct?' wrong':'')} disabled={!!isHost||!timeOpen||!canInteract||snapshot.ownAnswer!=null||pendingChoice!==null} onClick={()=>chooseAnswer(i)}><span className="answer-letter">{correct?'✓':letters[i]}</span><span>{option}</span>{picked&&!reveal&&<span className="picked-mark">✓</span>}</button>
         })}</div>
-        {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย' :narrationRemaining>0?'กำลังฟังเสียงโจทย์ · จากนั้นมีเวลาตอบเต็ม 10 วินาที':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
+        {!isHost&&!reveal&&<p className="answer-status" role="status">{snapshot.ownAnswer?'ส่งคำตอบแล้ว รอเฉลยครับ':pendingChoice!==null?'กำลังส่งคำตอบ…':closed?'หมดเวลาแล้ว รอผู้สอนเปิดเฉลย' :narrationRemaining>0?'กำลังฟังเสียงโจทย์ · จากนั้นมีเวลาตอบเต็ม 8 วินาที':'เลือกคำตอบที่เหมาะสมที่สุดหนึ่งข้อ'}</p>}
         {isHost&&!reveal&&<div className="host-controls"><span>ตอบแล้ว <strong>{answered} / {snapshot.players.length}</strong> คน</span><button className="button primary" disabled={!canInteract} onClick={()=>void send('reveal')}>{timeOpen?'ปิดรับคำตอบและเปิดเฉลย':'เปิดเฉลย ✦'}</button></div>}
         {reveal&&<div className="explanation"><h2>คำตอบ: {letters[snapshot.correctAnswer??0]} · {snapshot.question?.options[snapshot.correctAnswer??0]}</h2><p>{snapshot.explanation}</p>{isHost&&<img className="reveal-guide-art" src="/art/nhk-presenter-original.svg" alt="" aria-hidden="true" decoding="async"/>}</div>}
         {reveal&&isHost&&<div className={'reveal-audio-panel '+(answerVoiceReady?'ready':'missing')} role="group" aria-label="เสียงเฉลยคำตอบ">

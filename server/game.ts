@@ -1,5 +1,5 @@
 /** Pure game rules. This module does not depend on Cloudflare or browser APIs. */
-export const QUESTION_SECONDS = 10;
+export const QUESTION_SECONDS = 8;
 // ElevenLabs recording: timing of Q01–Q15 split at the repeated spoken
 // "คำถามข้อที่..." onset. The classroom answer clock begins after each
 // recording plus a small loading/synchronization grace period.
