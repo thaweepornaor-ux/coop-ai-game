@@ -57,6 +57,11 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       {more?'ซ่อนการปรับแต่ง −':'ปรับแต่งตัวละคร +'}
    </button>
    {more&&<div className="quick-options">
+     <div className="wardrobe-live-preview" aria-label="ตัวละครตัวอย่างที่เปลี่ยนตามการปรับแต่ง">
+       <div className="wardrobe-live-avatar"><Avatar options={avatar} motion={false}/></div>
+       <div className="wardrobe-live-caption"><strong>ตัวละครของฉัน</strong><span>ลองเปลี่ยนสีผิว ทรงผม หรือเสื้อผ้า แล้วดูผลตรงนี้ได้เลย</span></div>
+       <span className="wardrobe-live-indicator">● เปลี่ยนทันที</span>
+     </div>
      {choices.map(({key,label})=><fieldset key={key}>
         <legend>{label}</legend>
         <div className="quick-option-list">
