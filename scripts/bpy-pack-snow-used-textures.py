@@ -595,6 +595,42 @@ def create_transport(candidate,parts_dir,work):
         "sha256":whole,"part_size_cap":PART_BYTES,"parts":chunks,"same_job_join_sha256_verified":True,
         "part_files_are_binary_chunks_not_standalone_blend":True}
 
+
+def observe_id_persistence(bpy,reported_driver_count=None):
+    # Diagnostic metadata only; do not change users, fake users, links or evaluation.
+    try:
+        objects=[{"name":obj.name,"type":obj.type,"users":int(obj.users),
+            "use_fake_user":bool(obj.use_fake_user),
+            "scene_names":sorted(scene.name for scene in bpy.data.scenes
+                if scene.objects.get(obj.name)==obj),
+            "collection_names":sorted(collection.name for collection in obj.users_collection),
+            "own_driver_count":len(obj.animation_data.drivers) if obj.animation_data else 0}
+            for obj in sorted(bpy.data.objects,key=lambda item:item.name)]
+        owners=[];visited=set()
+        for category in ("objects","meshes","armatures","shape_keys","materials","node_groups","scenes","worlds","curves"):
+            for block in sorted(getattr(bpy.data,category),key=lambda item:item.name):
+                for route,item in (("id",block),("node_tree",getattr(block,"node_tree",None))):
+                    if item is None or int(item.as_pointer()) in visited:
+                        continue
+                    visited.add(int(item.as_pointer()))
+                    animation=getattr(item,"animation_data",None)
+                    if animation is None or not animation.drivers:
+                        continue
+                    keys=sorted([curve.data_path,int(curve.array_index),curve.driver.type]
+                        for curve in animation.drivers)
+                    owners.append({"owner_key":[category,block.name,route],
+                        "driver_count":len(keys),"identity_sha256":digest(keys)})
+        owners.sort(key=lambda row:row["owner_key"])
+        result={"objects":objects,"driver_owners":owners,
+            "aggregate_driver_count":sum(row["driver_count"] for row in owners),
+            "helper_reported_driver_count":reported_driver_count,
+            "aggregate_matches_helper":sum(row["driver_count"] for row in owners)==reported_driver_count
+                if reported_driver_count is not None else None}
+        require(len(encoded(result))<=64*1024,"id_observation_budget")
+        return result
+    except Exception as error:
+        return {"inspection_error":{"error_type":_diagnostic_text(type(error).__name__,64)}}
+
 def main():
     parser=argparse.ArgumentParser()
     for name in ("original-root","derivative-blend","config","out"):
@@ -711,6 +747,7 @@ def main():
         require(audit["in_memory_value_comparison"]["passed"],"packing_values")
         restore_binding(bpy,native,rig,saved)
         require(binding_state(bpy,rig)==saved,"before_save_binding")
+        audit["pre_save_id_inventory"]=observe_id_persistence(bpy,snapshot["driver_status"]["count"])
         candidate=work/"snow-packed-used-textures-candidate.blend"
         bpy.ops.wm.save_as_mainfile(filepath=str(candidate),check_existing=False,compress=True,relative_remap=False)
         audit["models_saved"]=1
@@ -719,11 +756,11 @@ def main():
         joined,transport=create_transport(candidate,out/"parts",work)
         audit["transport"]=transport
         write_json(snow/"packed-transport-manifest.json",transport)
-        expected={"schema_version":1,"wrapper_blob":blob(Path(__file__)),"worker_blob":blob(worker),
+        expected={"schema_version":2,"wrapper_blob":blob(Path(__file__)),"worker_blob":blob(worker),
             "blend_sha256":transport["sha256"],"blend_bytes":transport["bytes"],"snapshot":snapshot,
             "snapshot_sha256":digest(snapshot),"reference_binding":reference,"saved_binding":saved,
             "action_names":action_names,"images":rows,"missing_root":str(missing_root),
-            "reference_values":reference_values}
+            "reference_values":reference_values,"pre_save_id_inventory":audit["pre_save_id_inventory"]}
         expected_path=snow/"packed-reopen-expectations.json"
         write_json(expected_path,expected)
         write_json(audit_path,audit)

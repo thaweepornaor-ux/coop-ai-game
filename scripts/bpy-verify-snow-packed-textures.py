@@ -20,7 +20,7 @@ MAX_STDOUT = 24*1024
 WRAPPER_FILE = "bpy-pack-snow-used-textures.py"
 FIELDS = {"schema_version", "wrapper_blob", "worker_blob", "blend_sha256", "blend_bytes",
           "snapshot", "snapshot_sha256", "reference_binding", "saved_binding",
-          "action_names", "images", "missing_root", "reference_values"}
+          "action_names", "images", "missing_root", "reference_values", "pre_save_id_inventory"}
 
 
 def require(condition, code):
@@ -77,7 +77,7 @@ def load_expected(path, expected_sha):
     require(hashlib.sha256(raw).hexdigest() == expected_sha, "expected_file_hash")
     value = json.loads(raw.decode("utf-8"))
     finite_json(value)
-    require(isinstance(value, dict) and set(value) == FIELDS and value["schema_version"] == 1,
+    require(isinstance(value, dict) and set(value) == FIELDS and value["schema_version"] == 2,
             "expected_schema")
     for key in ("wrapper_blob", "worker_blob"):
         require(digest_text(value[key], 40), "expected_source_pin")
@@ -182,6 +182,50 @@ def observe_driver_aggregate(bpy,soft,helper):
         return {"inspection_error":{"error_type":type(error).__name__[:64]}}
 
 
+
+def observe_id_comparison(bpy,wrapper,expected,aggregate):
+    # Parent identities are pinned expected data. Differences are observations, never recovery.
+    try:
+        before=expected["pre_save_id_inventory"]
+        after=wrapper.observe_id_persistence(bpy,aggregate.get("native_driver_status",{}).get("count"))
+        if "inspection_error" in before or "inspection_error" in after:
+            return {"inspection_unavailable":True,"before":before.get("inspection_error"),
+                    "after":after.get("inspection_error")}
+        left={row["name"]:row for row in before["objects"]}
+        right={row["name"]:row for row in after["objects"]}
+        require(len(left)==len(before["objects"]) and len(right)==len(after["objects"]),
+                "diagnostic_object_identity_duplicate")
+        missing=sorted(set(left)-set(right));extra=sorted(set(right)-set(left))
+        old={tuple(row["owner_key"]):row for row in before["driver_owners"]}
+        new={tuple(row["owner_key"]):row for row in after["driver_owners"]}
+        require(len(old)==len(before["driver_owners"]) and len(new)==len(after["driver_owners"]),
+                "diagnostic_owner_identity_duplicate")
+        absent=sorted(set(old)-set(new));added=sorted(set(new)-set(old))
+        changed=sorted(key for key in set(old)&set(new) if old[key]!=new[key])
+        details=([{"kind":"missing_object","before":left[name]} for name in missing]
+            +[{"kind":"extra_object","after":right[name]} for name in extra]
+            +[{"kind":"missing_driver_owner","before":old[key]} for key in absent]
+            +[{"kind":"extra_driver_owner","after":new[key]} for key in added]
+            +[{"kind":"changed_driver_owner","before":old[key],"after":new[key]} for key in changed])
+        result={"object_count_before":len(left),"object_count_after":len(right),
+            "missing_object_count":len(missing),"extra_object_count":len(extra),
+            "missing_owner_count":len(absent),"extra_owner_count":len(added),
+            "changed_owner_count":len(changed),"details":details[:20],
+            "driver_count_before":sum(row["driver_count"] for row in old.values()),
+            "driver_count_after":sum(row["driver_count"] for row in new.values()),
+            "aggregate_matches_helper_before":before["aggregate_matches_helper"],
+            "aggregate_matches_helper_after":after["aggregate_matches_helper"],
+            "detail_limit":20,"details_omitted":max(0,len(details)-20),
+            "details_truncated":len(details)>20,"diagnostic_byte_budget":16*1024,
+            "users_and_fake_users_are_observations_only":True}
+        while result["details"] and len(encoded(result))>16*1024:
+            result["details"].pop()
+            result["details_omitted"]=len(details)-len(result["details"])
+            result["details_truncated"]=True
+        return result
+    except Exception as error:
+        return {"inspection_error":{"error_type":type(error).__name__[:64]}}
+
 def main():
     parser = argparse.ArgumentParser()
     for name in ("blend", "expected", "expected-sha", "out"):
@@ -242,6 +286,7 @@ def main():
                 "open_or_autoexec_policy")
         wrapper.validate_runtime(bpy)
         result["native_driver_after_open"] = observe_driver_aggregate(bpy, soft, helper)
+        result["id_persistence_comparison"] = observe_id_comparison(bpy, wrapper, expected, result["native_driver_after_open"])
         rig = bpy.data.objects.get("RIG-Snow")
         require(rig is not None and rig.type == "ARMATURE" and rig.data.pose_position == "POSE"
                 and rig.name in bpy.context.scene.objects, "saved_native_rig")
@@ -336,7 +381,9 @@ def main():
     # Fixed flags do not conflate packed transport/decode with scene/PBR/render acceptance.
     payload = encoded(result)
     summary = {key: value for key, value in result.items()
-               if key not in ("packed_verification", "native_guard_context")}
+               if key not in ("packed_verification", "native_guard_context", "id_persistence_comparison")}
+    if "id_persistence_comparison" in result:
+        summary["id_persistence_comparison_in_report"] = True
     if "native_guard_context" in result:
         summary["native_guard_context_in_report"] = True
     if "packed_verification" in result:
