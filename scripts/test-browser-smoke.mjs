@@ -282,6 +282,9 @@ async function wardrobe(page) {
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
  await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
+ const livePreview=page.locator('.quick-options .wardrobe-live-preview');
+ await livePreview.waitFor();
+ assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
  const options=page.locator('.quick-options fieldset');
  assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
  const styles=options.nth(2).locator('button');
@@ -290,6 +293,7 @@ async function wardrobe(page) {
  const shirtColors=options.nth(3).locator('button');
  await shirtColors.nth(2).click();
  assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'),'true');
+ assert.equal(await livePreview.isVisible(),true,'Live selected avatar stays visible after a wardrobe change');
  assert.equal(await page.locator('select').count(),0);
  assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
 }
