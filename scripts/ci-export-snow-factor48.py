@@ -118,40 +118,85 @@ def stored_quaternion(R):
     return (q/norm).astype(np.float32)
 
 
-def chebyshev_scale(column,target,witness):
+def chebyshev_scale(column,target,witness,audit,out,context):
     sign=1.0 if witness>0 else -1.0
     if not math.isfinite(float(witness)) or abs(float(witness))<=1e-8:
         raise ValueError("cached_glb_scale_witness_invalid")
     coefficients=column.astype(np.float64)*sign
     target=target.astype(np.float64)
-    def interval(error):
+    require_finite(coefficients);require_finite(target)
+    center=abs(float(witness))
+    residual=coefficients*center-target
+    require_finite(residual)
+    radius=float(np.max(np.abs(residual)))
+    check(math.isfinite(radius),"centered_scale_radius_nonfinite")
+    def centered_bounds(error):
+        lower,upper=1e-8-center,float("inf")
+        for coefficient,value in zip(coefficients,residual):
+            if coefficient==0:
+                if abs(float(value))>error:
+                    return lower,upper,False
+                continue
+            a,b=(-error-value)/coefficient,(error-value)/coefficient
+            lower=max(lower,min(a,b));upper=min(upper,max(a,b))
+        valid=lower<=upper and math.isfinite(lower) and math.isfinite(upper)
+        return lower,upper,bool(valid)
+    def old_direct_bounds(error):
         lower,upper=1e-8,float("inf")
         for coefficient,value in zip(coefficients,target):
             if coefficient==0:
-                if abs(value)>error:
-                    return None
+                if abs(float(value))>error:
+                    return lower,upper,False
                 continue
             a,b=(value-error)/coefficient,(value+error)/coefficient
             lower=max(lower,min(a,b));upper=min(upper,max(a,b))
-        return (lower,upper) if lower<=upper and math.isfinite(lower) and math.isfinite(upper) else None
-    lower=0.0
-    upper=float(np.max(np.abs(coefficients*abs(float(witness))-target)))
-    best=interval(upper)
-    if best is None:
-        raise ValueError("cached_glb_scale_initial_interval_invalid")
+        return lower,upper,bool(lower<=upper and math.isfinite(lower) and math.isfinite(upper))
+    def safe(value):
+        return float(value) if math.isfinite(float(value)) else None
+    old_low,old_high,old_valid=old_direct_bounds(radius)
+    initial_low,initial_high,initial_valid=centered_bounds(radius)
+    contains_zero=initial_valid and initial_low<=0<=initial_high
+    diagnostics=audit.setdefault("scale_interval_diagnostics",{
+        "policy":"uniform witness-centered magnitude offset; unchanged signed Chebyshev objective",
+        "bisections":64,"calls":0,"old_initial_empty_count":0,
+        "centered_initial_failure_count":0,"examples":[],"holdouts_used":False})
+    diagnostics["calls"]+=1
+    if not old_valid:diagnostics["old_initial_empty_count"]+=1
+    if not contains_zero:diagnostics["centered_initial_failure_count"]+=1
+    example=None
+    if (not old_valid or not contains_zero) and len(diagnostics["examples"])<3:
+        example={"context":dict(context),"coefficient":coefficients.tolist(),
+            "target":target.tolist(),"witness":float(witness),"sign":sign,
+            "center_magnitude":center,"center_residual":residual.tolist(),"initial_radius":radius,
+            "old_direct":{"lower":safe(old_low),"upper":safe(old_high),"feasible":old_valid,
+                "bounds_finite":math.isfinite(old_low) and math.isfinite(old_high)},
+            "centered":{"lower":safe(initial_low),"upper":safe(initial_high),"feasible":initial_valid,
+                "contains_zero":bool(contains_zero)},
+            "stored_scale":None,"direct_stored_column_error":None}
+        diagnostics["examples"].append(example)
+        checkpoint(out,audit)
+    if not contains_zero:
+        raise ValueError("cached_glb_centered_scale_initial_interval_invalid")
+    lower,upper=0.0,radius
+    best=(initial_low,initial_high)
     for iteration in range(64):
         middle=(lower+upper)*0.5
-        candidate=interval(middle)
-        if candidate is None:
+        low,high,valid=centered_bounds(middle)
+        if not valid:
             lower=middle
         else:
-            upper=middle;best=candidate
-    magnitude=best[0]+(best[1]-best[0])*0.5
+            upper=middle;best=(low,high)
+    offset=best[0]+(best[1]-best[0])*0.5
+    magnitude=center+offset
     value=np.float32(sign*magnitude)
+    if example is not None:
+        example["fitted_offset"]=safe(offset);example["fitted_magnitude"]=safe(magnitude)
+        example["stored_scale"]=safe(value)
+        example["direct_stored_column_error"]=safe(np.max(np.abs(column.astype(np.float64)*float(value)-target)))
+        checkpoint(out,audit)
     if not np.isfinite(value) or abs(float(value))<=1e-8 or np.sign(value)!=sign:
         raise ValueError("cached_glb_stored_scale_invalid")
     return value
-
 
 class GLBBuffer:
     def __init__(self):
@@ -182,7 +227,7 @@ class GLBBuffer:
 
 
 
-def ordinary(local,signs):
+def ordinary(local,signs,audit,out,context):
     A=local[:3,:3]
     check(np.linalg.det(A)*float(np.prod(signs))>1e-12,"ordinary_reflection_domain")
     U,sv,Vt=np.linalg.svd(A*signs[None,:])
@@ -192,7 +237,8 @@ def ordinary(local,signs):
     for j in range(3):
         witness=float(np.dot(R[:,j],A[:,j]))
         check(abs(witness)>1e-8 and np.sign(witness)==signs[j],"ordinary_scale_domain")
-        s[j]=chebyshev_scale(R[:,j],A[:,j],witness)
+        context.update({"column":j,"stored_quaternion_xyzw":q.tolist(),"stored_rotation":R.tolist()})
+        s[j]=chebyshev_scale(R[:,j],A[:,j],witness,audit,out,context)
     t=local[:3,3].astype(np.float32)
     return t,q,s,float(np.max(np.abs(compose(t,q,s)-local)))
 
@@ -329,7 +375,13 @@ def build_trs(doc,ref,arrays,audit,out):
         check(np.all(np.abs(signs)==1),"old_bind_scale_sign")
         errors=[]
         for row in range(291):
-            ts[row,i],qs[row,i],ss[row,i],error=ordinary(local[row,i],signs)
+            context={"row":row,"clip":ref["frames"][row]["clip"],"frame":ref["frames"][row]["frame"],
+                "palette_index":i,"node_name":palette[i]["node_name"],"native_local_matrix":local[row,i].tolist()}
+            try:
+                ts[row,i],qs[row,i],ss[row,i],error=ordinary(local[row,i],signs,audit,out,context)
+            except Exception:
+                audit["active_classifier_context"]=context;checkpoint(out,audit)
+                raise
             errors.append(error)
         maximum=max(errors);maxima.append(maximum)
         if maximum>TRS_TOL:
@@ -374,7 +426,7 @@ def build_trs(doc,ref,arrays,audit,out):
         n.update({"translation":T[0,i].tolist(),"rotation":Q[0,i].tolist(),"scale":S[0,i].tolist()})
         children=[j for j,p in enumerate(parents) if p==i]
         if children:n["children"]=children
-    audit["classification"]={"policy":"all291 authored keys only; ordinary polar-F32-Cheb64 otherwise fixed7TRS",
+    audit["classification"]={"policy":"all291 authored keys only; ordinary polar-F32-centered-Cheb64 otherwise fixed7TRS",
         "local_tolerance":TRS_TOL,"factored_indices":selected,"ordinary_maximum_by_palette_index":maxima,
         "factor_helper_nodes":6*len(selected),"common_identity_root":common,
         "maximum_stored_factor_chain_error":maximum_chain,"maximum_real_joint_world_error":maxworld,
@@ -521,6 +573,8 @@ def main():
             "native_reference_hash_recheck","readonly_cleanup_passed","classifier_progress")}
         if "classification" in audit:
             small["classification"]={k:v for k,v in audit["classification"].items() if k!="ordinary_maximum_by_palette_index"}
+        if "scale_interval_diagnostics" in audit:
+            small["scale_interval_diagnostics"]={k:v for k,v in audit["scale_interval_diagnostics"].items() if k!="examples"}
         check(len(encode(small))<=24576,"stdout_budget")
         print("SNOW_GLB_FACTOR48_WRITER "+encode(small).decode(),flush=True)
     return 0 if audit["writer_completed"] else 1

@@ -1059,22 +1059,25 @@ def fit_scalar_chebyshev(column, target, witness, expected_sign):
     if (not math.isfinite(witness) or abs(witness) <= 1e-8
             or math.copysign(1, witness) != expected_sign):
         fail("classifier_scale_witness_sign")
-    coefficients = column.astype(np.float64)*expected_sign
+    coefficients = finite(column.astype(np.float64)*expected_sign)
+    target = finite(np.asarray(target, dtype=np.float64))
+    magnitude = abs(witness)
+    residual = finite(coefficients*magnitude-target)
     def feasible(error):
-        low, high = 1e-8, float("inf")
-        for c, value in zip(coefficients, target):
+        low, high = 1e-8-magnitude, float("inf")
+        for c, value in zip(coefficients, residual):
             if c == 0:
                 if abs(float(value)) > error:
                     return None
             else:
-                left, right = (value-error)/c, (value+error)/c
+                left, right = (-error-value)/c, (error-value)/c
                 low, high = max(low, min(left, right)), min(high, max(left, right))
         return (low, high) if low <= high and math.isfinite(low) and math.isfinite(high) else None
     low = 0.0
-    high = float(np.max(np.abs(column*witness-target)))
+    high = float(np.max(np.abs(residual)))
     best = feasible(high)
-    if best is None:
-        fail("classifier_scale_initial_interval")
+    if best is None or not best[0] <= 0 <= best[1]:
+        fail("classifier_centered_scale_initial_interval")
     for _ in range(64):
         trial = (low+high)*0.5
         interval = feasible(trial)
@@ -1082,7 +1085,8 @@ def fit_scalar_chebyshev(column, target, witness, expected_sign):
             low = trial
         else:
             high, best = trial, interval
-    result = np.float32(expected_sign*(best[0]+(best[1]-best[0])*0.5))
+    offset = best[0]+(best[1]-best[0])*0.5
+    result = np.float32(expected_sign*(magnitude+offset))
     if not math.isfinite(float(result)) or abs(float(result)) <= 1e-8 or np.sign(result) != expected_sign:
         fail("classifier_stored_scale")
     return result
@@ -1117,7 +1121,7 @@ def classify_key_only(reference, arrays, bind_signs, graph):
     expected = {i for i, value in enumerate(maxima) if value > LOCAL_TRS_TOL}
     if expected != graph["factored"]:
         fail("key_only_classifier_helper_set_mismatch")
-    return {"algorithm": "proper_polar_f32_quaternion_signed_chebyshev64",
+    return {"algorithm": "proper_polar_f32_quaternion_signed_witness_centered_chebyshev64",
             "native_keys_checked": TARGET_COUNT, "native_joint_count": NATIVE_JOINTS,
             "local_tolerance": LOCAL_TRS_TOL, "uses_holdout_rows": False,
             "recomputed_independently": True, "exact_helper_set_match": True,
