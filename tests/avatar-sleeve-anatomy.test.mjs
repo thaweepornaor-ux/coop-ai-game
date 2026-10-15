@@ -30,3 +30,15 @@ test('raised arm fabric differs from neutral arm fabric', () => {
    assert.notEqual(find(candidate), find(neutral), `${pose} needs specific sleeve outlines`);
  }
 });
+
+test('confident pose has separate hands with defined digits on both sides',()=>{
+ for(const bodyStyle of genders){
+  const svg=renderAvatar({pose:'confident',bodyStyle});
+  for(const side of ['left','right']){
+   const hand=svg.match(new RegExp('<g data-avatar-part="'+side+'-confident-hand">([\\s\\S]*?)<\\/g>'));
+   assert.ok(hand, side+' hand missing');
+   assert.match(hand[1],/<ellipse/);
+   assert.match(hand[1],/<path/);
+  }
+ }
+});
