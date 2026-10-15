@@ -539,7 +539,7 @@ async function realRoom(browser, browserName) {
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
     assert.equal(persisted.presetId,'F03'); assert.equal(persisted.bodyStyle,'female'); row.checks.push('Edited name and wardrobe survive reload under the same player token');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
-    await host.getByRole('button', { name: /เริ่มเกม/ }).click();
+    await host.getByRole('button', { name: '▶ เริ่มเกม', exact: true }).click();
     let expectedScore = 0;
     for (let number = 1; number <= 15; number++) {
       await stage('question-' + number);
