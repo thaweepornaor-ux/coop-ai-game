@@ -1,5 +1,5 @@
 'use client';
-import {useMemo,useState} from 'react';
+import {useId,useMemo,useState} from 'react';
 import {renderAvatar} from '../../shared/avatar.js';
 import {PNG_PARTS} from '../../shared/avatar-png-catalog.js';
 import {playableAvatarLayers} from '../../shared/avatar-playable-layers.js';
@@ -13,6 +13,7 @@ type LoadedState='loading'|'ok'|'error';
  * SVG fallback renders ALL chosen clothing, hair and glasses without hiding parts.
  */
 export function Avatar({options={},className,pose='stand'}:AvatarProps){
+ const uniqueMaterialId=useId().replace(/[^a-zA-Z0-9_-]/g,'');
  const v=options as Record<string,unknown>;
  const stack=playableAvatarLayers(v,PNG_PARTS);
  const parts=stack.layers;
@@ -20,7 +21,7 @@ export function Avatar({options={},className,pose='stand'}:AvatarProps){
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=pose==='stand'&&complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
- const fallback=useMemo(()=>renderAvatar({...options,pose}),[JSON.stringify(options),pose]);
+ const fallback=useMemo(()=>renderAvatar({...options,pose,materialPrefix:'avatar-'+uniqueMaterialId}),[JSON.stringify(options),pose,uniqueMaterialId]);
  return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
   {pose==='stand'&&complete&&<div key={signature} aria-hidden="true" style={{position:'absolute',inset:0,opacity:everyLoaded?1:0,pointerEvents:'none'}}>
