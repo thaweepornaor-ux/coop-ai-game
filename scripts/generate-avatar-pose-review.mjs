@@ -8,7 +8,7 @@ const fullMatrix=process.argv.includes('--all');
 // Read committed preset definitions so the expanded sheet checks the actual
 // hairstyle, color, glasses and clothing choices rather than stand-in defaults.
 const catalog=readFileSync(new URL('../shared/characters.ts',import.meta.url),'utf8');
-const match=catalog.match(/export const CHARACTERS:CharacterPreset\\[\\]\\s*=\\s*(\\[[\\s\\S]*?\\]);/);
+const match=catalog.match(/export const CHARACTERS:CharacterPreset\[\]\s*=\s*(\[[\s\S]*?\]);/);
 if(!match)throw new Error('Cannot locate committed character presets');
 const presets=JSON.parse(match[1]);
 const people=(fullMatrix?presets:presets.filter(p=>['M01','F01'].includes(p.id))).map(p=>({
