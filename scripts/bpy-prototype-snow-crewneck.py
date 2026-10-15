@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import struct
 import sys
+import time
 
 SOURCE_SHA = "80fd0a81bca90f0efdcdcb98422df0e198ae57f4a1c239e13fb795922779b1fc"
 HELPER_BLOB = "a64c4f14e977a6ae720fb57b01ffa9f69d5703f8"
@@ -195,6 +196,8 @@ def plan_displacements(obj, component, settings):
             {"index": i, "delta": pins[i]} for i in sorted(collar)],
         "affected_vertex_indices": [i for i, v in enumerate(values) if v > 1e-10],
         "support_vertex_count": len(support), "interior_vertex_count": len(unknown),
+        "harmonic_world_z_values": values, "free_vertex_indices": unknown,
+        "support_vertex_indices": sorted(support),
         "support_radius_world": radius, "max_displacement_world": max(values),
         "solver": "positive inverse-edge-length harmonic interpolation",
         "solver_iterations": iteration, "solver_last_max_change": max_change,
@@ -202,6 +205,201 @@ def plan_displacements(obj, component, settings):
         "fixed_side_anchors": [966, 1590], "front_anchor": 984,
         "correspondence": "manual front/side anchor correspondence supplied by reviewed source images",
     }
+
+
+ORIENTATION_FLOOR = 0.05
+ORIENTATION_SOLVE_TARGET = 0.051
+ORIENTATION_STORED_SAFETY = 1e-6
+ORIENTATION_MAX_PASSES = 2500
+ORIENTATION_MAX_SECONDS = 60.0
+BASELINE_RUN = 38122307127
+
+def cross64(u, v):
+    return (u[1] * v[2] - u[2] * v[1],
+            u[2] * v[0] - u[0] * v[2],
+            u[0] * v[1] - u[1] * v[0])
+
+def dot64(u, v):
+    return sum(a * b for a, b in zip(u, v))
+
+def orientation_rows(obj, before, triangles, free, on_failure):
+    from mathutils import Vector
+    points = [tuple(obj.matrix_world @ p) for p in before]
+    rows, skipped = [], 0
+    for number, ids in enumerate(triangles):
+        a, b, c = (points[i] for i in ids)
+        native_normal = (Vector(b) - Vector(a)).cross(Vector(c) - Vector(a))
+        # Exact same original-degenerate threshold as the independent old guard.
+        if native_normal.length <= 1e-12:
+            skipped += 1
+            continue
+        u, v = tuple(b[i] - a[i] for i in range(3)), tuple(c[i] - a[i] for i in range(3))
+        normal = cross64(u, v)
+        squared = dot64(normal, normal)
+        if not math.isfinite(squared) or squared <= 0:
+            report = {"triangle_index": number, "vertex_indices": list(ids),
+                      "original_normal_squared": squared if math.isfinite(squared) else None}
+            on_failure("orientation_nonfinite_original_normal", report)
+            raise ValueError("orientation_nonfinite_original_normal")
+        A = (-normal[0] * v[1] + normal[1] * v[0]) / squared
+        B = (normal[0] * u[1] - normal[1] * u[0]) / squared
+        coefficients = (-(A + B), A, B)
+        if not all(math.isfinite(x) for x in coefficients):
+            report = {"triangle_index": number, "vertex_indices": list(ids)}
+            on_failure("orientation_nonfinite_row_coefficients", report)
+            raise ValueError("orientation_nonfinite_row_coefficients")
+        pairs = [(i, coefficient) for i, coefficient in zip(ids, coefficients) if i in free]
+        denominator = sum(coefficient * coefficient for _, coefficient in pairs)
+        scale = max(1.0, sum(coefficient * coefficient for coefficient in coefficients))
+        rows.append({"triangle": number, "vertices": ids, "coefficients": coefficients,
+                     "free": pairs, "denominator": denominator,
+                     "denominator_threshold": scale * 1e-24,
+                     "normal": normal, "normal_squared": squared, "old_points": (a, b, c)})
+    return rows, points, skipped
+
+def orientation_row_value(row, values):
+    return 1.0 + sum(c * values[i] for i, c in zip(row["vertices"], row["coefficients"]))
+
+def orientation_scan(rows, values, target):
+    minimum, violations = math.inf, []
+    for row in rows:
+        ratio = orientation_row_value(row, values)
+        if not math.isfinite(ratio):
+            return {"minimum_ratio": None, "worst_residual": None,
+                    "violating_rows": len(rows), "nonfinite": True, "sample_blocking_rows": []}
+        minimum = min(minimum, ratio)
+        if target - ratio > 1e-8:
+            violations.append((ratio, row))
+    sample = []
+    for ratio, row in heapq.nsmallest(8, violations, key=lambda item: item[0]):
+        sample.append({"triangle_index": row["triangle"], "vertex_indices": list(row["vertices"]),
+                       "ratio": ratio, "residual": max(0.0, target - ratio),
+                       "free_vertex_indices": [i for i, _ in row["free"]],
+                       "free_coefficients": [c for _, c in row["free"]],
+                       "free_denominator": row["denominator"],
+                       "denominator_threshold": row["denominator_threshold"],
+                       "floor_also_violated": ratio < ORIENTATION_FLOOR,
+                       "old_world_coordinates": [list(p) for p in row["old_points"]],
+                       "world_z_displacements": [values[i] for i in row["vertices"]]})
+    return {"minimum_ratio": minimum if math.isfinite(minimum) else None,
+            "worst_residual": max(0.0, target - minimum) if math.isfinite(minimum) else None,
+            "violating_rows": len(violations), "nonfinite": False, "sample_blocking_rows": sample}
+
+def constrain_orientations(obj, before, triangles, plan, on_failure):
+    from mathutils import Vector
+    started = time.monotonic()
+    initial = list(plan["harmonic_world_z_values"])
+    values = list(initial)
+    free = set(plan["free_vertex_indices"])
+    fixed = [i for i in range(len(values)) if i not in free]
+    rows = []
+    cap = 0.065
+    context = {"method": "cyclic halfspace projection followed by free-variable box projection",
+        "required_signed_projected_area_ratio": ORIENTATION_FLOOR,
+        "projection_target": ORIENTATION_SOLVE_TARGET,
+        "stored_positive_safety_margin": ORIENTATION_STORED_SAFETY,
+        "max_passes": ORIENTATION_MAX_PASSES, "max_seconds": ORIENTATION_MAX_SECONDS,
+        "free_vertex_count": len(free), "support_vertex_count": plan["support_vertex_count"],
+        "fixed_vertex_count": len(fixed), "max_lift_world": cap,
+        "passes": 0, "converged": False,
+        "feasibility_proven": False, "optimal_harmonic_fit_claimed": False}
+    def stop(code, details):
+        report = dict(context)
+        report.update(details)
+        report["elapsed_seconds"] = time.monotonic() - started
+        if rows:
+            report["failure_full_scan"] = orientation_scan(rows, values, ORIENTATION_SOLVE_TARGET)
+        report["fixed_values_exactly_preserved"] = all(values[i] == initial[i] for i in fixed)
+        on_failure(code, report)
+        raise ValueError(code)
+    if len(free) != 271 or plan["support_vertex_count"] != 359:
+        stop("orientation_input_region_changed", {})
+    rows, points, skipped = orientation_rows(obj, before, triangles, free, stop)
+    context["constraint_row_count"] = len(rows)
+    context["original_degenerate_triangles_skipped"] = skipped
+    context["initial_scan"] = orientation_scan(rows, values, ORIENTATION_SOLVE_TARGET)
+    current_scan = context["initial_scan"]
+    for iteration in range(1, ORIENTATION_MAX_PASSES + 1):
+        context["passes"] = iteration
+        for row in rows:
+            current = orientation_row_value(row, values)
+            if not math.isfinite(current):
+                stop("orientation_nonfinite_row_value", {"triangle_index": row["triangle"]})
+            if current >= ORIENTATION_SOLVE_TARGET:
+                continue
+            if not row["free"] or row["denominator"] == 0:
+                stop("orientation_fixed_pin_conflict", {
+                    "triangle_index": row["triangle"], "vertex_indices": list(row["vertices"]),
+                    "current_ratio": current, "floor_also_violated": current < ORIENTATION_FLOOR})
+            if (not math.isfinite(row["denominator"])
+                    or row["denominator"] <= row["denominator_threshold"]):
+                stop("orientation_low_free_denominator", {
+                    "triangle_index": row["triangle"], "vertex_indices": list(row["vertices"]),
+                    "current_ratio": current, "free_denominator": row["denominator"],
+                    "denominator_threshold": row["denominator_threshold"]})
+            step = (ORIENTATION_SOLVE_TARGET - current) / row["denominator"]
+            for index, coefficient in row["free"]:
+                updated = values[index] + step * coefficient
+                if not math.isfinite(updated):
+                    stop("orientation_nonfinite_update", {"triangle_index": row["triangle"]})
+                values[index] = min(cap, max(0.0, updated))
+        # Full ALL-row residual scan after each complete pass, including clipped rows.
+        current_scan = orientation_scan(rows, values, ORIENTATION_SOLVE_TARGET)
+        context["final_scan"] = current_scan
+        if current_scan["nonfinite"]:
+            stop("orientation_nonfinite_full_scan", current_scan)
+        if current_scan["violating_rows"] == 0:
+            context["converged"] = True
+            break
+        if time.monotonic() - started > ORIENTATION_MAX_SECONDS:
+            stop("orientation_time_budget_not_converged", current_scan)
+    if not context["converged"]:
+        stop("orientation_pass_budget_not_converged", current_scan)
+    if any(values[i] != initial[i] for i in fixed):
+        stop("orientation_fixed_values_changed", {})
+    if any(not math.isfinite(values[i]) or not 0 <= values[i] <= cap for i in free):
+        stop("orientation_free_box_violation", {})
+    context["fixed_values_exactly_preserved"] = True
+    context["free_box_passed"] = True
+    context["elapsed_seconds"] = time.monotonic() - started
+    context["max_displacement_world"] = max(values)
+    context["final_world_z_values"] = values
+    context["changed_free_vertices"] = sum(values[i] != initial[i] for i in free)
+    inverse = obj.matrix_world.to_3x3().inverted()
+    deltas = [inverse @ Vector((0, 0, value)) for value in values]
+    return deltas, context, rows, points
+
+def check_stored_orientations(obj, rows, old_points, on_failure):
+    points = [tuple(obj.matrix_world @ v.co) for v in obj.data.vertices]
+    required = ORIENTATION_FLOOR + ORIENTATION_STORED_SAFETY
+    minimum, failures = math.inf, []
+    for row in rows:
+        a, b, c = (points[i] for i in row["vertices"])
+        u, v = tuple(b[i] - a[i] for i in range(3)), tuple(c[i] - a[i] for i in range(3))
+        # Direct cross from actual stored float32 coordinates, not the solved scalar vector.
+        ratio = dot64(row["normal"], cross64(u, v)) / row["normal_squared"]
+        if not math.isfinite(ratio) or ratio < required:
+            failures.append({"triangle_index": row["triangle"],
+                             "vertex_indices": list(row["vertices"]),
+                             "ratio": ratio if math.isfinite(ratio) else None,
+                             "required_with_safety": required})
+        if math.isfinite(ratio):
+            minimum = min(minimum, ratio)
+    report = {"constraint_row_count": len(rows), "required_ratio": ORIENTATION_FLOOR,
+        "positive_safety_margin": ORIENTATION_STORED_SAFETY, "required_with_safety": required,
+        "minimum_stored_ratio": minimum if math.isfinite(minimum) else None,
+        "failed_row_count": len(failures), "sample_blocking_rows": failures[:8],
+        "worst_residual": max(0.0, required - minimum) if math.isfinite(minimum) else None,
+        "blocking_rows_truncated": len(failures) > 8,
+        "max_world_xy_storage_drift": max(max(abs(p[0] - q[0]), abs(p[1] - q[1]))
+                                         for p, q in zip(points, old_points)),
+        "validation_uses_actual_stored_coordinates": True,
+        "negative_tolerance_acceptance_allowed": False}
+    if failures:
+        on_failure("orientation_stored_coordinate_constraint_failed", report)
+        raise ValueError("orientation_stored_coordinate_constraint_failed")
+    return report
+
 
 def apply_identical_deltas(obj, deltas, tolerance):
     from mathutils import Vector
@@ -470,8 +668,11 @@ def main():
     parser.add_argument("--config", default=str(
         Path(__file__).with_name("avatar-render-configs") / "snow-crewneck-prototype.json"))
     parser.add_argument("--emit-preview", action="store_true")
-    parser.add_argument("--diagnostic-only", action="store_true",
-                        help="Evaluate the same geometry guard without rendering or saving a blend.")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--diagnostic-only", action="store_true",
+                      help="Evaluate without rendering or saving a blend.")
+    mode.add_argument("--after-only", action="store_true",
+                      help="Reference the actual existing baseline and render only three AFTER views.")
     args = parser.parse_args()
     import bpy
     from mathutils import Vector
@@ -549,14 +750,16 @@ def main():
         "manual_correspondence_guard": correspondence,
         "preserved_weights_uv_material_topology_sha256_before": preserved_before,
         "renders": [], "credits": credit_records, "derivative_saved": False,
-        "diagnostic_only": args.diagnostic_only,
+        "diagnostic_only": args.diagnostic_only, "after_only": args.after_only,
         "derivative": None, "after_views_rendered": 0,
         "production_glb_approved": False, "animation_approved": False,
         "garment_art_approved": False, "native_driver_policy_visually_accepted": False,
         "limits": ["Only the exact manually matched neckline and geodesic nearby vertices move.",
                    "All original shape-key offsets are preserved; no new sleeve geometry exists.",
                    "Neutral CPU renders do not prove joint animation, GLB or eleven controls.",
-                   "Original textures remain external; restore the source texture tree for reuse."]}
+                   "Original textures remain external; restore the source texture tree for reuse.",
+                   "Halfspace projections are not an optimal harmonic fit or self-intersection proof.",
+                   "Positive signed original-normal ratio is not a cosine or art acceptance."]}
     audit["images"] = validate_material_images(helper, bpy, selected_meshes, source)
     scene, camera, center, height = prepare_scene(helper, bpy, selected_meshes, rig, config, audit)
     neck_world = [garment.matrix_world @ garment.data.vertices[i].co for i in EXPECTED_NECK_INDICES]
@@ -574,29 +777,40 @@ def main():
          "angle": 0, "resolution": (640, 480)},
     ]
     audit["neck_world_bounds_before"] = {"minimum": list(neck_min), "maximum": list(neck_max)}
+    camera_config = [{"name": shot["name"], "target_world": list(shot["target"]),
+                      "ortho_scale": shot["scale"], "azimuth": shot["angle"],
+                      "resolution": list(shot["resolution"])} for shot in shots]
+    audit["camera_config"] = camera_config
+    audit["baseline_reference"] = {
+        "actual_run": BASELINE_RUN, "source_sha256": SOURCE_SHA,
+        "helper_git_blob_sha1": HELPER_BLOB,
+        "producer_script_blob": "7cbccbd1675840b936ae973ab284d8bc463b2aa7",
+        "producer_commit": "b2f2314ad9bebd1e2953e63e7c2e7a855f41b32e",
+        "actual_before_files": ["snow-before-front.png", "snow-before-threequarter.png",
+                                "snow-before-neck-crop.png"],
+        "camera_config": camera_config,
+        "camera_config_sha256": hashlib.sha256(json.dumps(
+            camera_config, sort_keys=True, allow_nan=False).encode()).hexdigest(),
+        "before_not_rerendered": args.after_only or args.diagnostic_only,
+        "art_comparison_accepted": False,
+    }
     audit["driver_status_before_render"] = helper.driver_evaluation_status(bpy)
     audit["driver_summary_before"] = driver_summary(audit["driver_status_before_render"])
     transform_before = transform_snapshot(rig, selected_meshes)
     audit["transform_snapshot_before"] = transform_before
     helper.write_json(destination / "prototype-audit.json", audit)
-    if not args.diagnostic_only:
+    if not args.diagnostic_only and not args.after_only:
         render_phase(helper, bpy, destination, scene, camera, center, height, shots,
                      "before", audit, args.emit_preview)
     original_vertices = [v.co.copy() for v in garment.data.vertices]
     garment.data.calc_loop_triangles()
     triangles = [tuple(t.vertices) for t in garment.data.loop_triangles]
-    deltas, plan = plan_displacements(garment, component, settings)
-    audit["displacement_plan"] = plan
-    helper.write_json(destination / "prototype-audit.json", audit)
-    audit["delta_application"] = apply_identical_deltas(
-        garment, deltas, settings["shape_key_residual_tolerance_local"])
-    helper.write_json(destination / "prototype-audit.json", audit)
-    def preserve_triangle_failure(report):
-        audit["raw_triangle_quality_after"] = report
-        audit["failure"] = {
-            "stage": "triangle_quality", "error_type": "ValueError",
-            "error_code": "prototype_has_flipped_or_collapsed_raw_triangles",
-        }
+    def preserve_candidate_failure(stage, code, report):
+        report_key = {"orientation_solver": "orientation_solver",
+                      "stored_orientation_constraints": "stored_orientation_constraints",
+                      "triangle_quality": "raw_triangle_quality_after"}[stage]
+        audit[report_key] = report
+        audit["failure"] = {"stage": stage, "error_type": "ValueError", "error_code": code}
         audit["geometry_after_failure"] = helper.garment_geometry_signature(garment)
         audit["render_state_after_failure"] = helper.garment_render_state(garment)
         audit["preserved_weights_uv_material_topology_sha256_at_failure"] = preserved_signature(garment)
@@ -607,12 +821,22 @@ def main():
         audit["derivative_saved"] = False
         audit["after_views_rendered"] = sum(r["phase"] == "after" for r in audit["renders"])
         helper.write_json(destination / "prototype-audit.json", audit)
+        scan = report.get("failure_full_scan", report.get("final_scan",
+                   report.get("initial_scan", report)))
         marker = {
-            "error_code": audit["failure"]["error_code"], "stage": "triangle_quality",
-            "diagnostic_only": args.diagnostic_only,
-            "implicated_triangles": report["flipped_or_collapsed_triangle_count"],
-            "triangle_indices": report["flipped_or_collapsed_triangle_indices"],
-            "triangle_details": report["implicated_triangle_details"][:4],
+            "error_code": code, "stage": stage,
+            "diagnostic_only": args.diagnostic_only, "after_only": args.after_only,
+            "constraint_rows": report.get("constraint_row_count"),
+            "solve_passes": report.get("passes"),
+            "worst_residual": scan.get("worst_residual"),
+            "minimum_ratio": scan.get("minimum_ratio", report.get("minimum_stored_ratio")),
+            "violating_rows": scan.get("violating_rows", report.get("failed_row_count")),
+            "sample_blocking_rows": scan.get("sample_blocking_rows", [])[:4],
+            "triangle_index": report.get("triangle_index"),
+            "current_ratio": report.get("current_ratio"),
+            "implicated_triangles": report.get("flipped_or_collapsed_triangle_count"),
+            "triangle_indices": report.get("flipped_or_collapsed_triangle_indices", []),
+            "triangle_details": report.get("implicated_triangle_details", [])[:4],
             "before_views_rendered": sum(r["phase"] == "before" for r in audit["renders"]),
             "after_views_rendered": audit["after_views_rendered"],
             "source_unchanged": audit["source_unchanged_at_failure"],
@@ -622,11 +846,33 @@ def main():
         marker_text = json.dumps(marker, allow_nan=False)
         if len(marker_text.encode("utf-8")) > 24000:
             marker["triangle_details"] = []
-            marker["triangle_details_omitted_for_stdout_byte_budget"] = True
+            marker["sample_blocking_rows"] = []
+            marker["details_omitted_for_stdout_byte_budget"] = True
             marker_text = json.dumps(marker, allow_nan=False)
         print("SNOW_CREWNECK_PROTOTYPE_FAILED " + marker_text, flush=True)
+    deltas, plan = plan_displacements(garment, component, settings)
+    audit["displacement_plan"] = plan
+    helper.write_json(destination / "prototype-audit.json", audit)
+    deltas, orientation, rows, old_points = constrain_orientations(
+        garment, original_vertices, triangles, plan,
+        on_failure=lambda code, report: preserve_candidate_failure("orientation_solver", code, report))
+    audit["orientation_solver"] = orientation
+    plan["harmonic_max_displacement_world"] = plan["max_displacement_world"]
+    plan["max_displacement_world"] = orientation["max_displacement_world"]
+    plan["affected_vertex_indices"] = [
+        i for i, value in enumerate(orientation["final_world_z_values"]) if value > 1e-10]
+    helper.write_json(destination / "prototype-audit.json", audit)
+    audit["delta_application"] = apply_identical_deltas(
+        garment, deltas, settings["shape_key_residual_tolerance_local"])
+    helper.write_json(destination / "prototype-audit.json", audit)
+    audit["stored_orientation_constraints"] = check_stored_orientations(
+        garment, rows, old_points, on_failure=lambda code, report:
+            preserve_candidate_failure("stored_orientation_constraints", code, report))
+    helper.write_json(destination / "prototype-audit.json", audit)
     audit["raw_triangle_quality_after"] = triangle_quality(
-        garment, original_vertices, triangles, on_failure=preserve_triangle_failure)
+        garment, original_vertices, triangles, on_failure=lambda report:
+            preserve_candidate_failure("triangle_quality",
+                "prototype_has_flipped_or_collapsed_raw_triangles", report))
     if args.diagnostic_only:
         preserved_after = preserved_signature(garment)
         if preserved_after != preserved_before:
@@ -670,7 +916,7 @@ def main():
     transform_after = transform_snapshot(rig, selected_meshes)
     audit["transform_snapshot_after"] = transform_after
     audit["rig_and_selected_object_transforms_preserved"] = transform_before == transform_after
-    working = destination / "snow-crewneck-prototype.blend"
+    working = destination / "snow-crewneck-orientation-prototype.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(working), check_existing=False)
     audit["derivative_saved"] = True
     audit["derivative"] = {"file": working.name, "bytes": working.stat().st_size,
@@ -681,11 +927,28 @@ def main():
     audit["weights_uv_materials_topology_preserved"] = True
     helper.write_json(destination / "prototype-audit.json", audit)
     print("SNOW_CREWNECK_PROTOTYPE_COMPLETE " + json.dumps({
-        "source_sha256": original_hash, "source_unchanged": True,
+        "source_sha256": original_hash, "source_unchanged": True, "source_hash_rechecked": True,
+        "baseline_actual_run": BASELINE_RUN, "after_only": args.after_only,
         "neck_indices": len(EXPECTED_NECK_INDICES), "vertex_count": EXPECTED_VERTICES,
         "shape_keys": EXPECTED_KEYS, "affected_vertices": len(plan["affected_vertex_indices"]),
         "maximum_lift_world": plan["max_displacement_world"],
-        "renders": len(audit["renders"]), "garment_art_approved": False,
+        "solve_passes": orientation["passes"],
+        "solve_worst_residual": orientation["final_scan"]["worst_residual"],
+        "solve_minimum_ratio": orientation["final_scan"]["minimum_ratio"],
+        "stored_minimum_ratio": audit["stored_orientation_constraints"]["minimum_stored_ratio"],
+        "stored_failed_rows": audit["stored_orientation_constraints"]["failed_row_count"],
+        "old_guard_failed_triangles": audit["raw_triangle_quality_after"]["flipped_or_collapsed_triangle_count"],
+        "max_key_pair_residual": max(r["max_pair_offset_residual_local"]
+                                    for r in audit["delta_application"]["pair_key_delta_residuals"]),
+        "weights_uv_materials_topology_preserved": True,
+        "rig_object_transforms_preserved": audit["rig_and_selected_object_transforms_preserved"],
+        "driver_active_invalid_before": audit["driver_summary_before"]["active_invalid"],
+        "driver_active_invalid_after": audit["driver_summary_after"]["active_invalid"],
+        "driver_muted_after": audit["driver_summary_after"]["muted"],
+        "before_views_rendered": sum(r["phase"] == "before" for r in audit["renders"]),
+        "after_views_rendered": audit["after_views_rendered"],
+        "derivative_saved": True, "derivative": audit["derivative"],
+        "garment_art_approved": False, "native_driver_policy_visually_accepted": False,
         "production_glb_approved": False, "animation_approved": False}), flush=True)
 
 if __name__ == "__main__":

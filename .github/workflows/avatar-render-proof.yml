@@ -1,10 +1,9 @@
-name: Inspect the failed Snow neckline displacement
+name: Render the constrained Snow crewneck prototype
 on:
   push:
     branches: [codex/game-recovery]
     paths:
       - 'scripts/bpy-inspect-avatar-garments.py'
-      - 'scripts/bpy-trace-rain-spine.py'
       - 'scripts/bpy-prototype-snow-crewneck.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
       - 'scripts/avatar-render-configs/**'
@@ -17,9 +16,9 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  trace-and-prototype:
+  snow-orientation-prototype:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -31,7 +30,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/bpy-inspect-avatar-garments.py scripts/bpy-trace-rain-spine.py scripts/bpy-prototype-snow-crewneck.py
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/bpy-inspect-avatar-garments.py scripts/bpy-prototype-snow-crewneck.py
           python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-garment-prototype/frozen-source-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
@@ -39,15 +38,15 @@ jobs:
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Capture the failed collar displacement without rendering or saving
+      - name: Solve the neckline constraints and render three AFTER views
         run: |
           source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-prototype-snow-crewneck.py --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-garment-prototype/snow" --diagnostic-only
-      - name: Preserve the actual inspection checkpoint
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-prototype-snow-crewneck.py --blend "$source_root/snow/original/Snow/snow_v4.2.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-garment-prototype/snow" --after-only --emit-preview
+      - name: Preserve actual AFTER images, derivative, audits and credits
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-crewneck-displacement-diagnostic
+          name: avatar-crewneck-orientation-prototype
           path: |
             ${{ runner.temp }}/avatar-garment-prototype/
             bpy-proof/
