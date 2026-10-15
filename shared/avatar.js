@@ -156,6 +156,7 @@ export function renderAvatar(options = {}) {
   const shirtPath = female
     ? 'M68 94Q80 99 92 94L105 99L114 113L104 120L99 109L98 126L102 145Q80 152 58 145L62 126L61 109L56 120L46 113L55 99Z'
     : 'M66 94Q80 99 94 94L108 99L117 113L106 120L102 111L104 146Q80 152 56 146L58 111L54 120L43 113L52 99Z';
+  const materialPrefix = typeof input.materialPrefix === 'string' && /^[a-zA-Z0-9_-]{1,72}$/.test(input.materialPrefix) ? input.materialPrefix : 'avatar';
   const bottom = selected.bottomStyle.value === 'skirt'
     ? `<g fill="${skin}"><path d="M61 172H75L74 191H62Z"/><path d="M85 172H99L98 191H86Z"/></g><path d="M60 143Q80 149 100 143L111 178Q81 188 49 178Z" fill="url(#${materialPrefix}-pants-lit)"/><path d="M60 145Q80 151 100 145" fill="none" stroke="${shade(bottomColor)}" stroke-width="4"/><path d="M66 154L62 176M80 155V180M94 154L99 176" stroke="${shade(bottomColor)}" stroke-width="2" opacity=".5"/><path d="M50 178Q80 187 110 178" fill="none" stroke="${shade(bottomColor)}" stroke-width="2"/>`
     : `<path d="M57 143Q80 149 103 143L101 187Q94 191 84 187L82 162H78L76 187Q68 191 59 187Z" fill="url(#${materialPrefix}-pants-lit)"/><path d="M58 145Q80 151 102 145" fill="none" stroke="${shade(bottomColor)}" stroke-width="4"/><path d="M80 151V161M64 157L65 180M96 157L95 180" stroke="${shade(bottomColor)}" stroke-width="2" stroke-linecap="round"/><path d="M59 185Q68 189 77 185M84 185Q93 189 101 185" fill="none" stroke="${shade(bottomColor)}" stroke-width="3"/>`;
@@ -173,7 +174,6 @@ export function renderAvatar(options = {}) {
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
   // All fills still derive from the user's exact selected outfit palette.
-  const materialPrefix = typeof input.materialPrefix === 'string' && /^[a-zA-Z0-9_-]{1,72}$/.test(input.materialPrefix) ? input.materialPrefix : 'avatar';
   const materialDefs = `<defs>
     <linearGradient id="${materialPrefix}-skin-lit" x1="0%" y1="10%" x2="95%" y2="90%"><stop offset="0%" stop-color="${skin}"/><stop offset="38%" stop-color="${skin}"/><stop offset="100%" stop-color="${skinShade}"/></linearGradient>
     <linearGradient id="${materialPrefix}-shirt-lit" x1="0%" y1="0%" x2="100%" y2="40%"><stop offset="0%" stop-color="${shirtColor}"/><stop offset="24%" stop-color="${shirtColor}"/><stop offset="78%" stop-color="${shirtColor}"/><stop offset="100%" stop-color="${shade(shirtColor)}"/></linearGradient>
