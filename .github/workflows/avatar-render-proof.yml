@@ -12,7 +12,7 @@ permissions:
   contents: read
   actions: read
 env:
-  ROTATION_CAPTURE_PACKET: '0'
+  ROTATION_CAPTURE_PACKET: '1'
 concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
