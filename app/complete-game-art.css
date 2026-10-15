@@ -534,3 +534,46 @@
     animation:none!important;
   }
 }
+
+
+/* Keep all five original NHK characters inside the empty-room illustration.
+ * Earlier stage rules used overflow:hidden and a fixed, compressed height,
+ * which can make the group look cut off, especially at short viewports. */
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+  overflow:visible!important;
+  width:min(94%,430px);
+  height:auto!important;
+  min-height:0!important;
+  max-height:min(31svh,275px);
+  aspect-ratio:405 / 261;
+  flex:0 1 auto;
+  border-radius:20px;
+}
+.game-shell[data-role="host"] > .host-lobby .arena-empty-visual .empty-stage-art{
+  display:block;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain!important;
+  object-position:center center!important;
+  overflow:visible;
+}
+@media(min-width:1000px) and (min-height:675px) and (max-height:760px){
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    width:min(80%,330px);
+    max-height:min(24svh,172px);
+  }
+}
+@media(max-width:999px){
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    width:min(87%,365px);
+    max-height:min(27svh,235px);
+  }
+}
+@media(max-width:650px){
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    width:min(88%,300px);
+    max-height:min(24svh,195px);
+  }
+}
