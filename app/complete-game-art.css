@@ -241,3 +241,132 @@
   .question-guide-art img,.wardrobe-mascot-art,.qr-visual-stage .qr){
   animation:none!important;transition:none!important;
 }
+
+/* POST-PR36: compact learner screens retain a readable answer/result area.
+ * Decorations never intercept clicks or make the mobile content wider. */
+@media(max-width:480px){
+  .game-shell .own-result:has(> .learner-reveal-art){
+    padding-right:max(58px,18%)!important;
+    min-width:0;
+  }
+  .game-shell .own-result .learner-reveal-art{
+    right:6px;
+    bottom:6px;
+    max-width:48px;
+    max-height:70px;
+  }
+  .game-shell .wardrobe-heading{
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage{
+    width:min(100%,260px);
+    gap:5px;
+    padding:4px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,215px)!important;
+    max-height:215px!important;
+  }
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-label,
+  .game-shell[data-role="host"] > .host-lobby .qr-stage-caption{
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+}
+@media(max-width:360px){
+  .game-shell[data-role="host"] > .host-lobby .qr-visual-stage .qr{
+    width:min(100%,190px)!important;
+    max-height:190px!important;
+  }
+}
+
+/* PR37 ROUND 2 — instructor visual hierarchy without gameplay changes.
+ * Prioritize scan target, clear steps and the live cast. Preserve all real
+ * participant tiles, timers, gestures, voice controls and image pixels. */
+@media(min-width:1000px) and (min-height:675px){
+  .game-shell[data-role="host"] > .host-lobby .simple-join-ticket{
+    grid-template-columns:minmax(0,43%) minmax(0,1fr)!important;
+    gap:clamp(10px,1.35vw,24px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+    gap:clamp(7px,1.15svh,14px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{
+    font-size:clamp(1.3rem,1.9vw,2.15rem);
+    text-wrap:balance;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps{
+    gap:clamp(5px,.65vw,10px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+    font-size:clamp(.73rem,.83vw,.98rem);
+    line-height:1.25;
+    padding:6px 9px 6px 5px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    width:min(92%,410px);
+    height:clamp(148px,27svh,260px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+    font-size:clamp(1.5rem,2vw,2.4rem);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy p{
+    font-size:clamp(.84rem,.94vw,1.06rem);
+    max-width:40ch;
+  }
+  .game-shell[data-role="host"] > .host-lobby .lobby-main > .button.primary{
+    font-size:clamp(.95rem,1.04vw,1.15rem);
+    font-weight:900;
+  }
+  .game-shell[data-role="host"] > .host-lobby .voice-setup-copy{
+    min-width:0;
+  }
+  .game-shell[data-role="host"] > .host-lobby .voice-setup-copy span{
+    overflow-wrap:anywhere;
+  }
+}
+/* Keep short 720p projectors from clipping the scan stage or player roster. */
+@media(min-width:1000px) and (min-height:675px) and (max-height:760px){
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content{
+    gap:4px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-join-steps span{
+    padding:4px 6px 4px 4px;
+    font-size:clamp(.67rem,.77vw,.86rem);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    height:clamp(100px,18svh,136px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+    font-size:clamp(1.17rem,1.55vw,1.6rem);
+  }
+}
+/* A phone-sized instructor page should scroll naturally, not waste a
+ * full extra screen on the decorative empty-player stage. */
+@media(max-width:650px){
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-stage{
+    min-height:220px;
+    gap:6px;
+    padding-block:9px;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-visual{
+    height:clamp(105px,29vw,145px);
+    width:min(86%,270px);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy strong{
+    font-size:clamp(1.2rem,5vw,1.55rem);
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-empty-copy p{
+    font-size:.88rem;
+    max-width:34ch;
+  }
+  .game-shell[data-role="host"] > .host-lobby .arena-ticket-content h2{
+    text-wrap:balance;
+  }
+}
+/* Increase keyboard discoverability without changing original game controls. */
+.game-shell[data-role="host"] :is(.topbar button,.host-lobby button,.host-lobby input):focus-visible{
+  outline:3px solid #ffe8a3;
+  outline-offset:3px;
+}
