@@ -233,9 +233,9 @@ def apply_identical_deltas(obj, deltas, tolerance):
             "max_raw_coordinate_assignment_error_local": assignment_error,
             "tolerance_local": tolerance}
 
-def triangle_quality(obj, before, triangles):
+def triangle_quality(obj, before, triangles, on_failure=None):
     matrix = obj.matrix_world
-    flipped, minimum_ratio, maximum_ratio = [], math.inf, 0.0
+    flipped, details, minimum_ratio, maximum_ratio = [], [], math.inf, 0.0
     for number, (a, b, c) in enumerate(triangles):
         p = [matrix @ before[i] for i in (a, b, c)]
         q = [matrix @ obj.data.vertices[i].co for i in (a, b, c)]
@@ -247,9 +247,32 @@ def triangle_quality(obj, before, triangles):
         minimum_ratio, maximum_ratio = min(minimum_ratio, ratio), max(maximum_ratio, ratio)
         if new.length <= 1e-12 or old.dot(new) <= 0:
             flipped.append(number)
-    report = {"checked_triangles": len(triangles), "flipped_or_collapsed_triangle_indices": flipped,
-              "minimum_area_ratio": minimum_ratio, "maximum_area_ratio": maximum_ratio}
+            if len(details) < 12:
+                details.append({
+                    "triangle_index": number, "vertex_indices": [a, b, c],
+                    "old_local_coordinates": [list(before[i]) for i in (a, b, c)],
+                    "new_local_coordinates": [list(obj.data.vertices[i].co) for i in (a, b, c)],
+                    "old_world_coordinates": [list(v) for v in p],
+                    "new_world_coordinates": [list(v) for v in q],
+                    "old_area_world": old.length * 0.5, "new_area_world": new.length * 0.5,
+                    "new_to_old_area_ratio": ratio, "old_new_normal_dot": old.dot(new),
+                    "old_new_normal_cosine": old.dot(new) / (old.length * new.length)
+                        if new.length > 0 else None,
+                })
+    report = {
+        "checked_triangles": len(triangles),
+        "flipped_or_collapsed_triangle_count": len(flipped),
+        "flipped_or_collapsed_triangle_indices": flipped[:32],
+        "triangle_indices_truncated": len(flipped) > 32,
+        "implicated_triangle_details": details,
+        "triangle_details_truncated": len(flipped) > len(details),
+        "minimum_area_ratio": minimum_ratio if math.isfinite(minimum_ratio) else None,
+        "maximum_area_ratio": maximum_ratio,
+        "guard": "new.length <= 1e-12 or old.dot(new) <= 0",
+    }
     if flipped:
+        if on_failure is not None:
+            on_failure(report)
         raise ValueError("prototype_has_flipped_or_collapsed_raw_triangles")
     return report
 
@@ -447,6 +470,8 @@ def main():
     parser.add_argument("--config", default=str(
         Path(__file__).with_name("avatar-render-configs") / "snow-crewneck-prototype.json"))
     parser.add_argument("--emit-preview", action="store_true")
+    parser.add_argument("--diagnostic-only", action="store_true",
+                        help="Evaluate the same geometry guard without rendering or saving a blend.")
     args = parser.parse_args()
     import bpy
     from mathutils import Vector
@@ -476,6 +501,15 @@ def main():
     if destination.is_relative_to(source.parents[3]) or source.is_relative_to(destination):
         raise ValueError("prototype_output_overlaps_original_source")
     destination.mkdir(parents=True, exist_ok=False)
+    credits_root = source.parents[3]
+    credit_records = []
+    for relative in ("LICENSES.md", "rain/ATTRIBUTION.txt", "snow/ATTRIBUTION.txt"):
+        credit_source = credits_root / relative
+        output = destination / "credits" / relative
+        output.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(credit_source, output)
+        credit_records.append({"path": str(output.relative_to(destination)),
+            "bytes": output.stat().st_size, "sha256": hashlib.sha256(output.read_bytes()).hexdigest()})
     bpy.context.preferences.filepaths.use_scripts_auto_execute = False
     bpy.ops.wm.open_mainfile(filepath=str(source), load_ui=False, use_scripts=False)
     policy = helper.disable_animation_and_scripts(bpy)
@@ -514,7 +548,10 @@ def main():
         "topology_before": topology, "render_state_before": helper.garment_render_state(garment),
         "manual_correspondence_guard": correspondence,
         "preserved_weights_uv_material_topology_sha256_before": preserved_before,
-        "renders": [], "production_glb_approved": False, "animation_approved": False,
+        "renders": [], "credits": credit_records, "derivative_saved": False,
+        "diagnostic_only": args.diagnostic_only,
+        "derivative": None, "after_views_rendered": 0,
+        "production_glb_approved": False, "animation_approved": False,
         "garment_art_approved": False, "native_driver_policy_visually_accepted": False,
         "limits": ["Only the exact manually matched neckline and geodesic nearby vertices move.",
                    "All original shape-key offsets are preserved; no new sleeve geometry exists.",
@@ -542,16 +579,80 @@ def main():
     transform_before = transform_snapshot(rig, selected_meshes)
     audit["transform_snapshot_before"] = transform_before
     helper.write_json(destination / "prototype-audit.json", audit)
-    render_phase(helper, bpy, destination, scene, camera, center, height, shots,
-                 "before", audit, args.emit_preview)
+    if not args.diagnostic_only:
+        render_phase(helper, bpy, destination, scene, camera, center, height, shots,
+                     "before", audit, args.emit_preview)
     original_vertices = [v.co.copy() for v in garment.data.vertices]
     garment.data.calc_loop_triangles()
     triangles = [tuple(t.vertices) for t in garment.data.loop_triangles]
     deltas, plan = plan_displacements(garment, component, settings)
     audit["displacement_plan"] = plan
+    helper.write_json(destination / "prototype-audit.json", audit)
     audit["delta_application"] = apply_identical_deltas(
         garment, deltas, settings["shape_key_residual_tolerance_local"])
-    audit["raw_triangle_quality_after"] = triangle_quality(garment, original_vertices, triangles)
+    helper.write_json(destination / "prototype-audit.json", audit)
+    def preserve_triangle_failure(report):
+        audit["raw_triangle_quality_after"] = report
+        audit["failure"] = {
+            "stage": "triangle_quality", "error_type": "ValueError",
+            "error_code": "prototype_has_flipped_or_collapsed_raw_triangles",
+        }
+        audit["geometry_after_failure"] = helper.garment_geometry_signature(garment)
+        audit["render_state_after_failure"] = helper.garment_render_state(garment)
+        audit["preserved_weights_uv_material_topology_sha256_at_failure"] = preserved_signature(garment)
+        current_source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+        audit["source_sha256_at_failure"] = current_source_hash
+        audit["source_hash_rechecked"] = True
+        audit["source_unchanged_at_failure"] = current_source_hash == original_hash
+        audit["derivative_saved"] = False
+        audit["after_views_rendered"] = sum(r["phase"] == "after" for r in audit["renders"])
+        helper.write_json(destination / "prototype-audit.json", audit)
+        marker = {
+            "error_code": audit["failure"]["error_code"], "stage": "triangle_quality",
+            "diagnostic_only": args.diagnostic_only,
+            "implicated_triangles": report["flipped_or_collapsed_triangle_count"],
+            "triangle_indices": report["flipped_or_collapsed_triangle_indices"],
+            "triangle_details": report["implicated_triangle_details"][:4],
+            "before_views_rendered": sum(r["phase"] == "before" for r in audit["renders"]),
+            "after_views_rendered": audit["after_views_rendered"],
+            "source_unchanged": audit["source_unchanged_at_failure"],
+            "derivative_saved": False, "garment_art_approved": False,
+            "production_glb_approved": False, "animation_approved": False,
+        }
+        marker_text = json.dumps(marker, allow_nan=False)
+        if len(marker_text.encode("utf-8")) > 24000:
+            marker["triangle_details"] = []
+            marker["triangle_details_omitted_for_stdout_byte_budget"] = True
+            marker_text = json.dumps(marker, allow_nan=False)
+        print("SNOW_CREWNECK_PROTOTYPE_FAILED " + marker_text, flush=True)
+    audit["raw_triangle_quality_after"] = triangle_quality(
+        garment, original_vertices, triangles, on_failure=preserve_triangle_failure)
+    if args.diagnostic_only:
+        preserved_after = preserved_signature(garment)
+        if preserved_after != preserved_before:
+            raise ValueError("weights_uv_materials_or_topology_changed")
+        audit["preserved_weights_uv_material_topology_sha256_after"] = preserved_after
+        audit["weights_uv_materials_topology_preserved"] = True
+        audit["geometry_after"] = helper.garment_geometry_signature(garment)
+        audit["render_state_after"] = helper.garment_render_state(garment)
+        audit["driver_status_after_diagnostic"] = helper.driver_evaluation_status(bpy)
+        audit["driver_summary_after"] = driver_summary(audit["driver_status_after_diagnostic"])
+        current_source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
+        if current_source_hash != original_hash:
+            raise ValueError("immutable_original_source_changed")
+        audit["source_hash_rechecked"] = True
+        audit["source_unchanged"] = True
+        audit["diagnostic_triangle_guard_passed"] = True
+        audit["derivative_saved"] = False
+        audit["after_views_rendered"] = 0
+        helper.write_json(destination / "prototype-audit.json", audit)
+        print("SNOW_CREWNECK_DIAGNOSTIC_COMPLETE " + json.dumps({
+            "diagnostic_only": True, "triangle_guard_passed": True,
+            "before_views_rendered": 0, "after_views_rendered": 0,
+            "source_unchanged": True, "derivative_saved": False,
+            "garment_art_approved": False, "production_glb_approved": False,
+            "animation_approved": False}), flush=True)
+        return
     preserved_after = preserved_signature(garment)
     if preserved_after != preserved_before:
         raise ValueError("weights_uv_materials_or_topology_changed")
@@ -563,6 +664,7 @@ def main():
     bpy.context.view_layer.update()
     render_phase(helper, bpy, destination, scene, camera, center, height, shots,
                  "after", audit, args.emit_preview)
+    audit["after_views_rendered"] = sum(r["phase"] == "after" for r in audit["renders"])
     audit["driver_status_after_render"] = helper.driver_evaluation_status(bpy)
     audit["driver_summary_after"] = driver_summary(audit["driver_status_after_render"])
     transform_after = transform_snapshot(rig, selected_meshes)
@@ -570,18 +672,9 @@ def main():
     audit["rig_and_selected_object_transforms_preserved"] = transform_before == transform_after
     working = destination / "snow-crewneck-prototype.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(working), check_existing=False)
+    audit["derivative_saved"] = True
     audit["derivative"] = {"file": working.name, "bytes": working.stat().st_size,
         "sha256": hashlib.sha256(working.read_bytes()).hexdigest(), "textures_packed": False}
-    credits_root = source.parents[3]
-    credit_records = []
-    for relative in ("LICENSES.md", "rain/ATTRIBUTION.txt", "snow/ATTRIBUTION.txt"):
-        credit_source = credits_root / relative
-        output = destination / "credits" / relative
-        output.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(credit_source, output)
-        credit_records.append({"path": str(output.relative_to(destination)),
-            "bytes": output.stat().st_size, "sha256": hashlib.sha256(output.read_bytes()).hexdigest()})
-    audit["credits"] = credit_records
     if hashlib.sha256(source.read_bytes()).hexdigest() != original_hash:
         raise ValueError("immutable_original_source_changed")
     audit["source_hash_rechecked"] = True
