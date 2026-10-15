@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only closure of declared roots in one frozen packed Snow native derivative.
+"""Read-only fixed Snow source-cage surface plan with locked resource/native prerequisites.
 No original textures, original blend, native pose replay, saves, renders or model upload.
 """
 import argparse
@@ -843,6 +843,769 @@ def failure_record(error, stage):
             "frames": [{"file": Path(frame.filename).name, "line": frame.lineno, "function": frame.name}
                        for frame in traceback.extract_tb(error.__traceback__)[-6:]]}
 
+
+# Source-cage planning, not evaluated geometry, PBR mapping, or renderer approval.
+SURFACE_MODIFIER_FIELDS = {
+    "ARMATURE": [
+        "object",
+        "use_bone_envelopes",
+        "use_vertex_groups",
+        "use_deform_preserve_volume",
+        "use_multi_modifier",
+        "vertex_group",
+        "invert_vertex_group"
+    ],
+    "SUBSURF": [
+        "subdivision_type",
+        "levels",
+        "render_levels",
+        "show_only_control_edges",
+        "use_creases",
+        "use_custom_normals",
+        "use_limit_surface",
+        "uv_smooth",
+        "quality",
+        "boundary_smooth"
+    ],
+    "MASK": [
+        "mode",
+        "armature",
+        "vertex_group",
+        "invert_vertex_group",
+        "use_smooth",
+        "threshold"
+    ],
+    "SMOOTH": [
+        "use_x",
+        "use_y",
+        "use_z",
+        "factor",
+        "iterations",
+        "vertex_group",
+        "invert_vertex_group"
+    ],
+    "CORRECTIVE_SMOOTH": [
+        "factor",
+        "iterations",
+        "scale",
+        "rest_source",
+        "smooth_type",
+        "invert_vertex_group",
+        "vertex_group",
+        "is_bind",
+        "use_only_smooth",
+        "use_pin_boundary"
+    ],
+    "LATTICE": [
+        "object",
+        "vertex_group",
+        "invert_vertex_group",
+        "strength"
+    ],
+    "SOLIDIFY": [
+        "solidify_mode",
+        "thickness",
+        "thickness_clamp",
+        "use_thickness_angle_clamp",
+        "thickness_vertex_group",
+        "offset",
+        "edge_crease_inner",
+        "edge_crease_outer",
+        "edge_crease_rim",
+        "material_offset",
+        "material_offset_rim",
+        "vertex_group",
+        "shell_vertex_group",
+        "rim_vertex_group",
+        "use_rim",
+        "use_even_offset",
+        "use_quality_normals",
+        "invert_vertex_group",
+        "use_flat_faces",
+        "use_flip_normals",
+        "use_rim_only",
+        "nonmanifold_thickness_mode",
+        "nonmanifold_boundary_mode",
+        "nonmanifold_merge_threshold",
+        "bevel_convex"
+    ],
+    "SHRINKWRAP": [
+        "wrap_method",
+        "wrap_mode",
+        "cull_face",
+        "target",
+        "auxiliary_target",
+        "vertex_group",
+        "offset",
+        "project_limit",
+        "use_project_x",
+        "use_project_y",
+        "use_project_z",
+        "subsurf_levels",
+        "use_negative_direction",
+        "use_positive_direction",
+        "use_invert_cull",
+        "invert_vertex_group"
+    ],
+    "WEIGHTED_NORMAL": [
+        "weight",
+        "mode",
+        "thresh",
+        "keep_sharp",
+        "vertex_group",
+        "invert_vertex_group",
+        "use_face_influence"
+    ],
+    "NORMAL_EDIT": [
+        "mode",
+        "mix_mode",
+        "mix_factor",
+        "mix_limit",
+        "no_polynors_fix",
+        "vertex_group",
+        "invert_vertex_group",
+        "target",
+        "use_direction_parallel"
+    ],
+    "MIRROR": [
+        "use_axis",
+        "use_bisect_axis",
+        "use_bisect_flip_axis",
+        "use_clip",
+        "use_mirror_vertex_groups",
+        "use_mirror_merge",
+        "use_mirror_u",
+        "use_mirror_v",
+        "use_mirror_udim",
+        "mirror_offset_u",
+        "mirror_offset_v",
+        "offset_u",
+        "offset_v",
+        "merge_threshold",
+        "bisect_threshold",
+        "mirror_object"
+    ],
+    "CAST": [
+        "cast_type",
+        "object",
+        "invert_vertex_group",
+        "use_x",
+        "use_y",
+        "use_z",
+        "use_radius_as_size",
+        "use_transform",
+        "factor",
+        "radius",
+        "size",
+        "vertex_group"
+    ],
+    "MESH_DEFORM": [
+        "object",
+        "is_bound",
+        "invert_vertex_group",
+        "vertex_group",
+        "precision",
+        "use_dynamic_bind"
+    ],
+    "SURFACE_DEFORM": [
+        "target",
+        "falloff",
+        "is_bound",
+        "vertex_group",
+        "invert_vertex_group",
+        "use_sparse_bind",
+        "strength"
+    ]
+}
+SURFACE_MATERIAL_FIELDS = ("use_nodes", "diffuse_color", "specular_color", "specular_intensity",
+    "roughness", "metallic", "surface_render_method", "displacement_method", "alpha_threshold",
+    "use_transparency_overlap", "use_backface_culling", "use_backface_culling_shadow",
+    "use_backface_culling_lightprobe_volume", "use_transparent_shadow", "thickness_mode",
+    "use_thickness_from_shadow", "volume_intersection_method", "max_vertex_displacement", "pass_index")
+
+def surface_value(bpy, value, labels, depth=0):
+    require(depth <= 8, "surface_value_depth")
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        require(-(2**63) <= value < 2**63, "surface_integer_range")
+        return value
+    if isinstance(value, float):
+        require(math.isfinite(value), "surface_nonfinite_numeric")
+        return value
+    if isinstance(value, str):
+        require(len(value) <= 4096, "surface_string_budget")
+        return value
+    if isinstance(value, bpy.types.ID):
+        require(value in labels and value.library is None and value.override_library is None,
+                "surface_id_outside_supported_closure")
+        return {"id": labels[value]}
+    if isinstance(value, (set, frozenset)):
+        require(len(value) <= 64 and all(isinstance(v, str) for v in value), "surface_enum_set")
+        return sorted(surface_value(bpy, v, labels, depth+1) for v in value)
+    kind = type(value).__name__
+    if isinstance(value, (list, tuple)) or kind in ("bpy_prop_array", "Vector", "Color", "Euler",
+            "Quaternion", "Matrix", "IDPropertyArray"):
+        require(len(value) <= 64, "surface_array_budget")
+        return [surface_value(bpy, v, labels, depth+1) for v in value]
+    if kind == "IDPropertyGroup" or isinstance(value, dict):
+        keys = sorted(value.keys())
+        require(len(keys) <= 256 and all(isinstance(k, str) for k in keys), "surface_idproperty_keys")
+        return {surface_value(bpy, k, labels, depth+1):
+                surface_value(bpy, value[k], labels, depth+1) for k in keys}
+    raise ValueError("surface_value_type_unsupported:"+kind[:96])
+
+def surface_fields(bpy, value, fields, labels):
+    return {name: surface_value(bpy, getattr(value, name), labels) for name in fields}
+
+def surface_stream_digest(rows):
+    digest, count = hashlib.sha256(), 0
+    for row in rows:
+        data = encoded(row)
+        digest.update(len(data).to_bytes(8, "little"))
+        digest.update(data)
+        count += 1
+    return {"count": count, "sha256": digest.hexdigest(),
+            "format": "ordered canonical JSON rows; uint64LE length then UTF8 JSON bytes"}
+
+def surface_modifier(bpy, modifier, labels, groups):
+    row = {"name": modifier.name, "type": modifier.type,
+           "flags": surface_fields(bpy, modifier,
+               ("show_viewport", "show_render", "show_in_editmode", "show_on_cage"), labels)}
+    if modifier.type == "NODES":
+        require(modifier.node_group is not None, "surface_geometry_group_missing")
+        groups.add(modifier.node_group)
+        row["settings"] = surface_fields(bpy, modifier,
+            ("node_group", "bake_directory", "bake_target"), labels)
+        require(len(modifier.bakes) == 0, "surface_geometry_bakes_unsupported")
+        row["bake_count"] = 0
+        # Registered NodesModifier settings IDProperty map; never execute or update the node group.
+        row["instance_settings"] = surface_value(bpy,
+            {key: modifier[key] for key in sorted(modifier.keys())}, labels)
+        row["source_parameter_capture_supported"] = True
+        return row
+    if modifier.type == "DATA_TRANSFER":
+        row["settings"] = {"object": surface_value(bpy, modifier.object, labels)}
+        row["source_parameter_capture_supported"] = False
+        row["unsupported_reason"] = "Dynamic layer enum labels may evaluate source meshes and use active-object context; selectors not read."
+        row["unread_selector_fields"] = ["layers_vgroup_select_src", "layers_vcol_vert_select_src",
+            "layers_vcol_loop_select_src", "layers_uv_select_src", "layers_vgroup_select_dst",
+            "layers_vcol_vert_select_dst", "layers_vcol_loop_select_dst", "layers_uv_select_dst"]
+        row["other_settings_not_captured"] = True
+        return row
+    if modifier.type not in SURFACE_MODIFIER_FIELDS:
+        row["source_parameter_capture_supported"] = False
+        row["unsupported_reason"] = "Modifier type has no complete source-backed public-parameter serializer."
+        return row
+    row["settings"] = surface_fields(bpy, modifier, SURFACE_MODIFIER_FIELDS[modifier.type], labels)
+    row["source_parameter_capture_supported"] = True
+    return row
+
+def surface_mesh(bpy, obj, rig, labels, materials, groups):
+    mesh = obj.data
+    require(obj.type == "MESH" and obj.mode == "OBJECT" and not mesh.is_editmode,
+            "surface_source_mesh_mode")
+    require(obj in labels and mesh in labels, "surface_mesh_identity")
+    require(mesh.library is None and mesh.override_library is None, "surface_linked_mesh")
+    require(len(obj.material_slots) <= 64 and len(mesh.uv_layers) <= 16
+            and len(obj.modifiers) <= 64 and len(mesh.attributes) <= 128,
+            "surface_mesh_collection_budget")
+    row = {"object": labels[obj], "data": labels[mesh], "source_cage_only": True,
+           "final_evaluated_surface_approved": False, "mode": obj.mode,
+           "vertices": len(mesh.vertices), "edges": len(mesh.edges), "loops": len(mesh.loops),
+           "polygons": len(mesh.polygons), "shape_key_blocks": len(mesh.shape_keys.key_blocks)
+                 if mesh.shape_keys else 0,
+           "matrix_world": surface_value(bpy, obj.matrix_world, labels),
+           "hide_viewport": bool(obj.hide_viewport), "hide_render": bool(obj.hide_render),
+           "data_materials": [surface_value(bpy, material, labels) for material in mesh.materials]}
+    for material in mesh.materials:
+        if material is not None:
+            materials.add(material)
+    slots = []
+    for index, slot in enumerate(obj.material_slots):
+        require(slot.slot_index == index and slot.link in ("OBJECT", "DATA"),
+                "surface_material_slot_identity")
+        material = slot.material
+        if material is not None:
+            materials.add(material)
+        slots.append({"index": index, "link": slot.link, "name": slot.name,
+                      "resolved_material": surface_value(bpy, material, labels)})
+    row["material_slots"] = slots
+    counts = {}
+    bad = []
+    for polygon in mesh.polygons:
+        index = int(polygon.material_index)
+        counts[str(index)] = counts.get(str(index), 0)+1
+        if index < 0 or index >= max(1, len(slots)):
+            bad.append(int(polygon.index))
+    row["polygon_material_index_counts"] = counts
+    row["unassigned_index_zero_faces_without_slots"] = counts.get("0",0) if not slots else 0
+    row["out_of_range_material_indices"] = {"count": len(bad), "first20_polygon_indices": bad[:20]}
+    require(not bad, "surface_polygon_material_index_out_of_range")
+    row["source_positions"] = surface_stream_digest(
+        surface_value(bpy, vertex.co, labels) for vertex in mesh.vertices)
+    row["source_topology"] = surface_stream_digest(
+        [int(p.index), list(p.vertices), int(p.loop_start), int(p.loop_total),
+         int(p.material_index), bool(p.use_smooth)] for p in mesh.polygons)
+    row["source_edges"] = surface_stream_digest(list(e.vertices) for e in mesh.edges)
+    group_names = {group.index: group.name for group in obj.vertex_groups}
+    deform = {bone.name for bone in rig.data.bones if bone.use_deform}
+    maximum, zero, positive = 0, 0, 0
+    def weight_rows():
+        nonlocal maximum, zero, positive
+        for vertex in mesh.vertices:
+            memberships = []
+            eligible = 0
+            for group in vertex.groups:
+                require(group.group in group_names and math.isfinite(group.weight)
+                        and group.weight >= 0, "surface_raw_weight_membership")
+                name = group_names[group.group]
+                memberships.append([int(group.group), name, float(group.weight)])
+                if group.weight > 0 and name in deform:
+                    eligible += 1
+            maximum = max(maximum, eligible)
+            zero += int(eligible == 0)
+            positive += int(eligible > 0)
+            yield [int(vertex.index), memberships]
+    weight_digest = surface_stream_digest(weight_rows())
+    row["source_vertex_groups"] = [{"index":g.index, "name":g.name} for g in obj.vertex_groups]
+    row["source_weights"] = {"memberships":weight_digest,
+        "max_positive_use_deform_bone_groups":maximum,
+        "vertices_without_positive_use_deform_group":zero,
+        "vertices_with_positive_use_deform_group":positive,
+        "scope":"raw source memberships only; not new pre-Armature or evaluated weight proof",
+        "weights_changed_or_truncated":False}
+    uv_rows = []
+    for index, layer in enumerate(mesh.uv_layers):
+        require(len(layer.uv) == len(mesh.loops), "surface_uv_corner_count")
+        low, high, cells = [None,None], [None,None], {}
+        def uv_values():
+            for item in layer.uv:
+                uv = surface_value(bpy, item.vector, labels)
+                require(len(uv) == 2, "surface_uv_dimension")
+                for axis in range(2):
+                    low[axis] = uv[axis] if low[axis] is None else min(low[axis],uv[axis])
+                    high[axis] = uv[axis] if high[axis] is None else max(high[axis],uv[axis])
+                cell = (math.floor(uv[0]), math.floor(uv[1]))
+                require(abs(cell[0]) <= 1000000 and abs(cell[1]) <= 1000000,
+                        "surface_uv_cell_range")
+                cells[cell] = cells.get(cell,0)+1
+                require(len(cells) <= 4096, "surface_uv_cell_budget")
+                yield uv
+        checksum = surface_stream_digest(uv_values())
+        uv_rows.append({"index":index,"name":layer.name,"active":bool(layer.active),
+            "active_render":bool(layer.active_render),"active_clone":bool(layer.active_clone),
+            "coordinates":checksum,"minimum":low,"maximum":high,
+            "raw_floor_cell_counts":[{"u":cell[0],"v":cell[1],"corners":count}
+                                    for cell,count in sorted(cells.items())],
+            "sampled_image_tile_coverage_approved":False})
+    row["uv_layers"] = uv_rows
+    row["active_uv_layer_index"] = int(mesh.uv_layers.active_index)
+    row["active_uv_layer_name"] = mesh.uv_layers.active.name if mesh.uv_layers.active else None
+    # Named shader-attribute dependencies need a descriptor; no assumption that a name is a UV map.
+    row["attribute_descriptors"] = [{"name":attribute.name,"type":attribute.data_type,
+                                   "domain":attribute.domain,"length":len(attribute.data)}
+                                  for attribute in mesh.attributes]
+    row["attribute_values_captured_except_uv"] = False
+    row["modifiers"] = [surface_modifier(bpy, modifier, labels, groups) for modifier in obj.modifiers]
+    return row
+
+def source_surface_report(bpy, config, rig, labels, context):
+    objects = [bpy.data.objects.get(name) for name in config["mesh_names"]]
+    require(len(objects) == 17 and all(obj is not None for obj in objects), "surface_exact17_objects")
+    counts = {"objects":len(objects), "vertices":sum(len(obj.data.vertices) for obj in objects),
+              "loops":sum(len(obj.data.loops) for obj in objects),
+              "polygons":sum(len(obj.data.polygons) for obj in objects),
+              "modifiers":sum(len(obj.modifiers) for obj in objects)}
+    context["preflight_counts"] = counts
+    modifier_types = {}
+    for obj in objects:
+        for modifier in obj.modifiers:
+            modifier_types[modifier.type] = modifier_types.get(modifier.type,0)+1
+    context["all_modifier_type_counts"] = dict(sorted(modifier_types.items()))
+    require(counts["vertices"] <= 1000000 and counts["loops"] <= 4000000
+            and counts["polygons"] <= 1000000 and counts["modifiers"] <= 1024,
+            "surface_aggregate_preflight")
+    meshes, materials, groups = [], set(), set()
+    for obj in objects:
+        context["active_object"] = obj.name
+        meshes.append(surface_mesh(bpy,obj,rig,labels,materials,groups))
+    require(len(materials) <= 128, "surface_material_budget")
+    material_rows, roots = [], set(groups)
+    for material in sorted(materials,key=lambda item:labels[item]):
+        context["active_material"] = material.name
+        require(material.library is None and material.override_library is None,
+                "surface_material_linked_or_override")
+        material_rows.append({"id":labels[material],
+            "settings":surface_fields(bpy,material,SURFACE_MATERIAL_FIELDS,labels),
+            "node_tree":surface_value(bpy,material.node_tree,labels)})
+        if material.node_tree is not None:
+            roots.add(material.node_tree)
+    trees = surface_node_trees(bpy,roots,labels)
+    unsupported = [{"object":mesh["object"], "modifier_index":index, "modifier_name":modifier["name"],
+                    "type":modifier["type"], "reason":modifier["unsupported_reason"]}
+                   for mesh in meshes for index,modifier in enumerate(mesh["modifiers"])
+                   if modifier.get("source_parameter_capture_supported") is not True]
+    unsupported_types = {}
+    for item in unsupported:
+        unsupported_types[item["type"]] = unsupported_types.get(item["type"],0)+1
+    result = {"schema_version":1, "scope":"exact17 configured SOURCE-CAGE meshes and source-slot materials",
+        "source_counts":counts, "native_render_engine":bpy.context.scene.render.engine, "meshes":meshes, "materials":material_rows, "node_trees":trees,
+        "source_exposed_parameter_capture_complete":not unsupported,
+        "unsupported_modifier_count":len(unsupported), "unsupported_modifier_type_counts":unsupported_types,
+        "unsupported_modifiers":unsupported, "unsupported_selector_or_type_never_read":True,
+        "derived_render_caches_captured":False, "all_node_storage_bytes_captured":False,
+        "named_attribute_numeric_data_or_behavior_approved":False,
+        "source_cage_equals_final_surface":False,
+        "final_evaluated_material_assignments_complete":False,
+        "pbr_semantic_mapping_approved":False,"material_visual_approved":False,
+        "production_glb_approved":False,"browser_approved":False,
+        "renders_or_bakes":0,"models_saved":0,"model_payload_reuploaded":False,
+        "source_or_native_controls_changed":False}
+    require(len(encoded(result)) <= 650*1024, "surface_report_byte_budget")
+    return result
+
+
+# Prepared source-only insertion block; Blender 4.5.9 / 8bf95cbd38d1456c94e9d751f3804eea4d5b137b.
+# Primary policy 791607b112df7fb8e94b98a708efbec42955462b.
+# Requires existing require, encoded, hashlib, math, redacted_text and
+# surface_value(bpy, value, labels, depth=0). Does not import bpy or execute nodes.
+# Public source configuration only; hidden GPU/curve caches are not read/rebuilt.
+SURFACE_NODE_FIELDS = {"NodeFrame": {"text": "ID", "shrink": "bool", "label_size": "int"}, "NodeReroute": {"socket_idname": "str"}, "NodeGroupInput": {}, "NodeGroupOutput": {"is_active_output": "bool"}, "ShaderNodeGroup": {"node_tree": "ID"}, "ShaderNodeTexImage": {"image": "ID", "projection": "enum", "interpolation": "enum", "projection_blend": "float", "extension": "enum", "image_user": "ImageUser", "texture_mapping": "TexMapping", "color_mapping": "ColorMapping"}, "ShaderNodeTexEnvironment": {"image": "ID", "projection": "enum", "interpolation": "enum", "image_user": "ImageUser", "texture_mapping": "TexMapping", "color_mapping": "ColorMapping"}, "ShaderNodeBsdfPrincipled": {"distribution": "enum", "subsurface_method": "enum"}, "ShaderNodeOutputMaterial": {"is_active_output": "bool", "target": "enum"}, "ShaderNodeNormalMap": {"space": "enum", "uv_map": "str"}, "ShaderNodeMath": {"operation": "enum", "use_clamp": "bool"}, "ShaderNodeVectorMath": {"operation": "enum"}, "ShaderNodeMixRGB": {"blend_type": "enum", "use_alpha": "bool", "use_clamp": "bool"}, "ShaderNodeMix": {"data_type": "enum", "factor_mode": "enum", "blend_type": "enum", "clamp_factor": "bool", "clamp_result": "bool"}, "ShaderNodeRGB": {}, "ShaderNodeValue": {}, "ShaderNodeTexCoord": {"object": "ID", "from_instancer": "bool"}, "ShaderNodeMapping": {"vector_type": "enum"}, "ShaderNodeBackground": {}, "ShaderNodeOutputWorld": {"is_active_output": "bool", "target": "enum"}, "ShaderNodeAddShader": {}, "ShaderNodeAttribute": {"attribute_type": "enum", "attribute_name": "str"}, "ShaderNodeBsdfAnisotropic": {"distribution": "enum"}, "ShaderNodeBsdfRefraction": {"distribution": "enum"}, "ShaderNodeBsdfTransparent": {}, "ShaderNodeEmission": {}, "ShaderNodeInvert": {}, "ShaderNodeLightPath": {}, "ShaderNodeMixShader": {}, "ShaderNodeNewGeometry": {}, "ShaderNodeTangent": {"direction_type": "enum", "axis": "enum", "uv_map": "str"}, "ShaderNodeUVMap": {"from_instancer": "bool", "uv_map": "str"}, "FunctionNodeBooleanMath": {"operation": "enum"}, "FunctionNodeCompare": {"operation": "enum", "data_type": "enum", "mode": "enum"}, "GeometryNodeInputEdgeSmooth": {}, "GeometryNodeInputMeshEdgeAngle": {}, "GeometryNodeInputShadeSmooth": {}, "GeometryNodeSetShadeSmooth": {"domain": "enum"}, "ShaderNodeValToRGB": {"color_ramp": "ColorRamp"}, "ShaderNodeRGBCurve": {"mapping": "CurveMapping"}, "ShaderNodeSeparateColor": {"mode": "enum"}, "ShaderNodeVectorRotate": {"rotation_type": "enum", "invert": "bool"}, "ShaderNodeVectorTransform": {"vector_type": "enum", "convert_from": "enum", "convert_to": "enum"}, "ShaderNodeMapRange": {"clamp": "bool", "interpolation_type": "enum", "data_type": "enum"}}
+SURFACE_SOCKET_FORMS = {"NodeSocketFloat": ["float", "NodeTreeInterfaceSocketFloat", "SOCK_FLOAT", "PROP_NONE"], "NodeSocketFloatUnsigned": ["float", "NodeTreeInterfaceSocketFloatUnsigned", "SOCK_FLOAT", "PROP_UNSIGNED"], "NodeSocketFloatPercentage": ["float", "NodeTreeInterfaceSocketFloatPercentage", "SOCK_FLOAT", "PROP_PERCENTAGE"], "NodeSocketFloatFactor": ["float", "NodeTreeInterfaceSocketFloatFactor", "SOCK_FLOAT", "PROP_FACTOR"], "NodeSocketFloatAngle": ["float", "NodeTreeInterfaceSocketFloatAngle", "SOCK_FLOAT", "PROP_ANGLE"], "NodeSocketFloatTime": ["float", "NodeTreeInterfaceSocketFloatTime", "SOCK_FLOAT", "PROP_TIME"], "NodeSocketFloatTimeAbsolute": ["float", "NodeTreeInterfaceSocketFloatTimeAbsolute", "SOCK_FLOAT", "PROP_TIME_ABSOLUTE"], "NodeSocketFloatDistance": ["float", "NodeTreeInterfaceSocketFloatDistance", "SOCK_FLOAT", "PROP_DISTANCE"], "NodeSocketFloatWavelength": ["float", "NodeTreeInterfaceSocketFloatWavelength", "SOCK_FLOAT", "PROP_WAVELENGTH"], "NodeSocketFloatColorTemperature": ["float", "NodeTreeInterfaceSocketFloatColorTemperature", "SOCK_FLOAT", "PROP_COLOR_TEMPERATURE"], "NodeSocketFloatFrequency": ["float", "NodeTreeInterfaceSocketFloatFrequency", "SOCK_FLOAT", "PROP_FREQUENCY"], "NodeSocketInt": ["int", "NodeTreeInterfaceSocketInt", "SOCK_INT", "PROP_NONE"], "NodeSocketIntUnsigned": ["int", "NodeTreeInterfaceSocketIntUnsigned", "SOCK_INT", "PROP_UNSIGNED"], "NodeSocketIntPercentage": ["int", "NodeTreeInterfaceSocketIntPercentage", "SOCK_INT", "PROP_PERCENTAGE"], "NodeSocketIntFactor": ["int", "NodeTreeInterfaceSocketIntFactor", "SOCK_INT", "PROP_FACTOR"], "NodeSocketBool": ["bool", "NodeTreeInterfaceSocketBool", "SOCK_BOOLEAN", "PROP_NONE"], "NodeSocketRotation": ["v3", "NodeTreeInterfaceSocketRotation", "SOCK_ROTATION", "PROP_NONE"], "NodeSocketMatrix": ["none", "NodeTreeInterfaceSocketMatrix", "SOCK_MATRIX", "PROP_NONE"], "NodeSocketVector": ["v3", "NodeTreeInterfaceSocketVector", "SOCK_VECTOR", "PROP_NONE"], "NodeSocketVectorFactor": ["v3", "NodeTreeInterfaceSocketVectorFactor", "SOCK_VECTOR", "PROP_FACTOR"], "NodeSocketVectorPercentage": ["v3", "NodeTreeInterfaceSocketVectorPercentage", "SOCK_VECTOR", "PROP_PERCENTAGE"], "NodeSocketVectorTranslation": ["v3", "NodeTreeInterfaceSocketVectorTranslation", "SOCK_VECTOR", "PROP_TRANSLATION"], "NodeSocketVectorDirection": ["v3", "NodeTreeInterfaceSocketVectorDirection", "SOCK_VECTOR", "PROP_DIRECTION"], "NodeSocketVectorVelocity": ["v3", "NodeTreeInterfaceSocketVectorVelocity", "SOCK_VECTOR", "PROP_VELOCITY"], "NodeSocketVectorAcceleration": ["v3", "NodeTreeInterfaceSocketVectorAcceleration", "SOCK_VECTOR", "PROP_ACCELERATION"], "NodeSocketVectorEuler": ["v3", "NodeTreeInterfaceSocketVectorEuler", "SOCK_VECTOR", "PROP_EULER"], "NodeSocketVectorXYZ": ["v3", "NodeTreeInterfaceSocketVectorXYZ", "SOCK_VECTOR", "PROP_XYZ"], "NodeSocketVector2D": ["v2", "NodeTreeInterfaceSocketVector2D", "SOCK_VECTOR", "PROP_NONE"], "NodeSocketVectorFactor2D": ["v2", "NodeTreeInterfaceSocketVectorFactor2D", "SOCK_VECTOR", "PROP_FACTOR"], "NodeSocketVectorPercentage2D": ["v2", "NodeTreeInterfaceSocketVectorPercentage2D", "SOCK_VECTOR", "PROP_PERCENTAGE"], "NodeSocketVectorTranslation2D": ["v2", "NodeTreeInterfaceSocketVectorTranslation2D", "SOCK_VECTOR", "PROP_TRANSLATION"], "NodeSocketVectorDirection2D": ["v2", "NodeTreeInterfaceSocketVectorDirection2D", "SOCK_VECTOR", "PROP_DIRECTION"], "NodeSocketVectorVelocity2D": ["v2", "NodeTreeInterfaceSocketVectorVelocity2D", "SOCK_VECTOR", "PROP_VELOCITY"], "NodeSocketVectorAcceleration2D": ["v2", "NodeTreeInterfaceSocketVectorAcceleration2D", "SOCK_VECTOR", "PROP_ACCELERATION"], "NodeSocketVectorEuler2D": ["v2", "NodeTreeInterfaceSocketVectorEuler2D", "SOCK_VECTOR", "PROP_EULER"], "NodeSocketVectorXYZ2D": ["v2", "NodeTreeInterfaceSocketVectorXYZ2D", "SOCK_VECTOR", "PROP_XYZ"], "NodeSocketVector4D": ["v4", "NodeTreeInterfaceSocketVector4D", "SOCK_VECTOR", "PROP_NONE"], "NodeSocketVectorFactor4D": ["v4", "NodeTreeInterfaceSocketVectorFactor4D", "SOCK_VECTOR", "PROP_FACTOR"], "NodeSocketVectorPercentage4D": ["v4", "NodeTreeInterfaceSocketVectorPercentage4D", "SOCK_VECTOR", "PROP_PERCENTAGE"], "NodeSocketVectorTranslation4D": ["v4", "NodeTreeInterfaceSocketVectorTranslation4D", "SOCK_VECTOR", "PROP_TRANSLATION"], "NodeSocketVectorDirection4D": ["v4", "NodeTreeInterfaceSocketVectorDirection4D", "SOCK_VECTOR", "PROP_DIRECTION"], "NodeSocketVectorVelocity4D": ["v4", "NodeTreeInterfaceSocketVectorVelocity4D", "SOCK_VECTOR", "PROP_VELOCITY"], "NodeSocketVectorAcceleration4D": ["v4", "NodeTreeInterfaceSocketVectorAcceleration4D", "SOCK_VECTOR", "PROP_ACCELERATION"], "NodeSocketVectorEuler4D": ["v4", "NodeTreeInterfaceSocketVectorEuler4D", "SOCK_VECTOR", "PROP_EULER"], "NodeSocketVectorXYZ4D": ["v4", "NodeTreeInterfaceSocketVectorXYZ4D", "SOCK_VECTOR", "PROP_XYZ"], "NodeSocketColor": ["v4", "NodeTreeInterfaceSocketColor", "SOCK_RGBA", "PROP_NONE"], "NodeSocketString": ["str", "NodeTreeInterfaceSocketString", "SOCK_STRING", "PROP_NONE"], "NodeSocketStringFilePath": ["str", "NodeTreeInterfaceSocketStringFilePath", "SOCK_STRING", "PROP_FILEPATH"], "NodeSocketShader": ["none", "NodeTreeInterfaceSocketShader", "SOCK_SHADER", "PROP_NONE"], "NodeSocketObject": ["ID", "NodeTreeInterfaceSocketObject", "SOCK_OBJECT", "PROP_NONE"], "NodeSocketImage": ["ID", "NodeTreeInterfaceSocketImage", "SOCK_IMAGE", "PROP_NONE"], "NodeSocketGeometry": ["none", "NodeTreeInterfaceSocketGeometry", "SOCK_GEOMETRY", "PROP_NONE"], "NodeSocketCollection": ["ID", "NodeTreeInterfaceSocketCollection", "SOCK_COLLECTION", "PROP_NONE"], "NodeSocketTexture": ["ID", "NodeTreeInterfaceSocketTexture", "SOCK_TEXTURE", "PROP_NONE"], "NodeSocketMaterial": ["ID", "NodeTreeInterfaceSocketMaterial", "SOCK_MATERIAL", "PROP_NONE"], "NodeSocketVirtual": ["none", None, "SOCK_CUSTOM", "PROP_NONE"]}
+SURFACE_NESTED_FIELDS = {"ImageUser": {"use_auto_refresh": "bool", "frame_current": "int", "use_cyclic": "bool", "frame_duration": "int", "frame_offset": "int", "frame_start": "int", "multilayer_layer": "int", "multilayer_pass": "int", "multilayer_view": "int", "tile": "int"}, "TexMapping": {"vector_type": "enum", "translation": "v3", "rotation": "v3", "scale": "v3", "min": "v3", "max": "v3", "use_min": "bool", "use_max": "bool", "mapping_x": "enum", "mapping_y": "enum", "mapping_z": "enum", "mapping": "enum"}, "ColorMapping": {"use_color_ramp": "bool", "color_ramp": "ColorRamp", "brightness": "float", "contrast": "float", "saturation": "float", "blend_type": "enum", "blend_color": "v3", "blend_factor": "float"}}
+SURFACE_GRAPH_CAPS = {"trees": 128, "nodes": 4096, "sockets": 32768,
+                      "links": 32768, "interface_items": 8192, "images": 64}
+
+def surface_count(counts, kind, amount=1):
+    counts[kind] += amount
+    require(counts[kind] <= SURFACE_GRAPH_CAPS[kind], "surface_"+kind+"_budget")
+
+def surface_typed(bpy, value, kind, labels, depth=0):
+    require(depth <= 8, "surface_nested_depth")
+    if kind == "ID":
+        require(value is None or isinstance(value, bpy.types.ID), "surface_id_type")
+        if value is not None:
+            require(value in labels and value.library is None
+                    and value.override_library is None, "surface_id_scope")
+        return surface_value(bpy, value, labels, depth)
+    if kind == "bool":
+        require(type(value) is bool, "surface_bool_type")
+        return value
+    if kind == "int":
+        require(type(value) is int and -(1 << 63) <= value < (1 << 63), "surface_int_type")
+        return value
+    if kind == "float":
+        require(type(value) in (int, float) and math.isfinite(value), "surface_float_type")
+        return float(value)
+    if kind in ("str", "enum"):
+        require(type(value) is str and len(value) <= (128 if kind == "enum" else 4096),
+                "surface_string_type_or_budget")
+        if kind == "enum":
+            require(bool(value) and all(char.isascii() for char in value), "surface_enum_identifier")
+        return value
+    if kind in ("v2", "v3", "v4"):
+        size = int(kind[1:])
+        require(not isinstance(value, (str, bytes, dict)) and len(value) == size,
+                "surface_vector_shape")
+        return [surface_typed(bpy, component, "float", labels, depth+1) for component in value]
+    if kind == "ColorRamp":
+        require(value is not None and value.bl_rna.identifier == "ColorRamp",
+                "surface_color_ramp_type")
+        require(1 <= len(value.elements) <= 32, "surface_color_ramp_budget")
+        out = surface_node_fields(bpy, value, {"interpolation": "enum", "hue_interpolation": "enum",
+                             "color_mode": "enum"}, labels, depth+1)
+        out["elements"] = [surface_node_fields(bpy, item, {"position": "float", "color": "v4",
+                            "alpha": "float"}, labels, depth+1) for item in value.elements]
+        return out
+    if kind == "CurveMapping":
+        require(value is not None and value.bl_rna.identifier == "CurveMapping",
+                "surface_curve_mapping_type")
+        out = surface_node_fields(bpy, value, {"tone": "enum", "use_clip": "bool",
+            "clip_min_x": "float", "clip_min_y": "float", "clip_max_x": "float",
+            "clip_max_y": "float", "extend": "enum", "black_level": "v3",
+            "white_level": "v3"}, labels, depth+1)
+        require(len(value.curves) <= 4, "surface_curve_count")
+        out["curves"] = []
+        total_points = 0
+        for curve in value.curves:
+            total_points += len(curve.points)
+            require(total_points <= 4096, "surface_curve_point_budget")
+            out["curves"].append({"points": [surface_node_fields(bpy, point,
+                {"location": "v2", "handle_type": "enum", "select": "bool"},
+                labels, depth+1) for point in curve.points]})
+        return out
+    if kind in SURFACE_NESTED_FIELDS:
+        require(value is not None and value.bl_rna.identifier == kind,
+                "surface_nested_rna_type")
+        return surface_node_fields(bpy, value, SURFACE_NESTED_FIELDS[kind], labels, depth+1)
+    require(False, "surface_unhandled_typed_value")
+
+def surface_node_fields(bpy, item, fields, labels, depth=0):
+    # Only explicit names; never walk/get all RNA properties.
+    return {name: surface_typed(bpy, getattr(item, name), kind, labels, depth+1)
+            for name, kind in fields.items()}
+
+def surface_id_properties(bpy, item, labels):
+    require(len(item.keys()) <= 256, "surface_id_property_count")
+    return surface_value(bpy, {key: item[key] for key in sorted(item.keys())}, labels)
+
+def surface_socket_default(bpy, socket, socket_id, labels, image_ids):
+    require(socket_id in SURFACE_SOCKET_FORMS, "surface_unsupported_socket_form")
+    kind, _, _, subtype = SURFACE_SOCKET_FORMS[socket_id]
+    if kind == "none":
+        require(not hasattr(socket, "default_value"), "surface_unhandled_socket_default")
+        return {"kind": "no_RNA_default_value"}
+    value = socket.default_value
+    if subtype == "PROP_FILEPATH":
+        require(value == "", "surface_nonempty_socket_filepath")
+    if kind == "ID" and isinstance(value, bpy.types.Image):
+        image_ids.add(value)
+    return {"kind": kind, "value": surface_typed(bpy, value, kind, labels)}
+
+def surface_socket(bpy, socket, index, direction, node_index, labels, image_ids):
+    socket_id = socket.bl_idname
+    require(socket_id in SURFACE_SOCKET_FORMS
+            and socket.bl_rna.identifier == socket_id, "surface_socket_rna_identity")
+    out = surface_node_fields(bpy, socket, {"name": "str", "identifier": "str", "type": "enum",
+        "is_output": "bool", "enabled": "bool", "hide": "bool", "hide_value": "bool",
+        "is_unavailable": "bool", "is_multi_input": "bool", "is_linked": "bool",
+        "link_limit": "int"}, labels)
+    require(out["is_output"] == (direction == "outputs"), "surface_socket_direction")
+    out.update({"index": index, "node_index": node_index, "direction": direction,
+                "socket_rna": socket_id,
+                "default": surface_socket_default(bpy, socket, socket_id, labels, image_ids)})
+    return out
+
+def surface_interface(bpy, tree, labels, counts, image_ids):
+    interface = tree.interface
+    require(interface.bl_rna.identifier == "NodeTreeInterface", "surface_interface_type")
+    require(len(interface.items_tree) <= 4096, "surface_tree_interface_budget")
+    items = list(interface.items_tree)
+    surface_count(counts, "interface_items", len(items))
+    indices = {item: index for index, item in enumerate(items)}
+    require(len(indices) == len(items), "surface_interface_item_identity")
+    implicit_roots = {item.parent for item in items
+                      if item.parent is not None and item.parent not in indices}
+    require(len(implicit_roots) <= 1, "surface_interface_implicit_root_count")
+    implicit = next(iter(implicit_roots)) if implicit_roots else None
+    def panel_fields(panel):
+        require(panel.bl_rna.identifier == "NodeTreeInterfacePanel"
+                and panel.item_type == "PANEL", "surface_interface_panel_type")
+        out = surface_node_fields(bpy, panel, {"name": "str", "description": "str",
+            "default_closed": "bool", "persistent_uid": "int"}, labels)
+        require(len(panel.interface_items) <= 4096
+                and all(child in indices for child in panel.interface_items),
+                "surface_interface_panel_children")
+        out["children"] = [indices[child] for child in panel.interface_items]
+        return out
+    root_record = None
+    if implicit is not None:
+        require(implicit.parent is None, "surface_interface_root_parent")
+        root_record = panel_fields(implicit)
+    rows = []
+    for index, item in enumerate(items):
+        parent = item.parent
+        require(parent is None or parent in indices or parent == implicit,
+                "surface_interface_parent")
+        row = {"collection_index": index, "index": surface_typed(bpy, item.index, "int", labels),
+               "position": surface_typed(bpy, item.position, "int", labels),
+               "parent": "ROOT" if parent == implicit and parent is not None else
+                         (indices[parent] if parent is not None else None),
+               "item_type": surface_typed(bpy, item.item_type, "enum", labels)}
+        if item.item_type == "PANEL":
+            row.update(panel_fields(item))
+        elif item.item_type == "SOCKET":
+            socket_id = item.bl_socket_idname
+            require(socket_id in SURFACE_SOCKET_FORMS and socket_id != "NodeSocketVirtual",
+                    "surface_unsupported_interface_socket")
+            kind, rna_interface, family, _ = SURFACE_SOCKET_FORMS[socket_id]
+            require(item.bl_rna.identifier == rna_interface, "surface_interface_socket_rna")
+            row.update(surface_node_fields(bpy, item, {"name": "str", "identifier": "str",
+                "description": "str", "socket_type": "enum", "in_out": "enum",
+                "hide_value": "bool", "hide_in_modifier": "bool", "force_non_field": "bool",
+                "is_inspect_output": "bool", "is_panel_toggle": "bool", "layer_selection_field": "bool",
+                "menu_expanded": "bool", "attribute_domain": "enum", "default_attribute_name": "str",
+                "structure_type": "enum", "default_input": "enum", "bl_socket_idname": "str"}, labels))
+            row["default"] = surface_socket_default(bpy, item, socket_id, labels, image_ids)
+            if family in ("SOCK_FLOAT", "SOCK_INT", "SOCK_VECTOR"):
+                row["subtype"] = surface_typed(bpy, item.subtype, "enum", labels)
+                number_type = "int" if family == "SOCK_INT" else "float"
+                row["min_value"] = surface_typed(bpy, item.min_value, number_type, labels)
+                row["max_value"] = surface_typed(bpy, item.max_value, number_type, labels)
+                if family == "SOCK_VECTOR":
+                    row["dimensions"] = surface_typed(bpy, item.dimensions, "int", labels)
+                    require(row["dimensions"] == int(kind[1:]), "surface_interface_vector_dimensions")
+            elif family == "SOCK_STRING":
+                row["subtype"] = surface_typed(bpy, item.subtype, "enum", labels)
+            row["id_properties"] = surface_id_properties(bpy, item, labels)
+        else:
+            require(False, "surface_unsupported_interface_item")
+        rows.append(row)
+    keys = [(row["in_out"], row["identifier"]) for row in rows if row["item_type"] == "SOCKET"]
+    require(len(keys) == len(set(keys)), "surface_duplicate_interface_identifier")
+    return {"items": rows, "implicit_root_panel": root_record,
+            "empty_root_panel_unexposed": not items,
+            "interface_container_id_properties_supported": False}
+
+def surface_image_metadata(bpy, image, labels):
+    require(image in labels and image.library is None and image.override_library is None
+            and image.source in ("FILE", "TILED"), "surface_image_scope")
+    out = {"id": surface_typed(bpy, image, "ID", labels)}
+    out.update(surface_node_fields(bpy, image, {"source": "enum", "type": "enum", "alpha_mode": "enum",
+        "use_view_as_render": "bool", "use_deinterlace": "bool", "use_multiview": "bool",
+        "is_multiview": "bool", "is_stereo_3d": "bool", "views_format": "enum",
+        "use_half_precision": "bool"}, labels))
+    require(not out["use_multiview"] and not out["is_multiview"] and not out["is_stereo_3d"],
+            "surface_multiview_or_stereo_unsupported")
+    out["colorspace"] = surface_node_fields(bpy, image.colorspace_settings,
+                                      {"name": "enum", "is_data": "bool"}, labels)
+    out["filepath"] = redacted_text(image.filepath_raw)
+    require(len(image.tiles) <= 256 and len(image.packed_files) <= 256, "surface_image_mapping_budget")
+    out["tiles"] = [surface_node_fields(bpy, tile, {"number": "int", "label": "str"}, labels)
+                    for tile in image.tiles]
+    out["packed_mapping"] = []
+    for packed in image.packed_files:
+        require(type(packed.view) is int and packed.view == 0
+                and type(packed.tile_number) is int, "surface_packed_view_unsupported")
+        out["packed_mapping"].append({"view": packed.view, "tile_number": packed.tile_number,
+                                     "filepath": redacted_text(packed.filepath)})
+    require(len({row["number"] for row in out["tiles"]}) == len(out["tiles"]),
+            "surface_duplicate_image_tile")
+    out["dimensions_channels_and_bytes_from_separate_packed_proof"] = True
+    out["pixels_or_new_decode_requested"] = False
+    return out
+
+def surface_node_trees(bpy, roots, labels):
+    """Return bounded raw source graph metadata; caller hashes this again after inspection.
+    roots: actual Material.node_tree / modifier.node_group IDs; no strings or archive input code.
+    Requires old strict native+packed+resource closure gates independently; this is not PBR proof.
+    """
+    counts = {key: 0 for key in SURFACE_GRAPH_CAPS}
+    image_ids, records, visiting = set(), {}, set()
+    require(isinstance(roots, (list, tuple, set)) and len(roots) <= 128, "surface_tree_root_budget")
+    root_ids = set(roots)
+    require(all(isinstance(tree, bpy.types.NodeTree) and tree in labels for tree in root_ids),
+            "surface_tree_root_type")
+    def visit(tree, depth):
+        require(depth <= 32, "surface_group_depth")
+        require(tree not in visiting, "surface_recursive_node_group")
+        if tree in records:
+            return
+        require(tree in labels and tree.library is None and tree.override_library is None
+                and tree.bl_idname in ("ShaderNodeTree", "GeometryNodeTree"),
+                "surface_tree_scope")
+        visiting.add(tree)
+        surface_count(counts, "trees")
+        require(len(tree.nodes) <= 4096 and len(tree.links) <= 32768, "surface_tree_budget")
+        nodes = list(tree.nodes)
+        indices = {node: index for index, node in enumerate(nodes)}
+        require(len(indices) == len(nodes) and len({node.name for node in nodes}) == len(nodes),
+                "surface_node_identity")
+        sockets = {}
+        rows = []
+        children = set()
+        interface = surface_interface(bpy, tree, labels, counts, image_ids)
+        for index, node in enumerate(nodes):
+            surface_count(counts, "nodes")
+            node_type = node.bl_idname
+            require(node_type in SURFACE_NODE_FIELDS and node.bl_rna.identifier == node_type,
+                    "surface_unsupported_node")
+            require(node.parent is None or (node.parent in indices
+                    and node.parent.bl_idname == "NodeFrame"), "surface_node_parent_scope")
+            row = surface_node_fields(bpy, node, {"name": "str", "label": "str",
+                                            "mute": "bool", "type": "str"}, labels)
+            row.update({"index": index, "node_type": node_type,
+                "parent_index": indices[node.parent] if node.parent is not None else None,
+                "parameters": surface_node_fields(bpy, node, SURFACE_NODE_FIELDS[node_type], labels),
+                "id_properties": surface_id_properties(bpy, node, labels)})
+            for direction in ("inputs", "outputs"):
+                collection = getattr(node, direction)
+                require(len(collection) <= 512, "surface_node_socket_budget")
+                row[direction] = []
+                for socket_index, socket in enumerate(collection):
+                    surface_count(counts, "sockets")
+                    require(socket not in sockets, "surface_duplicate_socket")
+                    item = surface_socket(bpy, socket, socket_index, direction, index, labels, image_ids)
+                    row[direction].append(item)
+                    sockets[socket] = {"node_index": index, "direction": direction,
+                                      "index": socket_index, "identifier": item["identifier"]}
+            if node_type in ("ShaderNodeTexImage", "ShaderNodeTexEnvironment") and node.image is not None:
+                image_ids.add(node.image)
+            if node_type == "ShaderNodeGroup" and node.node_tree is not None:
+                children.add(node.node_tree)
+            rows.append(row)
+        def endpoint(socket):
+            require(socket is not None and socket in sockets, "surface_link_socket_scope")
+            return dict(sockets[socket])
+        def link_row(link, order, internal_owner=None):
+            surface_count(counts, "links")
+            source, target = endpoint(link.from_socket), endpoint(link.to_socket)
+            if internal_owner is None:
+                require(source["direction"] == "outputs" and target["direction"] == "inputs"
+                        and link.from_node in indices and link.to_node in indices
+                        and indices[link.from_node] == source["node_index"]
+                        and indices[link.to_node] == target["node_index"], "surface_external_link_owner")
+            else:
+                # Internal mute links are input-to-output, not external-link orientation.
+                require(source["node_index"] == target["node_index"] == internal_owner,
+                        "surface_internal_link_owner")
+            return {"collection_index": order, "from": source, "to": target,
+                **surface_node_fields(bpy, link, {"is_valid": "bool", "is_muted": "bool",
+                     "is_hidden": "bool", "multi_input_sort_id": "int"}, labels)}
+        links = [link_row(link, order) for order, link in enumerate(tree.links)]
+        for node, row in zip(nodes, rows):
+            require(len(node.internal_links) <= 512, "surface_internal_link_budget")
+            row["internal_links"] = [link_row(link, order, row["index"])
+                                     for order, link in enumerate(node.internal_links)]
+        def group_bindings(row, group_interface, directions):
+            interface_keys = {(item["in_out"], item["identifier"]): item["collection_index"]
+                for item in group_interface["items"] if item["item_type"] == "SOCKET"}
+            bindings = []
+            for direction, interface_direction in directions:
+                for socket in row[direction]:
+                    if socket["socket_rna"] == "NodeSocketVirtual":
+                        bindings.append({"socket_direction": direction, "socket_index": socket["index"],
+                                         "virtual_extension_sentinel": True})
+                    else:
+                        key = (interface_direction, socket["identifier"])
+                        require(key in interface_keys, "surface_group_socket_interface_binding")
+                        bindings.append({"socket_direction": direction, "socket_index": socket["index"],
+                            "identifier": socket["identifier"], "interface_item_index": interface_keys[key]})
+            return bindings
+        for child in sorted(children, key=lambda item: labels[item] if item in labels else ""):
+            visit(child, depth+1)
+        for node, row in zip(nodes, rows):
+            if row["node_type"] == "ShaderNodeGroup" and node.node_tree is not None:
+                row["group_instance_bindings"] = group_bindings(row, records[node.node_tree]["interface"],
+                                                               (("inputs", "INPUT"), ("outputs", "OUTPUT")))
+            elif row["node_type"] == "NodeGroupInput":
+                row["group_interface_bindings"] = group_bindings(row, interface, (("outputs", "INPUT"),))
+            elif row["node_type"] == "NodeGroupOutput":
+                row["group_interface_bindings"] = group_bindings(row, interface, (("inputs", "OUTPUT"),))
+        require(tree.nodes.active is None or tree.nodes.active in indices, "surface_active_node")
+        records[tree] = {"id": surface_typed(bpy, tree, "ID", labels),
+            "tree_type": tree.bl_idname, "nodes": rows, "links": links, "interface": interface,
+            "active_node_index": indices[tree.nodes.active] if tree.nodes.active is not None else None,
+            "id_properties": surface_id_properties(bpy, tree, labels)}
+        visiting.remove(tree)
+    for tree in sorted(root_ids, key=lambda item: labels[item]):
+        visit(tree, 0)
+    surface_count(counts, "images", len(image_ids))
+    result = {"roots": [surface_typed(bpy, tree, "ID", labels)
+                         for tree in sorted(root_ids, key=lambda item: labels[item])],
+        "trees": [records[tree] for tree in sorted(records, key=lambda item: labels[item])],
+        "images": [surface_image_metadata(bpy, image, labels)
+                    for image in sorted(image_ids, key=lambda item: labels[item])],
+        "counts": counts, "public_source_configuration_only": True,
+        "hidden_gpu_and_curve_caches_uninspected_not_recomputed": True,
+        "all_socket_collections_and_defaults_retained": True,
+        "actual_node_evaluation_shader_compile_or_pixels_requested": False,
+        "pbr_export_or_visual_equivalence_proved": False}
+    require(len(encoded(result)) <= 512*1024, "surface_node_graph_json_budget")
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-root", required=True)
@@ -854,7 +1617,8 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     audit_path = out/"packed-actor-closure-audit.json"
     require(not audit_path.exists(), "audit_already_exists")
-    audit = {"purpose": "Read-only dependency/resource closure of fixed saved Snow actor/preservation roots",
+    audit = {"purpose": "Read-only exact17 Snow SOURCE-CAGE material/UV/modifier planning with locked actor resource prerequisites",
+             "source_surface_report_passed": False,
              "used_actor_external_closure_passed": False, "saved_packed_native_readback_passed": False,
              "full_scene_portable": False, "art_approved": False, "glb_pbr_approved": False,
              "browser_animation_approved": False, "native_pose_replay": False, "models_saved": 0,
@@ -866,6 +1630,9 @@ def main():
     failure = None
     native_passed = False
     resources = None
+    surface_report = None
+    surface_failure = None
+    surface_context = {}
     try:
         before = verify_inputs(root)
         checkpoint = root/"checkpoint"
@@ -947,6 +1714,16 @@ def main():
         resources = audit_resources(bpy, ids, labels, chain, expected,
                                     resource_dependencies, resource_metadata_before)
         audit["resource_closure"] = resources
+        if resources["passed"]:
+            try:
+                stage = "source_surface_before"
+                surface_report = source_surface_report(bpy, config, rig, labels, surface_context)
+                audit["source_surface_plan"] = surface_report
+                audit["source_surface_before_sha256"] = hashlib.sha256(encoded(surface_report)).hexdigest()
+            except Exception as error:
+                surface_failure = failure_record(error, stage)
+                audit["source_surface_failure"] = surface_failure
+                audit["source_surface_failure_context"] = dict(surface_context)
         stage = "native_after"
         final = wrapper.capture_state(bpy, modules, rig, expected["action_names"])
         require(final == first and wrapper.digest(final) == SNAPSHOT_SHA, "native_snapshot_after")
@@ -966,6 +1743,19 @@ def main():
                 and audit["resource_metadata_after"]["sha256"] == metadata_hash_before,
                 "readonly_resource_metadata_changed")
         audit["resource_metadata_unchanged"] = True
+        if surface_report is not None and surface_failure is None:
+            try:
+                stage = "source_surface_after"
+                surface_after = source_surface_report(bpy, config, rig, labels, surface_context)
+                audit["source_surface_after_sha256"] = hashlib.sha256(encoded(surface_after)).hexdigest()
+                require(surface_after == surface_report
+                        and audit["source_surface_after_sha256"] == audit["source_surface_before_sha256"],
+                        "source_surface_readonly_metadata_changed")
+                audit["source_surface_metadata_unchanged"] = True
+            except Exception as error:
+                surface_failure = failure_record(error, stage)
+                audit["source_surface_failure"] = surface_failure
+                audit["source_surface_failure_context"] = dict(surface_context)
         native_passed = True
     except Exception as error:
         failure = failure_record(error, stage)
@@ -984,8 +1774,12 @@ def main():
         audit["saved_packed_native_readback_passed"] = bool(native_passed and hashes_passed and failure is None)
         audit["used_actor_external_closure_passed"] = bool(native_passed and hashes_passed
             and failure is None and resources is not None and resources["passed"])
+        audit["source_surface_report_passed"] = bool(audit["used_actor_external_closure_passed"]
+            and surface_report is not None and surface_failure is None
+            and surface_report.get("source_exposed_parameter_capture_complete") is True
+            and audit.get("source_surface_metadata_unchanged") is True)
         write_json(audit_path, audit)
-        summary = {key: audit.get(key) for key in ("purpose", "used_actor_external_closure_passed",
+        summary = {key: audit.get(key) for key in ("purpose", "source_surface_report_passed", "source_surface_failure", "used_actor_external_closure_passed",
             "saved_packed_native_readback_passed", "failure", "hash_recheck_failure",
             "all_eight_inputs_and_manifest_unchanged", "reviewed_code_and_runtime_unchanged",
             "full_scene_portable", "art_approved", "glb_pbr_approved", "browser_animation_approved",
@@ -995,9 +1789,14 @@ def main():
                 ("passed", "unsupported_count", "unsupported_details_omitted", "issue_counts_by_code",
                  "issue_counts_by_owner_type", "weak_reference_count", "weak_classification_counts",
                  "unknown_node_type_counts", "checked")}
+        if surface_report is not None:
+            summary["source_surface_plan"] = {key:surface_report[key] for key in
+                ("scope","source_counts","source_exposed_parameter_capture_complete",
+                 "unsupported_modifier_count","unsupported_modifier_type_counts",
+                 "final_evaluated_material_assignments_complete","pbr_semantic_mapping_approved")}
         require(len(encoded(summary)) <= 24*1024, "stdout_budget")
         print("SNOW_PACKED_ACTOR_CLOSURE "+encoded(summary).decode("utf-8").strip(), flush=True)
-    return 0 if audit["used_actor_external_closure_passed"] else 1
+    return 0 if audit["source_surface_report_passed"] else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
