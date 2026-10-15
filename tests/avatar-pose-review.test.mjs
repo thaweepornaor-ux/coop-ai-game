@@ -15,5 +15,12 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
    assert.match(html,new RegExp('F01 — '+pose));
   }
   assert.equal((html.match(/<g data-avatar-part="pose-sleeves">/g)||[]).length,10);
+  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all'],{stdio:'pipe'});
+  const full=readFileSync('artifacts/avatar-qa/all-presets-contact-sheet.html','utf8');
+  assert.equal((full.match(/<article>/g)||[]).length,100);
+  assert.equal((full.match(/<svg /g)||[]).length,100);
+  for(const prefix of ['M','F'])for(let n=1;n<=10;n++)for(const pose of ['stand','wave','celebrate','think','confident']){
+   assert.ok(full.includes(prefix+String(n).padStart(2,'0')+' — '+pose));
+  }
  }finally{rmSync('artifacts/avatar-qa',{recursive:true,force:true});}
 });
