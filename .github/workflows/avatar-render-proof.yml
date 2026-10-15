@@ -1,12 +1,27 @@
-name: Test one offline Snow CUBICSPLINE GLB candidate
+name: Test one native48Hz Snow corrective GLB candidate
 on:
   push:
     branches: [codex/game-recovery]
     paths:
+      - 'scripts/bpy-inspect-avatar-garments.py'
+      - 'scripts/bpy-proof-snow-raised-arms.py'
+      - 'scripts/bpy-prototype-snow-friendly-face.py'
+      - 'scripts/bpy-prototype-snow-smile-width.py'
+      - 'scripts/bpy-proof-snow-bent-elbows.py'
+      - 'scripts/bpy-proof-snow-natural-wrists.py'
+      - 'scripts/bpy-prototype-snow-native-clips.py'
+      - 'scripts/bpy-prototype-snow-glb-correctives.py'
+      - 'scripts/bpy-export-snow-cached-correctives.py'
+      - 'scripts/bpy-export-snow-native48-correctives.py'
+      - 'scripts/avatar_glb_48hz_reader.py'
+      - 'scripts/ci-restore-snow-native-reference.py'
+      - 'scripts/avatar_glb_corrective_reader.py'
+      - 'scripts/bpy-prototype-snow-soft-cloth.py'
+      - 'scripts/bpy-render-snow-normalmap-pair.py'
+      - 'scripts/bpy-prototype-snow-crewneck.py'
+      - 'scripts/ci-restore-snow-native-clips.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
-      - 'scripts/ci-restore-snow-cubic-input.py'
-      - 'scripts/ci-prototype-snow-cubic-glb.py'
-      - 'scripts/avatar_glb_cubic_reader.py'
+      - 'scripts/avatar-render-configs/**'
       - '.github/workflows/avatar-render-proof.yml'
   workflow_dispatch:
 permissions:
@@ -16,7 +31,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  snow-glb-cubic-candidate:
+  snow-glb-correctives-candidate:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -26,32 +41,36 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
-      - name: Compile and restore only frozen GLB and native reference bytes
+      - name: Restore and verify the frozen source artifact
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-cubic-input.py scripts/ci-prototype-snow-cubic-glb.py scripts/avatar_glb_cubic_reader.py
-          python scripts/ci-restore-snow-cubic-input.py --out "$RUNNER_TEMP/avatar-cubic-input-restored" --report "$RUNNER_TEMP/avatar-glb-cubic-candidate/frozen-cubic-input-restore.json"
-      - name: Prepare NumPy only, without Blender or original avatar restoration
+          python -m py_compile scripts/bpy-export-snow-native48-correctives.py scripts/avatar_glb_48hz_reader.py scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-native-clips.py scripts/ci-restore-snow-native-reference.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-friendly-face.py scripts/bpy-prototype-snow-smile-width.py scripts/bpy-proof-snow-bent-elbows.py scripts/bpy-proof-snow-natural-wrists.py scripts/bpy-prototype-snow-native-clips.py scripts/bpy-prototype-snow-glb-correctives.py scripts/bpy-export-snow-cached-correctives.py scripts/avatar_glb_corrective_reader.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-glb-native48-candidate/frozen-source-restore.json"
+          python scripts/ci-restore-snow-native-clips.py --out "$RUNNER_TEMP/avatar-native-clips-restored" --report "$RUNNER_TEMP/avatar-glb-native48-candidate/frozen-native-clips-restore.json"
+          python scripts/ci-restore-snow-native-reference.py --out "$RUNNER_TEMP/avatar-native-reference-restored" --report "$RUNNER_TEMP/avatar-glb-native48-candidate/frozen-native-reference-restore.json"
+      - name: Prepare the previously reviewed Blender runtime
         run: |
-          python -m venv "$RUNNER_TEMP/numpy-runtime"
-          "$RUNNER_TEMP/numpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4
-      - name: Rewrite one deterministic cubic candidate from authored keys only
+          python -m venv "$RUNNER_TEMP/bpy-runtime"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
+      - name: Sample one native48Hz candidate with cached calibration and fresh quarter validation
         run: |
-          "$RUNNER_TEMP/numpy-runtime/bin/python" scripts/ci-prototype-snow-cubic-glb.py --input-root "$RUNNER_TEMP/avatar-cubic-input-restored/checkpoint" --out "$RUNNER_TEMP/avatar-glb-cubic-candidate/snow"
+          source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-export-snow-native48-correctives.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-native-clips-restored/checkpoint/snow-native-clips-candidate.blend" --reference-root "$RUNNER_TEMP/avatar-native-reference-restored/checkpoint" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-glb-native48-candidate/snow"
       - name: Independently read serialized GLB and native reference bytes
         env:
-          CORRECTIVE_OUT: ${{ runner.temp }}/avatar-glb-cubic-candidate/snow
-          CUBIC_BASELINE: ${{ runner.temp }}/avatar-cubic-input-restored/checkpoint/source.glb
+          CORRECTIVE_OUT: ${{ runner.temp }}/avatar-glb-native48-candidate/snow
         run: |
-          "$RUNNER_TEMP/numpy-runtime/bin/python" - <<'PY'
+          "$RUNNER_TEMP/bpy-runtime/bin/python" - <<'PY'
           from pathlib import Path
           import hashlib
           import json
           import os
           import sys
           sys.path.insert(0, "scripts")
-          from avatar_glb_cubic_reader import validate
+          from avatar_glb_48hz_reader import validate
 
           out = Path(os.environ["CORRECTIVE_OUT"])
           npz = out / "native_reference.npz"
@@ -65,7 +84,7 @@ jobs:
               if writer_path.stat().st_size > 1048576:
                   raise ValueError("avatar_glb_reader_writer_checkpoint_budget")
               writer = json.loads(writer_path.read_text("utf-8"))
-              glb = out / "snow-armature-cubic-prototype.glb"
+              glb = out / "snow-armature-correctives-48hz-prototype.glb"
               reference = out / "native_reference.json"
               written = writer["glb_written"]
               native = writer["native_reference"]
@@ -79,12 +98,12 @@ jobs:
                       and native["metadata_sha256"] == sha(reference)):
                   raise ValueError("avatar_glb_reader_writer_checkpoint_incomplete_or_changed")
               writer_checkpoint_passed = True
-              report = validate(glb, reference, npz, Path(os.environ["CUBIC_BASELINE"]))
+              report = validate(glb, reference, npz)
           except Exception as error:
               code = error.args[0] if isinstance(error, ValueError) and len(error.args) == 1 and isinstance(error.args[0], str) else None
               if code is None or not code.startswith("avatar_glb_reader_") or len(code) > 160 or not all(c.islower() or c.isdigit() or c == "_" for c in code):
                   code = None
-              report = {"reader": "independent_serialized_glb_cubic_correctives_v1",
+              report = {"reader": "independent_serialized_glb_native48_correctives_v1",
                         "summary": {"passed": False, "error_type": type(error).__name__[:80],
                                     "error_code": code, "production_glb_approved": False,
                                     "browser_fidelity_approved": False}}
@@ -100,15 +119,17 @@ jobs:
           if len(full) > 1048576 or len(small) > 24576:
               raise ValueError("independent_reader_output_byte_budget_exceeded")
           (out / "independent-reader-audit.json").write_bytes(full)
-          print("SNOW_GLB_CUBIC_READER " + small.decode("utf-8"), flush=True)
+          print("SNOW_GLB_NATIVE48_READER " + small.decode("utf-8"), flush=True)
           raise SystemExit(0 if summary["passed"] else 1)
           PY
-      - name: Preserve the actual cubic GLB, native references and credits
+      - name: Preserve the actual GLB candidate, references, credits and runtime proof
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-glb-cubic-candidate
-          path: ${{ runner.temp }}/avatar-glb-cubic-candidate/
+          name: avatar-snow-glb-native48-candidate
+          path: |
+            ${{ runner.temp }}/avatar-glb-native48-candidate/
+            bpy-proof/
           if-no-files-found: error
           compression-level: 6
           retention-days: 14
@@ -116,10 +137,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-glb-cubic-proof
+          name: avatar-snow-glb-native48-proof
           path: |
-            ${{ runner.temp }}/avatar-glb-cubic-candidate/**/*.json
-            ${{ runner.temp }}/avatar-glb-cubic-candidate/**/credits/**
+            ${{ runner.temp }}/avatar-glb-native48-candidate/**/*.json
+            ${{ runner.temp }}/avatar-glb-native48-candidate/**/credits/**
+            bpy-proof/
           if-no-files-found: error
           compression-level: 6
           retention-days: 14
