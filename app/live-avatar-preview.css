@@ -1,6 +1,6 @@
 /* Keep the selected character visible while learners scroll clothing and hair choices. */
 .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{
- position:sticky;top:calc(60px + env(safe-area-inset-top,0px));z-index:12;
+ position:sticky;top:0;z-index:12;
  display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;
  gap:12px;width:100%;min-width:0;margin:0 0 16px;padding:9px 12px;
  background:linear-gradient(120deg,rgba(21,62,110,.98),rgba(42,64,153,.98));
@@ -27,7 +27,7 @@
 }
 @media(max-width:520px){
  .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{
-  top:calc(53px + env(safe-area-inset-top,0px));
+  top:0;
   grid-template-columns:78px minmax(0,1fr);gap:9px;padding:8px;
  }
  .game-shell[data-role="player"] .wardrobe-live-avatar{width:76px;height:94px}
