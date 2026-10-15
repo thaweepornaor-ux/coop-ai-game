@@ -286,7 +286,7 @@ async function wardrobe(page) {
  await livePreview.waitFor();
  assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
  const options=page.locator('.quick-options fieldset');
- assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
+ assert.equal(await options.count(),8,'All eight wardrobe groups including hair color are displayed');
  const styles=options.nth(2).locator('button');
  await styles.nth(1).click();
  assert.equal(await styles.nth(1).getAttribute('aria-pressed'),'true');
