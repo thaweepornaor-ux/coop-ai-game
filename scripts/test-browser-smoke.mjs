@@ -281,7 +281,7 @@ async function wardrobe(page) {
  const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
- await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
+ assert.equal(await page.locator('.quick-options').isVisible(),true,'Wardrobe options are expanded by default');
  const livePreview=page.locator('.quick-options .wardrobe-live-preview');
  await livePreview.waitFor();
  assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
