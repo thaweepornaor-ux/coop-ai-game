@@ -23,7 +23,7 @@ test('Presenter uses real MP3 for questions while revealing answers separately',
  assert.ok(game.includes("new Audio(voiceUrls.current["));
  assert.match(game,/\.mp3'\)/);
  assert.match(game,/const letters=\['A','B','C'\]/);
- assert.match(game,/const timer=Math.min\(10,totalRemaining\)/);
+ assert.match(game,/const timer=Math.min\(8,totalRemaining\)/);
  assert.match(game,/const narrationRemaining=/);
  assert.match(game,/narrationRemaining>0\?'🔊 กำลังพากย์'/);
  assert.match(game,/track.onended=/);
@@ -55,8 +55,8 @@ test('Narration stays intact and the synchronized answer clock starts at 8 secon
   const last8=fullRound-duration[i]-1400;
   assert.equal(last8,8_000,'Question '+(i+1)+' must leave precisely 8 seconds after narration');
  }
- assert.match(game,/Math.max\(0,totalRemaining-10\)/);
- assert.match(game,/timer\/10/);
+ assert.match(game,/Math.max\(0,totalRemaining-8\)/);
+ assert.match(game,/timer\/8/);
  assert.match(game,/หลังฟังโจทย์มีเวลาตอบ 8 วินาที/);
  assert.match(game,/หลังฟังโจทย์มีเวลาตอบ 8 วินาที/);
  assert.match(game,/จากนั้นมีเวลาตอบเต็ม 8 วินาที/);
