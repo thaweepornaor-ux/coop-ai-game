@@ -15,7 +15,7 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
    assert.match(html,new RegExp('F01 — '+pose));
   }
   assert.equal((html.match(/<g data-avatar-part="pose-sleeves">/g)||[]).length,10);
-  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all'],{stdio:'pipe'});
+  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--validate'],{stdio:'pipe'});
   const full=readFileSync('artifacts/avatar-qa/all-presets-contact-sheet.html','utf8');
   assert.equal((full.match(/<article>/g)||[]).length,100);
   assert.equal((full.match(/<svg /g)||[]).length,100);
