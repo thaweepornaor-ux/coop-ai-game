@@ -33,5 +33,5 @@ const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="vie
  '<p class="note">Check shoulder-to-sleeve contact, wrists/fingers, continuity, feet, hairstyle, and equal framing. Not proof of visual acceptance.</p>'+
  '<main class="grid">'+cards.join('')+'</main></html>';
 mkdirSync('artifacts/avatar-qa',{recursive:true});
-writeFileSync('artifacts/avatar-qa/pose-contact-sheet.html',html,'utf8');
-console.log('Wrote artifacts/avatar-qa/pose-contact-sheet.html ('+cards.length+' poses)');
+writeFileSync(fullMatrix?'artifacts/avatar-qa/all-presets-contact-sheet.html':'artifacts/avatar-qa/pose-contact-sheet.html',html,'utf8');
+console.log('Wrote avatar pose review ('+cards.length+' poses; full='+fullMatrix+')');
