@@ -539,7 +539,7 @@ async function realRoom(browser, browserName) {
     const persisted = await player.evaluate(() => JSON.parse(localStorage.getItem('coop-ai-game-avatar') || 'null'));
     assert.equal(persisted.presetId,'F03'); assert.equal(persisted.bodyStyle,'female'); row.checks.push('Edited name and wardrobe survive reload under the same player token');
     await shot(host, browserName + '-lobby-host'); await shot(player, browserName + '-lobby-player');
-    await host.getByRole('button', { name: /เริ่มเกมกับผู้เล่น 1 คน/ }).click();
+    await host.getByRole('button', { name: '▶ เริ่มเกม', exact: true }).click();
     let expectedScore = 0;
     for (let number = 1; number <= 15; number++) {
       await stage('question-' + number);
@@ -982,7 +982,7 @@ async function realTwentyFive(browser,browserName){
    await host.setViewportSize({width:1280,height:720});
    await shot(host,browserName+'-25-real-lobby');
    await stage('begin-game-with-25-players');
-   await host.getByRole('button',{name:/เริ่มเกมกับผู้เล่น 25 คน/}).click();
+   await host.getByRole('button',{name:'▶ เริ่มเกม',exact:true}).click();
    await question(host,1);
    await stage('verify-all-25-live-score-cells-are-visible');
    await host.waitForFunction(()=>document.querySelectorAll('.host-scored-roster.packed-players .mini-player').length===25,null,{timeout:15000});
