@@ -276,12 +276,12 @@ function pageErrors(page) { const errors = []; page.on('pageerror', error => err
 async function wardrobe(page) {
  const gallery=page.locator('.quick-characters');
  assert.equal(await gallery.getByRole('button').count(),10);
- await page.getByRole('button',{name:'ผู้หญิง · 10 แบบ',exact:true}).click();
+ await page.getByRole('button',{name:'ตัวละครหญิง',exact:true}).click();
  assert.equal(await gallery.getByRole('button').count(),10);
  const chosen=gallery.getByRole('button',{name:/^F03 /});
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
- await page.getByRole('button',{name:/อยากเปลี่ยนผม สีผิว/}).click();
+ await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
  const options=page.locator('.quick-options fieldset');
  assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
  const styles=options.nth(2).locator('button');
@@ -383,7 +383,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       await page.reload({waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>{
         const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ผู้หญิง'));
-        return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character.selected')?.textContent?.includes('F03');
+        return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character:nth-child(3).selected') !== null;
       },null,{timeout:15000});
       assert.equal(await page.getByLabel(nameLabel,{exact:true}).inputValue(),syntheticName);
       row.checks.push({femaleSelectionRestored:true});
@@ -472,7 +472,7 @@ async function realRoom(browser, browserName) {
       await selector.locator('input[type=file]').setInputFiles({
         name:'ci-only-R01-R15.zip',mimeType:'application/zip',buffer:zipTestRevealAudio(mp3)
       });
-      await host.getByText('เสียงเฉลย R01–R15 พร้อม ✓').waitFor({timeout:20000});
+      await host.getByText('เสียงเฉลยพร้อม ✓').waitFor({timeout:20000});
       const count=await host.evaluate(async()=>{
         const db=await new Promise((resolve,reject)=>{
           const r=indexedDB.open('coop-ai-answer-recorded-voice',1);
@@ -512,8 +512,8 @@ async function realRoom(browser, browserName) {
     await stage('edit-profile-without-duplicate-join');
     await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
     await player.locator('.inline-profile-form').waitFor();
-    await player.getByRole('button',{name:'ผู้ชาย · 10 แบบ'}).click();
-    await player.locator('.inline-profile-form .quick-character').filter({hasText:'M02'}).click();
+    await player.getByRole('button',{name:'ตัวละครชาย'}).click();
+    await player.locator('.inline-profile-form .quick-character').nth(1).click();
     const interimName=syntheticName+'ใหม่';
     await player.locator('#edit-player-name').fill(interimName);
     const [edited] = await Promise.all([
@@ -525,8 +525,8 @@ async function realRoom(browser, browserName) {
     await host.locator('.roster .mini-player').filter({hasText:interimName}).waitFor();
     assert.equal(await host.locator('.roster .mini-player').count(),1,'Editing an existing player cannot create a duplicate roster entry');
     await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
-    await player.getByRole('button',{name:'ผู้หญิง · 10 แบบ'}).click();
-    await player.locator('.inline-profile-form .quick-character').filter({hasText:'F03'}).click();
+    await player.getByRole('button',{name:'ตัวละครหญิง'}).click();
+    await player.locator('.inline-profile-form .quick-character').nth(2).click();
     await player.locator('#edit-player-name').fill(syntheticName);
     await player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click();
     await player.getByRole('heading',{name:syntheticName,exact:true}).waitFor();
