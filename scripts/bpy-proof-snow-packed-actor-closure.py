@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 from pathlib import Path
 import shutil
 import stat
@@ -38,6 +39,10 @@ PACK_RUN = 38752917367
 INTERNAL_TYPES = ("Mesh", "Armature", "Lattice", "Object", "Material", "Action", "Key",
                   "Collection", "World", "Camera", "Light", "NodeTree", "Scene")
 
+# Narrow inert Text/numeric Palette source audit ef34c680315ea4ee2f6ae931ebadad3bfe0f692f
+# Text.is_modified/reload/as_module/run/import are deliberately NEVER called.
+# Empty SequenceEditor source audit c173bdf9ce4f74c11d35e3ba596cdd63e47c536f
+# No measured next-candidate Text/Palette/editor values or runtime acceptance inferred.
 # Additional exact-class source audits (data only; never loaded/executed from archives):
 # root shader12 3e463047391ba9d9b67940a28638420878a149fb
 # peer Geometry/Function+shader12 00843b400f2069fc04aac48c6e643d01d4244945
@@ -453,9 +458,27 @@ def build_graph(bpy, config, expected):
 def id_label(item, labels):
     return labels.get(item, item.bl_rna.identifier+":"+item.name_full) if item is not None else None
 
+
+def saved_text_buffer_state(text):
+    line_count = len(text.lines)
+    require(line_count <= 32768, "text_line_budget")
+    digest, count = hashlib.sha256(), 0
+    for line in text.lines:
+        data = line.body.encode("utf-8")
+        count += len(data)
+        require(count <= 1024*1024, "text_buffer_byte_budget")
+        digest.update(len(data).to_bytes(8, "little"))
+        digest.update(data)
+    return {"line_count": line_count, "utf8_body_bytes": count,
+            "saved_buffer_sha256": digest.hexdigest(),
+            "hash_format": "saved line bodies UTF8; each prefixed by uint64 little-endian byte length",
+            "script_body_logged": False, "text_executed_or_imported": False}
+
+
 def resource_metadata_state(bpy, ids, labels, dependencies):
     """Read metadata only: no weak target path resolution, append, decode or mutation."""
-    weak_rows, style_rows = [], []
+    weak_rows, style_rows, text_rows, palette_rows, sequence_rows = [], [], [], [], []
+    total_text_bytes = 0
     for owner in sorted(ids, key=lambda item: labels[item]):
         weak = owner.library_weak_reference
         if weak is not None:
@@ -479,7 +502,50 @@ def resource_metadata_state(bpy, ids, labels, dependencies):
                 "texture_slot_ids": textures,
                 "outgoing_ids": sorted(id_label(item, labels)
                                        for item in dependencies.get(owner, set()))})
-    return {"weak": weak_rows, "freestyle": style_rows}
+
+        if isinstance(owner, bpy.types.Text):
+            require(isinstance(owner.filepath, str) and len(owner.filepath) <= 4096
+                    and type(owner.is_in_memory) is bool and type(owner.use_module) is bool,
+                    "text_metadata_schema")
+            saved = saved_text_buffer_state(owner)
+            total_text_bytes += saved["utf8_body_bytes"]
+            require(total_text_bytes <= 2*1024*1024, "total_text_buffer_budget")
+            text_rows.append({"owner": labels[owner], "name": owner.name_full,
+                "local": owner.library is None, "no_override": owner.override_library is None,
+                "filepath": owner.filepath, "is_in_memory": owner.is_in_memory,
+                "use_module": owner.use_module, "use_fake_user": owner.use_fake_user, **saved})
+        if isinstance(owner, bpy.types.Palette):
+            require(len(owner.colors) <= 4096, "palette_color_budget")
+            values = []
+            for color in owner.colors:
+                value = [float(component) for component in color.color]
+                value.extend((float(color.strength), float(color.weight)))
+                require(len(value) == 5 and all(math.isfinite(number) for number in value),
+                        "palette_numeric_data")
+                values.append(value)
+            palette_rows.append({"owner": labels[owner], "local": owner.library is None,
+                "no_override": owner.override_library is None, "color_count": len(values),
+                "numeric_values_finite": True, "numeric_data_sha256": hashlib.sha256(encoded(values)).hexdigest(),
+                "use_fake_user": owner.use_fake_user, "colors_edited_or_applied": False})
+        if isinstance(owner, bpy.types.Scene):
+            editor = owner.sequence_editor
+            row = {"owner": labels[owner], "editor_present": editor is not None}
+            if editor is not None:
+                require(len(editor.strips) <= 4096 and len(editor.meta_stack) <= 4096
+                        and isinstance(editor.proxy_dir, str) and len(editor.proxy_dir) <= 4096,
+                        "sequence_editor_metadata_budget")
+                top = [{"name": strip.name, "type": strip.type} for strip in editor.strips]
+                row.update({"top_level_count": len(top), "top_level_identity_sha256": hashlib.sha256(encoded(top)).hexdigest(),
+                    "top_level_type_counts": {kind: sum(value["type"] == kind for value in top)
+                                             for kind in sorted({value["type"] for value in top})},
+                    "top_level_sample": top[:20], "meta_stack_count": len(editor.meta_stack),
+                    "active_strip": editor.active_strip.name if editor.active_strip is not None else None,
+                    "proxy_dir": editor.proxy_dir,
+                    "recursive_empty_proved_from_top_level": len(top) == 0,
+                    "recursive_collection_walked": False})
+            sequence_rows.append(row)
+    return {"schema_version": 2, "weak": weak_rows, "freestyle": style_rows,
+            "texts": text_rows, "palettes": palette_rows, "sequencers": sequence_rows}
 
 def redacted_text(value, limit=512):
     raw = str(value)
@@ -518,7 +584,7 @@ def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
     image_paths = {row["name"]: {row["missing_pattern"], *(f["missing_path"] for f in row["files"])}
                    for row in expected["images"]}
     supported_owners = set()
-    freestyle_records = []
+    freestyle_records, text_records, palette_records, sequence_records = [], [], [], []
     def issue(owner, code, location, path=None):
         nonlocal issue_count
         issue_count += 1
@@ -564,6 +630,9 @@ def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
     internal = tuple(getattr(bpy.types, name) for name in INTERNAL_TYPES)
     inspected_trees = set()
     style_by_name = {row["owner"]: row for row in metadata["freestyle"]}
+    text_by_name = {row["owner"]: row for row in metadata["texts"]}
+    palette_by_name = {row["owner"]: row for row in metadata["palettes"]}
+    sequence_by_name = {row["owner"]: row for row in metadata["sequencers"]}
     for owner in sorted(ids, key=lambda item: labels[item]):
         local = owner.library is None and owner.override_library is None
         if not local:
@@ -575,6 +644,28 @@ def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
             else:
                 checked["verified_packed_image_ids"] += 1
                 supported_owners.add(owner)
+            continue
+        if isinstance(owner, bpy.types.Text):
+            facts = text_by_name[labels[owner]]
+            accepted = (local and owner.name in {"cloudrig.py", "snow_post_generation.py"}
+                        and facts["filepath"] == "" and facts["is_in_memory"] is True)
+            text_records.append({**{key: value for key, value in facts.items() if key != "filepath"},
+                "filepath": redacted_text(facts["filepath"]), "root_chain": chain(owner),
+                "stored_inert_internal_text_data": accepted,
+                "saved_module_request_preserved_not_executed": True,
+                "script_behavior_or_execution_dependencies_approved": False})
+            if accepted:
+                supported_owners.add(owner)
+            else:
+                issue(owner, "unsupported_text_storage_or_identity", "Text.filepath/is_in_memory", facts["filepath"])
+            continue
+        if isinstance(owner, bpy.types.Palette):
+            facts = palette_by_name[labels[owner]]
+            palette_records.append({**facts, "root_chain": chain(owner),
+                                    "internal_numeric_data_only": local})
+            if local:
+                supported_owners.add(owner)
+            # Generic nested-ID dependencies remain in the unchanged graph.
             continue
         if isinstance(owner, bpy.types.FreestyleLineStyle):
             checked["freestyle_line_styles"] += 1
@@ -602,8 +693,16 @@ def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
         inspect_paths(owner, owner, owner.bl_rna.identifier)
         if isinstance(owner, bpy.types.Scene):
             inspect_paths(owner, owner.render, "Scene.render", ("filepath",))
-            if owner.sequence_editor is not None:
-                issue(owner, "sequence_editor_resource_inspection_unsupported", "Scene.sequence_editor")
+            facts = sequence_by_name[labels[owner]]
+            accepted = (not facts["editor_present"] or (
+                facts["top_level_count"] == 0 and facts["meta_stack_count"] == 0
+                and facts["active_strip"] is None and facts["proxy_dir"] == ""))
+            sequence_records.append({**{key: value for key, value in facts.items() if key != "proxy_dir"},
+                "proxy_dir": redacted_text(facts.get("proxy_dir", "")),
+                "empty_editor_structural_data_only": accepted, "root_chain": chain(owner),
+                "editor_created_cleared_or_media_opened": False})
+            if not accepted:
+                issue(owner, "nonempty_or_unclassified_sequence_editor", "Scene.sequence_editor", facts.get("proxy_dir", ""))
             if owner.rigidbody_world is not None:
                 point_cache(owner, owner.rigidbody_world.point_cache, "Scene.rigidbody_world.point_cache")
         if isinstance(owner, bpy.types.Object):
@@ -722,12 +821,14 @@ def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
             "weak_owner_type_counts": dict(sorted(weak_type_counts.items())), "weak_records": weak_records,
             "weak_fields_never_resolved_opened_or_mutated": True,
             "weak_metadata_before_after_hash_required": True,
-            "freestyle_records": freestyle_records, "checked": checked,
+            "freestyle_records": freestyle_records, "inert_text_records": text_records,
+            "palette_records": palette_records, "sequence_editor_records": sequence_records,
+            "text_execution_or_future_script_dependencies_approved": False, "checked": checked,
             "all_node_type_counts": dict(sorted(node_type_counts.items())),
             "unknown_node_type_counts": dict(sorted(unknown_node_types.items())),
             "unknown_node_details": unknown_node_details,
             "node_policy_source_revision": NODE_SOURCE_REVISION, "closed_node_policy": NODE_POLICY,
-            "resource_policy": "Exact44auditednodes; verified22packedImages; local append-origin metadata; dependency-checked LineStyle; unknown inputs STOP",
+            "resource_policy": "Exact44nodes; packed22Images; local append metadata; checked LineStyle; exact2inert Text buffers; numeric Palette; strictly empty editor; unknown inputs STOP",
             "id_cap": ID_CAP, "edge_cap": EDGE_CAP, "file_path_map_is_supplementary": True,
             "file_path_map_fixed_skip_packed_and_weak_not_used_as_absence_proof": True,
             "full_scene_portable": False, "whole_file_portable": False}
