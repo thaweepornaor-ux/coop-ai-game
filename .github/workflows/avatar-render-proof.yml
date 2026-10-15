@@ -1,13 +1,14 @@
-name: Render soft cloth Snow material candidate
+name: Render Snow raised-arm deformation proof
 on:
   push:
     branches: [codex/game-recovery]
     paths:
       - 'scripts/bpy-inspect-avatar-garments.py'
+      - 'scripts/bpy-proof-snow-raised-arms.py'
       - 'scripts/bpy-prototype-snow-soft-cloth.py'
       - 'scripts/bpy-render-snow-normalmap-pair.py'
       - 'scripts/bpy-prototype-snow-crewneck.py'
-      - 'scripts/ci-restore-snow-prototype.py'
+      - 'scripts/ci-restore-snow-soft-cloth.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
       - 'scripts/avatar-render-configs/**'
       - '.github/workflows/avatar-render-proof.yml'
@@ -19,7 +20,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  snow-soft-cloth-candidate:
+  snow-raised-arms-proof:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -33,26 +34,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-prototype.py scripts/bpy-prototype-snow-soft-cloth.py
-          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-soft-cloth-candidate/frozen-source-restore.json"
-          python scripts/ci-restore-snow-prototype.py --out "$RUNNER_TEMP/avatar-prototype-restored" --report "$RUNNER_TEMP/avatar-soft-cloth-candidate/frozen-prototype-restore.json"
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-soft-cloth.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-raised-arms-proof/frozen-source-restore.json"
+          python scripts/ci-restore-snow-soft-cloth.py --out "$RUNNER_TEMP/avatar-soft-cloth-restored" --report "$RUNNER_TEMP/avatar-raised-arms-proof/frozen-soft-cloth-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Render the new soft cloth material from front and neck cameras
+      - name: Render controlled raised-arm Snow proof from the frozen soft-cloth checkpoint
         run: |
           source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-prototype-snow-soft-cloth.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-prototype-restored/checkpoint/snow-crewneck-orientation-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-soft-cloth-candidate/snow" --emit-preview
-      - name: Preserve soft cloth candidate renders, derivative and bounded audit
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-proof-snow-raised-arms.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-soft-cloth-restored/checkpoint/snow-soft-cloth-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-raised-arms-proof/snow" --emit-preview
+      - name: Preserve raised-arm proof images, bounded audits and credits
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-soft-cloth-candidate
+          name: avatar-snow-raised-arms-proof
           path: |
-            ${{ runner.temp }}/avatar-soft-cloth-candidate/
+            ${{ runner.temp }}/avatar-raised-arms-proof/
             bpy-proof/
           if-no-files-found: error
           compression-level: 6
