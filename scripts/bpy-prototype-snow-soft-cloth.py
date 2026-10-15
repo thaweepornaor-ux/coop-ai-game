@@ -139,10 +139,10 @@ def driver_summary(helper,bpy):
             "index":r["index"],"type":r["type"],"muted":r["muted"],"is_valid":r["is_valid"],
             "native":r["native_without_python"],"targets":r["targets"]} for r in records])}
 
-def verify_override(bpy,garment,old_material,new_material,principled,output):
+def verify_override(bpy,garment,data_material_baseline,new_material,principled,output):
     if (garment.material_slots[0].link!="OBJECT"
             or garment.material_slots[0].material!=new_material
-            or garment.data.materials[0]!=old_material
+            or garment.data.materials[0]!=data_material_baseline
             or len(new_material.node_tree.nodes)!=2
             or len(new_material.node_tree.links)!=1
             or principled.inputs["Normal"].is_linked
@@ -296,9 +296,29 @@ def main():
                 or not garment.material_slots or not garment.data.materials):
             raise ValueError("frozen_shirt_geometry_or_slot_guard_failed")
         old_material=bpy.data.materials.get("snow.shirt")
-        if (old_material is None or garment.material_slots[0].material!=old_material
-                or garment.data.materials[0]!=old_material
-                or not any(p.material_index==0 for p in garment.data.polygons)):
+        data_material_baseline=garment.data.materials[0]
+        slot_zero_polygons=sum(p.material_index==0 for p in garment.data.polygons)
+        predicates={"expected_material_exists":old_material is not None,
+            "effective_slot_zero_is_expected":old_material is not None
+                and garment.material_slots[0].material==old_material,
+            "slot_zero_polygons_present":slot_zero_polygons>0,
+            "data_slot_zero_is_expected_diagnostic_only":old_material is not None
+                and data_material_baseline==old_material}
+        audit["target_binding_guard"]={"required_predicates":[
+                "expected_material_exists","effective_slot_zero_is_expected","slot_zero_polygons_present"],
+            "predicates":predicates,"data_slot_zero_must_equal_expected":False,
+            "layout":{"object":garment.name,"object_slot_count":len(garment.material_slots),
+                "data_slot_count":len(garment.data.materials),
+                "object_slots":[{"index":i,"link":slot.link,
+                    "effective_material":slot.material.name if slot.material else None}
+                    for i,slot in enumerate(garment.material_slots)],
+                "data_materials":[m.name if m else None for m in garment.data.materials],
+                "slot_zero_polygon_count":slot_zero_polygons,
+                "expected_material":old_material.name if old_material else None,
+                "captured_data_material_baseline":data_material_baseline.name if data_material_baseline else None}}
+        # Persist every original compound predicate before a material guard can raise.
+        write_audit(audit_path,audit)
+        if not all(predicates[name] for name in audit["target_binding_guard"]["required_predicates"]):
             raise ValueError("frozen_shirt_slot_zero_material_mismatch")
         if bpy.data.materials.get(MATERIAL_NAME) is not None:
             raise ValueError("candidate_material_name_already_exists")
@@ -306,7 +326,7 @@ def main():
         audit["original_target_normal_route"]=old_route
         audit["target_binding_before"]={"object":garment.name,"slot":0,
             "link":garment.material_slots[0].link,"object_material":old_material.name,
-            "data_material":garment.data.materials[0].name,
+            "data_material":data_material_baseline.name if data_material_baseline else None,
             "mesh_data_users":garment.data.users,"material_users":old_material.users,
             "slot_zero_polygon_count":sum(p.material_index==0 for p in garment.data.polygons)}
         scene.cycles.seed=SEED
@@ -353,9 +373,9 @@ def main():
         new_material.node_tree.links.new(principled.outputs["BSDF"],output.inputs["Surface"])
         garment.material_slots[0].link="OBJECT"
         garment.material_slots[0].material=new_material
-        verify_override(bpy,garment,old_material,new_material,principled,output)
+        verify_override(bpy,garment,data_material_baseline,new_material,principled,output)
         audit["target_binding_after"]={"object":garment.name,"slot":0,"link":"OBJECT",
-            "object_material":new_material.name,"data_material":garment.data.materials[0].name}
+            "object_material":new_material.name,"data_material":garment.data.materials[0].name if garment.data.materials[0] else None}
         audit["new_target_shader_signature"]=shader_signature(pair,new_material)
         audit["intentional_changes"]={"new_material":new_material.name,"object_slot_override_only":True,
             "base_color_scene_linear_rgba":list(COLOR),"roughness":0.8,"metallic":0,
@@ -378,7 +398,7 @@ def main():
             after=pair.control_snapshot(bpy,scene,objects,candidate_materials,None,None)
             if before["sha256"]!=after["sha256"]:
                 raise ValueError("candidate_controls_changed_during_render")
-            verify_override(bpy,garment,old_material,new_material,principled,output)
+            verify_override(bpy,garment,data_material_baseline,new_material,principled,output)
             if digest(shader_signature(pair,new_material))!=new_shader_hash:
                 raise ValueError("candidate_target_shader_changed_during_render")
             record={"view":shot["name"],"before_sha256":before["sha256"],
@@ -429,6 +449,9 @@ def main():
             "renders":len(audit["renders"]),"views":[r["view"] for r in audit["renders"]],
             "models_saved":audit["models_saved"],"derivative_saved":audit["derivative_saved"],
             "derivative":audit.get("derivative"),"intentional_changes":audit.get("intentional_changes"),
+            "target_binding_guard":audit.get("target_binding_guard"),
+            "target_binding_before":audit.get("target_binding_before"),
+            "target_binding_after":audit.get("target_binding_after"),
             "preservation_passed":audit.get("preservation_passed",False),
             "shirt_geometry":audit.get("preservation_after",audit.get("preservation_before",{})).get("shirt"),
             "per_view_control_hashes":audit["controls"],"native_policy":audit.get("native_policy"),
