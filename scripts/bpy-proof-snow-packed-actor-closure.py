@@ -38,6 +38,13 @@ PACK_RUN = 38752917367
 INTERNAL_TYPES = ("Mesh", "Armature", "Lattice", "Object", "Material", "Action", "Key",
                   "Collection", "World", "Camera", "Light", "NodeTree", "Scene")
 
+# Additional exact-class source audits (data only; never loaded/executed from archives):
+# root shader12 3e463047391ba9d9b67940a28638420878a149fb
+# peer Geometry/Function+shader12 00843b400f2069fc04aac48c6e643d01d4244945
+# weak provenance/LineStyle 059855e91ee3ad7017230a483399fdceae093700
+# Weak eligibility: measured local/no override AND independently supported live dependency closure.
+# LineStyle.use_texture is the positive RNA Boolean; no storage-flag inference or render pruning.
+
 # Closed builtin node policy; unlisted types STOP instead of inferring path coverage.
 NODE_SOURCE_REVISION = "8bf95cbd38d1456c94e9d751f3804eea4d5b137b"
 NODE_POLICY = {
@@ -140,8 +147,128 @@ NODE_POLICY = {
         "shader/nodes/node_shader_output_world.cc",
         "9-17;42-51",
         "shader_output"
+    ],
+    "ShaderNodeAddShader": [
+        "shader/nodes/node_shader_add_shader.cc",
+        "9-23;55-70",
+        "shader_values"
+    ],
+    "ShaderNodeAttribute": [
+        "shader/nodes/node_shader_attribute.cc",
+        "16-22;37-86;102-121",
+        "internal_named_attribute"
+    ],
+    "ShaderNodeBsdfAnisotropic": [
+        "shader/nodes/node_shader_bsdf_glossy.cc",
+        "12-40;42-57;92-116",
+        "shader_values"
+    ],
+    "ShaderNodeBsdfRefraction": [
+        "shader/nodes/node_shader_bsdf_refraction.cc",
+        "9-40;69-89",
+        "shader_values"
+    ],
+    "ShaderNodeBsdfTransparent": [
+        "shader/nodes/node_shader_bsdf_transparent.cc",
+        "11-28;55-73",
+        "shader_values"
+    ],
+    "ShaderNodeEmission": [
+        "shader/nodes/node_shader_emission.cc",
+        "9-29;49-65",
+        "shader_values"
+    ],
+    "ShaderNodeInvert": [
+        "shader/nodes/node_shader_invert.cc",
+        "13-34;48-63",
+        "shader_values"
+    ],
+    "ShaderNodeLightPath": [
+        "shader/nodes/node_shader_light_path.cc",
+        "9-34;55-72",
+        "internal_shading_context"
+    ],
+    "ShaderNodeMixShader": [
+        "shader/nodes/node_shader_mix_shader.cc",
+        "9-31;62-77",
+        "shader_values"
+    ],
+    "ShaderNodeNewGeometry": [
+        "shader/nodes/node_shader_geometry.cc",
+        "9-59;88-103",
+        "internal_shading_geometry"
+    ],
+    "ShaderNodeTangent": [
+        "shader/nodes/node_shader_tangent.cc",
+        "19-22;51-84;98-118",
+        "internal_named_uv"
+    ],
+    "ShaderNodeUVMap": [
+        "shader/nodes/node_shader_uvmap.cc",
+        "21-24;49-73;89-110",
+        "internal_named_uv"
+    ],
+    "FunctionNodeBooleanMath": [
+        "function/nodes/node_fn_boolean_math.cc",
+        "23-29;178-205",
+        "audited_internal_field_or_value"
+    ],
+    "FunctionNodeCompare": [
+        "function/nodes/node_fn_compare.cc",
+        "29-58;736-754",
+        "audited_internal_field_or_value"
+    ],
+    "GeometryNodeInputEdgeSmooth": [
+        "geometry/nodes/node_geo_input_edge_smooth.cc",
+        "9-18;20-33",
+        "audited_internal_field_or_value"
+    ],
+    "GeometryNodeInputMeshEdgeAngle": [
+        "geometry/nodes/node_geo_input_mesh_edge_angle.cc",
+        "15-29;217-229",
+        "audited_internal_field_or_value"
+    ],
+    "GeometryNodeInputShadeSmooth": [
+        "geometry/nodes/node_geo_input_face_smooth.cc",
+        "9-18;20-33",
+        "audited_internal_field_or_value"
+    ],
+    "GeometryNodeSetShadeSmooth": [
+        "geometry/nodes/node_geo_set_shade_smooth.cc",
+        "18-37;112-131",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeValToRGB": [
+        "shader/nodes/node_shader_color_ramp.cc",
+        "22-40;159-179",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeRGBCurve": [
+        "shader/nodes/node_shader_curves.cc",
+        "159-180;299-318",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeSeparateColor": [
+        "shader/nodes/node_shader_sepcomb_color.cc",
+        "25-65;96-115",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeVectorRotate": [
+        "shader/nodes/node_shader_vector_rotate.cc",
+        "25-45;265-283",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeVectorTransform": [
+        "shader/nodes/node_shader_vector_transform.cc",
+        "17-43;201-221",
+        "audited_internal_field_or_value"
+    ],
+    "ShaderNodeMapRange": [
+        "shader/nodes/node_shader_map_range.cc",
+        "32-49;521-543",
+        "audited_internal_field_or_value"
     ]
-} 
+}
 
 def require(condition, code):
     if not condition:
@@ -315,39 +442,99 @@ def build_graph(bpy, config, expected):
                "outside_scope_sample": sorted(labels[item] for item in all_ids-reached)[:20],
                "eye_anim_is_explicit_preservation_root": True,
                "all_59_actions_are_explicit_roots": True, "fake_user_counts_used_as_edges": False}
-    return inspected, labels, chain, summary
+    resource_dependencies = {owner: set(dependencies.get(owner, set())) for owner in inspected}
+    for child, owner in embedded_parent.items():
+        resource_dependencies[owner].add(child)
+    require(all(target in inspected for targets in resource_dependencies.values() for target in targets),
+            "resource_dependency_outside_closure")
+    return inspected, labels, chain, summary, resource_dependencies
 
-def audit_resources(bpy, ids, labels, chain, expected):
-    issues = []
-    issue_count = 0
-    unknown_node_types = {}
-    unknown_node_details = []
+
+def id_label(item, labels):
+    return labels.get(item, item.bl_rna.identifier+":"+item.name_full) if item is not None else None
+
+def resource_metadata_state(bpy, ids, labels, dependencies):
+    """Read metadata only: no weak target path resolution, append, decode or mutation."""
+    weak_rows, style_rows = [], []
+    for owner in sorted(ids, key=lambda item: labels[item]):
+        weak = owner.library_weak_reference
+        if weak is not None:
+            filepath, id_name = weak.filepath, weak.id_name
+            require(isinstance(filepath, str) and len(filepath) <= 4096
+                    and isinstance(id_name, str) and len(id_name) <= 1024,
+                    "weak_metadata_text_budget")
+            weak_rows.append({"owner": labels[owner], "owner_type": owner.bl_rna.identifier,
+                "filepath": filepath, "id_name": id_name,
+                "local": owner.library is None, "no_override": owner.override_library is None})
+        if isinstance(owner, bpy.types.FreestyleLineStyle):
+            require(type(owner.use_nodes) is bool and type(owner.use_texture) is bool,
+                    "freestyle_boolean_metadata")
+            textures = []
+            for slot in owner.texture_slots:
+                if slot is not None and slot.texture is not None:
+                    textures.append(id_label(slot.texture, labels))
+            style_rows.append({"owner": labels[owner], "local": owner.library is None,
+                "no_override": owner.override_library is None, "use_nodes": owner.use_nodes,
+                "use_texture": owner.use_texture, "node_tree": id_label(owner.node_tree, labels),
+                "texture_slot_ids": textures,
+                "outgoing_ids": sorted(id_label(item, labels)
+                                       for item in dependencies.get(owner, set()))})
+    return {"weak": weak_rows, "freestyle": style_rows}
+
+def redacted_text(value, limit=512):
+    raw = str(value)
+    redacted = raw
+    if "://" in raw:
+        parts = urlsplit(raw)
+        redacted = urlunsplit((parts.scheme, parts.netloc.rsplit("@", 1)[-1], parts.path, "", ""))
+    return {"text": clean(redacted, limit), "length": len(redacted),
+            "truncated": len(redacted) > limit, "sha256": hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+            "url_credentials_query_fragment_redacted": redacted != raw}
+
+def bounded_issue_representatives(groups):
+    """Fair per-code examples; counts never depend on retained details."""
+    details, used = [], 0
+    for index in range(3):
+        for code in sorted(groups):
+            if index >= len(groups[code]):
+                continue
+            row = groups[code][index]
+            size = len(encoded(row))
+            if used+size <= 128*1024 and len(details) < 60:
+                details.append(row)
+                used += size
+    return details, used
+
+
+def audit_resources(bpy, ids, labels, chain, expected, dependencies, metadata):
+    issue_count, issue_counts, owner_type_counts = 0, {}, {}
+    owners_by_type, bad_owners, issue_groups = {}, set(), {}
+    unknown_node_types, unknown_node_details, node_type_counts = {}, [], {}
     output_paths = {}
     checked = {"verified_packed_image_ids": 0, "nodes": 0, "modifiers": 0,
                "registered_nonempty_paths": 0, "registered_output_paths": 0,
-               "registered_verified_packed_image_paths": 0}
+               "registered_verified_packed_image_paths": 0, "freestyle_line_styles": 0}
     expected_images = {row["name"] for row in expected["images"]}
     image_paths = {row["name"]: {row["missing_pattern"], *(f["missing_path"] for f in row["files"])}
                    for row in expected["images"]}
+    supported_owners = set()
+    freestyle_records = []
     def issue(owner, code, location, path=None):
         nonlocal issue_count
         issue_count += 1
-        if len(issues) < ISSUE_CAP:
-            row = {"owner": labels[owner], "code": code, "location": clean(location, 256),
-                   "root_chain": chain(owner)}
+        require(issue_count <= 131072, "observation_budget")
+        issue_counts[code] = issue_counts.get(code, 0)+1
+        typename = owner.bl_rna.identifier
+        owner_type_counts[typename] = owner_type_counts.get(typename, 0)+1
+        owners_by_type.setdefault(typename, set()).add(owner)
+        bad_owners.add(owner)
+        rows = issue_groups.setdefault(code, [])
+        if len(rows) < 3:
+            row = {"owner": labels[owner], "owner_type": typename, "code": code,
+                   "location": clean(location, 256), "root_chain": chain(owner)}
             if path is not None:
-                raw_path = str(path)
-                redacted = raw_path
-                if "://" in raw_path:
-                    parts = urlsplit(raw_path)
-                    host = parts.netloc.rsplit("@", 1)[-1]
-                    redacted = urlunsplit((parts.scheme, host, parts.path, "", ""))
-                row["path_sha256"] = hashlib.sha256(raw_path.encode("utf-8")).hexdigest()
-                row["path"] = clean(redacted, 512)
-                row["path_length"] = len(redacted)
-                row["path_truncated"] = len(redacted) > 512
-                row["url_credentials_query_fragment_redacted"] = redacted != raw_path
-            issues.append(row)
+                row["resource_path"] = redacted_text(path)
+            rows.append(row)
     def output(owner, path):
         if isinstance(path, str) and path:
             require(len(path) <= 4096, "path_text_budget")
@@ -373,22 +560,43 @@ def audit_resources(bpy, ids, labels, chain, expected):
             return
         flags = [bool(getattr(cache, name, False)) for name in ("is_baked", "use_disk_cache", "use_external")]
         if any(flags) or getattr(cache, "filepath", ""):
-            issue(owner, "point_cache_input_unsupported", location)
+            issue(owner, "point_cache_input_unsupported", location, getattr(cache, "filepath", ""))
     internal = tuple(getattr(bpy.types, name) for name in INTERNAL_TYPES)
     inspected_trees = set()
+    style_by_name = {row["owner"]: row for row in metadata["freestyle"]}
     for owner in sorted(ids, key=lambda item: labels[item]):
-        if owner.library is not None or owner.override_library is not None:
-            issue(owner, "linked_or_override_dependency", "ID.library/override_library")
-        weak = getattr(owner, "library_weak_reference", None)
-        if weak is not None and getattr(weak, "filepath", ""):
-            issue(owner, "weak_external_reference_unclassified", "ID.library_weak_reference")
+        local = owner.library is None and owner.override_library is None
+        if not local:
+            issue(owner, "linked_or_override_dependency", "ID.library/override_library",
+                  owner.library.filepath if owner.library is not None else None)
         if isinstance(owner, bpy.types.Image):
             if owner.name not in expected_images:
-                issue(owner, "extra_reachable_image_not_in_packed_proof", "Image")
+                issue(owner, "extra_reachable_image_not_in_packed_proof", "Image", owner.filepath_raw)
             else:
                 checked["verified_packed_image_ids"] += 1
+                supported_owners.add(owner)
             continue
-        if not isinstance(owner, internal):
+        if isinstance(owner, bpy.types.FreestyleLineStyle):
+            checked["freestyle_line_styles"] += 1
+            supported_owners.add(owner)
+            facts = style_by_name[labels[owner]]
+            outgoing = dependencies.get(owner, set())
+            counts = {}
+            for item in outgoing:
+                key = item.bl_rna.identifier
+                counts[key] = counts.get(key, 0)+1
+            for slot in owner.texture_slots:
+                if slot is not None and slot.texture is not None and slot.texture not in ids:
+                    issue(owner, "freestyle_texture_reference_outside_graph", "FreestyleLineStyle.texture_slots")
+            if owner.node_tree is not None and owner.node_tree not in ids:
+                issue(owner, "freestyle_node_tree_outside_graph", "FreestyleLineStyle.node_tree")
+            freestyle_records.append({**facts, "root_chain": chain(owner),
+                "outgoing_dependency_type_counts": dict(sorted(counts.items())),
+                "all_dependencies_must_independently_pass": True,
+                "disabled_render_or_texture_flags_do_not_prune_dependencies": True})
+        elif isinstance(owner, internal):
+            supported_owners.add(owner)
+        else:
             issue(owner, "unsupported_reachable_id_type", owner.bl_rna.identifier)
             continue
         inspect_paths(owner, owner, owner.bl_rna.identifier)
@@ -420,12 +628,14 @@ def audit_resources(bpy, ids, labels, chain, expected):
                 require(checked["nodes"] <= NODE_CAP, "node_budget")
                 location = "NodeTree.nodes["+clean(node.name, 96)+"]"
                 typename = str(node.bl_idname)
+                require(len(typename) <= 128 and (len(node_type_counts) < 256 or typename in node_type_counts),
+                        "node_type_budget")
+                node_type_counts[typename] = node_type_counts.get(typename, 0)+1
                 if typename not in NODE_POLICY or node.bl_rna.identifier != typename:
-                    require(len(unknown_node_types) < 256 or typename in unknown_node_types, "unknown_node_type_budget")
                     unknown_node_types[typename] = unknown_node_types.get(typename, 0)+1
                     if len(unknown_node_details) < ISSUE_CAP:
-                        unknown_node_details.append({"node_type": clean(typename, 128),
-                            "owner": labels[owner], "location": location, "root_chain": chain(owner)})
+                        unknown_node_details.append({"node_type": typename, "owner": labels[owner],
+                            "location": location, "root_chain": chain(owner)})
                     issue(owner, "unsupported_node_type", location+"."+typename)
                     continue
                 if typename in ("ShaderNodeTexImage", "ShaderNodeTexEnvironment"):
@@ -440,16 +650,11 @@ def audit_resources(bpy, ids, labels, chain, expected):
                     obj = node.object
                     if obj is not None and obj not in ids:
                         issue(owner, "coordinate_object_reference_outside_id_graph", location)
-                outputs = ("base_path",) if node.bl_idname == "CompositorNodeOutputFile" else ()
-                inspect_paths(owner, node, location, outputs)
-                if node.bl_idname == "CompositorNodeOutputFile":
-                    output(owner, node.base_path)
-                    for slot in node.file_slots:
-                        output(owner, slot.path)
-                        output(owner, str(Path(node.base_path)/slot.path))
+                # Exact audited builtins only. Their values/attributes are metadata; no execute call.
+                inspect_paths(owner, node, location)
                 for socket in node.inputs:
                     inspect_paths(owner, socket, location+".inputs["+clean(socket.identifier, 96)+"]")
-    # Supplementary registered BKE_bpath input. API deliberately skips packed/weak paths.
+    # Supplementary registered BKE_bpath inputs deliberately skip packed/weak paths.
     mapped = bpy.data.file_path_map(subset=set(ids), include_libraries=True)
     require(isinstance(mapped, dict), "file_path_map_schema")
     for owner, paths in mapped.items():
@@ -460,23 +665,72 @@ def audit_resources(bpy, ids, labels, chain, expected):
             checked["registered_nonempty_paths"] += 1
             require(checked["registered_nonempty_paths"] <= PATH_CAP
                     and isinstance(path, str) and len(path) <= 4096, "registered_path_budget")
-            # Only exact actual output-field strings are allowed; no directory-prefix exemption.
             if isinstance(owner, bpy.types.Image) and path in image_paths.get(owner.name, set()):
                 checked["registered_verified_packed_image_paths"] += 1
             elif path in output_paths.get(owner, set()):
                 checked["registered_output_paths"] += 1
             else:
                 issue(owner, "registered_external_input_unclassified", "file_path_map", path)
+    # Weak references are append provenance only if the owner's actual live closure is supported.
+    # The state includes BOTH readonly fields; id_name is not a filesystem path.
+    live_bad_owners = set(bad_owners)
+    def live_closure_passed(owner):
+        seen, pending = set(), [owner]
+        while pending:
+            current = pending.pop()
+            if current in seen:
+                continue
+            seen.add(current)
+            require(len(seen) <= ID_CAP, "live_closure_budget")
+            if current not in supported_owners or current in live_bad_owners:
+                return False
+            pending.extend(dependencies.get(current, set())-seen)
+        return True
+    weak_records, weak_counts, weak_type_counts = [], {}, {}
+    for row in metadata["weak"]:
+        owner = next(item for item in ids if labels[item] == row["owner"])
+        own_live_passed = live_closure_passed(owner)
+        eligible = row["local"] and row["no_override"] and own_live_passed
+        classification = "append_origin_metadata" if eligible else "unclassified_owner_resource"
+        weak_counts[classification] = weak_counts.get(classification, 0)+1
+        typename = row["owner_type"]
+        weak_type_counts[typename] = weak_type_counts.get(typename, 0)+1
+        if not eligible:
+            issue(owner, "weak_owner_resources_unclassified", "ID.library_weak_reference")
+        weak_records.append({"owner": row["owner"], "owner_type": typename, "root_chain": chain(owner),
+            "local": row["local"], "no_override": row["no_override"],
+            "own_live_resource_closure_passed": own_live_passed, "classification": classification,
+            "filepath": redacted_text(row["filepath"]), "id_name": redacted_text(row["id_name"], 256),
+            "id_name_is_not_filesystem_input": True, "original_target_resolved_or_opened": False,
+            "metadata_sha256": hashlib.sha256(encoded(row)).hexdigest()})
+    require(len(encoded(weak_records)) <= 512*1024, "weak_record_budget")
+    for row in freestyle_records:
+        owner = next(item for item in ids if labels[item] == row["owner"])
+        row["live_resource_closure_passed"] = live_closure_passed(owner)
+    details, detail_bytes = bounded_issue_representatives(issue_groups)
+    require(sum(issue_counts.values()) == issue_count and sum(owner_type_counts.values()) == issue_count,
+            "issue_aggregate_consistency")
     return {"passed": issue_count == 0, "unsupported_count": issue_count,
-            "unsupported_details": issues, "unsupported_details_omitted": max(0, issue_count-len(issues)),
-            "checked": checked, "id_cap": ID_CAP, "edge_cap": EDGE_CAP,
+            "issue_counts_by_code": dict(sorted(issue_counts.items())),
+            "issue_counts_by_owner_type": dict(sorted(owner_type_counts.items())),
+            "unique_unsupported_owner_count": len(bad_owners),
+            "unique_unsupported_owners_by_type": {key: len(value) for key, value in sorted(owners_by_type.items())},
+            "unsupported_details": details, "unsupported_details_omitted": issue_count-len(details),
+            "representative_policy": {"per_code": 3, "maximum": 60, "byte_budget": 128*1024,
+                                      "actual_bytes": detail_bytes, "full_counts_never_trimmed": True},
+            "weak_reference_count": len(weak_records), "weak_classification_counts": dict(sorted(weak_counts.items())),
+            "weak_owner_type_counts": dict(sorted(weak_type_counts.items())), "weak_records": weak_records,
+            "weak_fields_never_resolved_opened_or_mutated": True,
+            "weak_metadata_before_after_hash_required": True,
+            "freestyle_records": freestyle_records, "checked": checked,
+            "all_node_type_counts": dict(sorted(node_type_counts.items())),
             "unknown_node_type_counts": dict(sorted(unknown_node_types.items())),
             "unknown_node_details": unknown_node_details,
             "node_policy_source_revision": NODE_SOURCE_REVISION, "closed_node_policy": NODE_POLICY,
-            "resource_policy": "Verified22packedImages; audited internal IDs; explicit outputs; unknown inputs STOP",
-            "file_path_map_is_supplementary": True,
+            "resource_policy": "Exact44auditednodes; verified22packedImages; local append-origin metadata; dependency-checked LineStyle; unknown inputs STOP",
+            "id_cap": ID_CAP, "edge_cap": EDGE_CAP, "file_path_map_is_supplementary": True,
             "file_path_map_fixed_skip_packed_and_weak_not_used_as_absence_proof": True,
-            "full_scene_portable": False}
+            "full_scene_portable": False, "whole_file_portable": False}
 
 def failure_record(error, stage):
     code = error.args[0] if isinstance(error, ValueError) and len(error.args) == 1 else None
@@ -576,10 +830,21 @@ def main():
                 "packed_decode_coverage")
         audit["packed_readback"] = packed
         stage = "dependency_graph"
-        ids, labels, chain, graph = build_graph(bpy, config, expected)
+        ids, labels, chain, graph, resource_dependencies = build_graph(bpy, config, expected)
         audit["dependency_graph"] = graph
+        require(graph["declared_root_count"] == 79 and graph["unfiltered_id_count"] == 339
+                and graph["unfiltered_edge_count"] == 361 and graph["inspected_id_count"] == 256
+                and graph["reachable_id_identity_sha256"] == "658cf75b210d7a99735565862f77f895e07cd0c58e6149eddd4d7a2a047fd4a2",
+                "fixed_actor_graph_identity")
+        stage = "resource_metadata_before"
+        resource_metadata_before = resource_metadata_state(bpy, ids, labels, resource_dependencies)
+        metadata_hash_before = hashlib.sha256(encoded(resource_metadata_before)).hexdigest()
+        audit["resource_metadata_before"] = {"sha256": metadata_hash_before,
+            "weak_reference_count": len(resource_metadata_before["weak"]),
+            "freestyle_count": len(resource_metadata_before["freestyle"])}
         stage = "resources"
-        resources = audit_resources(bpy, ids, labels, chain, expected)
+        resources = audit_resources(bpy, ids, labels, chain, expected,
+                                    resource_dependencies, resource_metadata_before)
         audit["resource_closure"] = resources
         stage = "native_after"
         final = wrapper.capture_state(bpy, modules, rig, expected["action_names"])
@@ -591,6 +856,15 @@ def main():
         require(wrapper.binding_state(bpy, rig) == expected["reference_binding"]
                 and not bpy.context.preferences.filepaths.use_scripts_auto_execute, "native_policy_after")
         audit["native_after"] = {"snapshot_sha256": wrapper.digest(final), "driver_status": final["driver_status"]}
+        stage = "resource_metadata_after"
+        resource_metadata_after = resource_metadata_state(bpy, ids, labels, resource_dependencies)
+        audit["resource_metadata_after"] = {"sha256": hashlib.sha256(encoded(resource_metadata_after)).hexdigest(),
+            "weak_reference_count": len(resource_metadata_after["weak"]),
+            "freestyle_count": len(resource_metadata_after["freestyle"])}
+        require(resource_metadata_after == resource_metadata_before
+                and audit["resource_metadata_after"]["sha256"] == metadata_hash_before,
+                "readonly_resource_metadata_changed")
+        audit["resource_metadata_unchanged"] = True
         native_passed = True
     except Exception as error:
         failure = failure_record(error, stage)
@@ -617,7 +891,9 @@ def main():
             "models_saved", "original_assets_restored", "model_payload_reuploaded")}
         if resources is not None:
             summary["resource_closure"] = {key: resources[key] for key in
-                ("passed", "unsupported_count", "unsupported_details_omitted", "checked")}
+                ("passed", "unsupported_count", "unsupported_details_omitted", "issue_counts_by_code",
+                 "issue_counts_by_owner_type", "weak_reference_count", "weak_classification_counts",
+                 "unknown_node_type_counts", "checked")}
         require(len(encoded(summary)) <= 24*1024, "stdout_budget")
         print("SNOW_PACKED_ACTOR_CLOSURE "+encoded(summary).decode("utf-8").strip(), flush=True)
     return 0 if audit["used_actor_external_closure_passed"] else 1
