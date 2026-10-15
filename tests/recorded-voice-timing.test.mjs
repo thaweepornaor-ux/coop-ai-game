@@ -57,7 +57,7 @@ test('Narration stays intact and the synchronized answer clock starts at 10 seco
  }
  assert.match(game,/Math.max\(0,totalRemaining-10\)/);
  assert.match(game,/timer\/10/);
- assert.match(game,/ฟังจบแล้วตอบ 10 วินาที/);
+ assert.match(game,/หลังฟังโจทย์มีเวลาตอบ 10 วินาที/);
  assert.match(game,/หลังฟังโจทย์มีเวลาตอบ 10 วินาที/);
  assert.match(game,/จากนั้นมีเวลาตอบเต็ม 10 วินาที/);
  assert.match(route,/answerWindowMs\(plan.questionIndex\)/);
