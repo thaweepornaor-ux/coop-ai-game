@@ -278,6 +278,27 @@ async function wardrobe(page) {
  assert.equal(await gallery.getByRole('button').count(),10);
  await page.getByRole('button',{name:'ตัวละครหญิง',exact:true}).click();
  assert.equal(await gallery.getByRole('button').count(),10);
+ // Geometry gate: every gallery portrait must stay in its own grid row;
+ // this catches feet or arms covering the Thai character name.
+ for(const genderName of ['ตัวละครชาย','ตัวละครหญิง']){
+  await page.getByRole('button',{name:genderName,exact:true}).click();
+  const layout=await gallery.locator('.quick-character').evaluateAll(cards=>cards.map(card=>{
+   const portrait=card.querySelector('.quick-character-portrait');
+   const caption=card.querySelector('strong');
+   if(!portrait||!caption)return {missing:true};
+   const a=portrait.getBoundingClientRect(),b=caption.getBoundingClientRect();
+   return {portraitBottom:a.bottom,captionTop:b.top,
+     svgCount:portrait.querySelectorAll('svg').length,
+     pngCount:portrait.querySelectorAll('img').length};
+  }));
+  assert.equal(layout.length,10,genderName+' gallery should contain ten avatars');
+  for(const card of layout){
+   assert.equal(card.missing,undefined,'Each avatar card needs portrait and caption');
+   assert.ok(card.portraitBottom<=card.captionTop+1,'Avatar portrait must not overlap name');
+   assert.equal(card.svgCount,1,'Gallery thumbnail uses a single SVG');
+   assert.equal(card.pngCount,0,'Gallery thumbnail must not mix PNG and SVG');
+  }
+ }
  const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
