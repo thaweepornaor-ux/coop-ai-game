@@ -28,6 +28,8 @@ PART_BYTES=64*1024*1024
 JSON_CAP=1024*1024
 PACK_BYTES=97102085
 DRIVER_VALUE_TOL=1e-4
+RETAINED_OBJECT="GEO-snow-eye_anim"
+RETAINED_DRIVER_SHA="d9638f60715ccbe8d885fdf6709cf1e74b229201d0a3c5ee85363c1f13c80040"
 
 def require(condition,code):
     if not condition:
@@ -661,6 +663,7 @@ def main():
     audit_path=snow/"packed-textures-audit.json"
     failure=None;modules=rig=saved=snapshot=reference_values=None
     source_snapshot=None;file_pins={};worker_report=None
+    retained_obj=None;retention_applied=False;fake_users_before=None
     try:
         require(source.is_file() and sha(source)==SOURCE_SHA and candidate_input.stat().st_size==INPUT_BYTES
             and sha(candidate_input)==INPUT_SHA and sha(producer_path)==PRODUCER_SHA
@@ -747,6 +750,36 @@ def main():
         require(audit["in_memory_value_comparison"]["passed"],"packing_values")
         restore_binding(bpy,native,rig,saved)
         require(binding_state(bpy,rig)==saved,"before_save_binding")
+        source_ids=observe_id_persistence(bpy,snapshot["driver_status"]["count"])
+        require("inspection_error" not in source_ids and source_ids["aggregate_matches_helper"] is True,
+            "retention_source_inventory")
+        matches=[row for row in source_ids["objects"] if row["name"]==RETAINED_OBJECT]
+        owners=[row for row in source_ids["driver_owners"]
+            if row["owner_key"]==["objects",RETAINED_OBJECT,"id"]]
+        require(matches==[{"name":RETAINED_OBJECT,"type":"MESH","users":0,"use_fake_user":False,
+            "scene_names":[],"collection_names":[],"own_driver_count":1}]
+            and owners==[{"owner_key":["objects",RETAINED_OBJECT,"id"],"driver_count":1,
+                "identity_sha256":RETAINED_DRIVER_SHA}],"retention_exact_measured_target")
+        retained_obj=bpy.data.objects.get(RETAINED_OBJECT)
+        require(retained_obj is not None and retained_obj.library is None
+            and retained_obj.override_library is None,"retention_local_target")
+        fake_users_before={obj.name:bool(obj.use_fake_user) for obj in bpy.data.objects}
+        audit["source_object_fake_users"]=fake_users_before
+        audit["retention_source_object"]=matches[0]
+        audit["retention_source_driver_owner"]=owners[0]
+        retention_applied=True
+        retained_obj.use_fake_user=True
+        saved_flags={obj.name:bool(obj.use_fake_user) for obj in bpy.data.objects}
+        expected_flags={**fake_users_before,RETAINED_OBJECT:True}
+        require(saved_flags==expected_flags and retained_obj.users==1,"retention_single_flag_delta")
+        require(capture_state(bpy,modules,rig,action_names)==snapshot,"retention_preservation")
+        audit["retention_policy"]={"object_name":RETAINED_OBJECT,"source_users":0,
+            "source_use_fake_user":False,"saved_users":1,"saved_use_fake_user":True,
+            "driver_identity_sha256":RETAINED_DRIVER_SHA,"saved_object_fake_users":saved_flags}
+        audit["intentional_metadata_exception"]={"id_type":"Object","id_name":RETAINED_OBJECT,
+            "property":"use_fake_user","source":False,"new_derivative":True,
+            "purpose":"Retain exactly the measured zero-user original Object and its native driver on disk",
+            "scene_or_collection_links_changed":False,"driver_definitions_changed":False}
         audit["pre_save_id_inventory"]=observe_id_persistence(bpy,snapshot["driver_status"]["count"])
         candidate=work/"snow-packed-used-textures-candidate.blend"
         bpy.ops.wm.save_as_mainfile(filepath=str(candidate),check_existing=False,compress=True,relative_remap=False)
@@ -756,11 +789,11 @@ def main():
         joined,transport=create_transport(candidate,out/"parts",work)
         audit["transport"]=transport
         write_json(snow/"packed-transport-manifest.json",transport)
-        expected={"schema_version":2,"wrapper_blob":blob(Path(__file__)),"worker_blob":blob(worker),
+        expected={"schema_version":3,"wrapper_blob":blob(Path(__file__)),"worker_blob":blob(worker),
             "blend_sha256":transport["sha256"],"blend_bytes":transport["bytes"],"snapshot":snapshot,
             "snapshot_sha256":digest(snapshot),"reference_binding":reference,"saved_binding":saved,
             "action_names":action_names,"images":rows,"missing_root":str(missing_root),
-            "reference_values":reference_values,"pre_save_id_inventory":audit["pre_save_id_inventory"]}
+            "reference_values":reference_values,"pre_save_id_inventory":audit["pre_save_id_inventory"],"retention_policy":audit["retention_policy"]}
         expected_path=snow/"packed-reopen-expectations.json"
         write_json(expected_path,expected)
         write_json(audit_path,audit)
@@ -781,6 +814,11 @@ def main():
         audit["failure"]=error_record(error)
     finally:
         try:
+            if retention_applied:
+                retained_obj.use_fake_user=False
+                audit["retention_metadata_restored"]=(retained_obj.users==0 and
+                    {obj.name:bool(obj.use_fake_user) for obj in bpy.data.objects}==fake_users_before)
+                require(audit["retention_metadata_restored"],"retention_parent_metadata_restore")
             if rig is not None and modules is not None and saved is not None:
                 base,native,natural,face,proof,soft,pair,helper=modules
                 restore_binding(bpy,native,rig,saved)
@@ -797,7 +835,8 @@ def main():
                 and Path(path).stat().st_size==pin["bytes"] and sha(path)==pin["sha256"])
                 for path,pin in file_pins.items()}
             audit["input_files_unchanged"]=bool(file_pins) and all(audit["input_file_recheck"].values())
-            complete=(failure is None and audit.get("reopen_verified",False)
+            complete=(failure is None and retention_applied and audit.get("retention_metadata_restored",False)
+                and audit.get("reopen_verified",False)
                 and audit.get("final_snapshot_preserved",False)
                 and audit.get("final_value_comparison",{}).get("passed") is True
                 and audit.get("original_binding_restored",False)

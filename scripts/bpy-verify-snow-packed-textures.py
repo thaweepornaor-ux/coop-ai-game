@@ -20,7 +20,7 @@ MAX_STDOUT = 24*1024
 WRAPPER_FILE = "bpy-pack-snow-used-textures.py"
 FIELDS = {"schema_version", "wrapper_blob", "worker_blob", "blend_sha256", "blend_bytes",
           "snapshot", "snapshot_sha256", "reference_binding", "saved_binding",
-          "action_names", "images", "missing_root", "reference_values", "pre_save_id_inventory"}
+          "action_names", "images", "missing_root", "reference_values", "pre_save_id_inventory", "retention_policy"}
 
 
 def require(condition, code):
@@ -69,6 +69,60 @@ def checked_binding(value):
             and math.isfinite(value["subframe"]) and 0 <= value["subframe"] < 1, "binding_values")
 
 
+def checked_retention_policy(policy, snapshot):
+    fields = {"object_name", "source_users", "source_use_fake_user", "saved_users",
+              "saved_use_fake_user", "driver_identity_sha256", "saved_object_fake_users"}
+    require(isinstance(policy, dict) and set(policy) == fields, "retention_policy_schema")
+    require(policy["object_name"] == "GEO-snow-eye_anim"
+            and type(policy["source_users"]) is int and policy["source_users"] == 0
+            and policy["source_use_fake_user"] is False
+            and type(policy["saved_users"]) is int and policy["saved_users"] == 1
+            and policy["saved_use_fake_user"] is True
+            and policy["driver_identity_sha256"] ==
+                "d9638f60715ccbe8d885fdf6709cf1e74b229201d0a3c5ee85363c1f13c80040",
+            "retention_policy_fixed_values")
+    flags = policy["saved_object_fake_users"]
+    require(isinstance(flags, dict) and len(flags) == 59
+            and all(isinstance(name, str) and 0 < len(name) <= 256
+                    and type(flag) is bool for name, flag in flags.items())
+            and flags.get("GEO-snow-eye_anim") is True, "retention_saved_flags")
+    require(isinstance(snapshot.get("stable_inventory"), dict)
+            and isinstance(snapshot["stable_inventory"].get("objects"), list)
+            and sorted(flags) == sorted(snapshot["stable_inventory"]["objects"]),
+            "retention_expected_object_names")
+
+
+def verify_retained_object(bpy, policy):
+    # Read-only saved-state check. The source-state fields are the parent's guarded declaration.
+    target = bpy.data.objects.get("GEO-snow-eye_anim")
+    require(target is not None and target.type == "MESH"
+            and target.library is None and target.override_library is None,
+            "retention_target_local_mesh")
+    scenes = sorted(scene.name for scene in bpy.data.scenes
+                    if scene.objects.get(target.name) == target)
+    collections = sorted(collection.name for collection in target.users_collection)
+    require(not scenes and not collections, "retention_target_became_linked")
+    require(target.use_fake_user is True and int(target.users) == 1,
+            "retention_saved_target_flag_or_users")
+    actual_flags = {obj.name: bool(obj.use_fake_user) for obj in bpy.data.objects}
+    require(len(actual_flags) == 59 and actual_flags == policy["saved_object_fake_users"],
+            "retention_all_object_flags_or_names")
+    animation = target.animation_data
+    curves = list(animation.drivers) if animation is not None else []
+    require(len(curves) == 1, "retention_target_driver_count")
+    keys = sorted([curve.data_path, int(curve.array_index), curve.driver.type] for curve in curves)
+    identity = hashlib.sha256(encoded(keys)).hexdigest()
+    require(identity == policy["driver_identity_sha256"], "retention_target_driver_identity")
+    return {"object_name": target.name, "object_type": target.type, "local_no_override": True,
+            "users": int(target.users), "use_fake_user": bool(target.use_fake_user),
+            "scene_names": scenes, "collection_names": collections, "own_driver_count": len(curves),
+            "driver_identity_sha256": identity, "object_count": len(actual_flags),
+            "all_saved_object_fake_user_flags_equal": True,
+            "saved_object_fake_users_sha256": hashlib.sha256(encoded(actual_flags)).hexdigest(),
+            "source_state_is_declared_parent_guard": True, "read_only_saved_state_check": True,
+            "passed": True}
+
+
 def load_expected(path, expected_sha):
     require(digest_text(expected_sha, 64), "expected_sha_argument")
     require(path.is_file() and not path.is_symlink()
@@ -77,7 +131,7 @@ def load_expected(path, expected_sha):
     require(hashlib.sha256(raw).hexdigest() == expected_sha, "expected_file_hash")
     value = json.loads(raw.decode("utf-8"))
     finite_json(value)
-    require(isinstance(value, dict) and set(value) == FIELDS and value["schema_version"] == 2,
+    require(isinstance(value, dict) and set(value) == FIELDS and value["schema_version"] == 3,
             "expected_schema")
     for key in ("wrapper_blob", "worker_blob"):
         require(digest_text(value[key], 40), "expected_source_pin")
@@ -87,6 +141,7 @@ def load_expected(path, expected_sha):
             "expected_blend_budget")
     require(isinstance(value["snapshot"], dict) and hashlib.sha256(
         encoded(value["snapshot"])).hexdigest() == value["snapshot_sha256"], "snapshot_hash")
+    checked_retention_policy(value["retention_policy"], value["snapshot"])
     for key in ("saved_binding", "reference_binding"):
         checked_binding(value[key])
     require(value["reference_binding"]["action"] == "COOP_SNOW_NATIVE_IDLE_CANDIDATE"
@@ -287,6 +342,9 @@ def main():
         wrapper.validate_runtime(bpy)
         result["native_driver_after_open"] = observe_driver_aggregate(bpy, soft, helper)
         result["id_persistence_comparison"] = observe_id_comparison(bpy, wrapper, expected, result["native_driver_after_open"])
+        stage = "retention_policy_readback"
+        result["retention_policy_readback"] = verify_retained_object(bpy, expected["retention_policy"])
+        stage = "fresh_open"
         rig = bpy.data.objects.get("RIG-Snow")
         require(rig is not None and rig.type == "ARMATURE" and rig.data.pose_position == "POSE"
                 and rig.name in bpy.context.scene.objects, "saved_native_rig")
