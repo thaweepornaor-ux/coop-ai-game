@@ -26,7 +26,8 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
    const next=normalizeWardrobe({...avatar,presetId:person.id,bodyStyle:person.gender,
      skinTone:person.skinTone,hairStyle:person.hairStyle,hairColor:person.hairColor,
      glassesStyle:person.glasses?(person.glassesStyle==='round'?'round':'rectangle'):'none',
-     bottomStyle:person.bottomStyle,shirtColor:person.shirtColor,bottomColor:person.bottomColor});
+     bottomStyle:person.bottomStyle,shirtColor:person.shirtColor,bottomColor:person.bottomColor,
+     shirtStyle:'polo',shoeColor:'black',hatStyle:'none'});
    onChange(next);
  };
  const chooseGender=(next:'male'|'female')=>{
@@ -52,10 +53,10 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       className={'quick-character'+(selectedId===c.id?' selected':'')}
       aria-label={c.label+(selectedId===c.id?' เลือกอยู่':'')}
       aria-pressed={selectedId===c.id} onClick={()=>selectPreset(c)}>
-      <span className="quick-character-portrait"><Avatar options={{...avatar,
+      <span className="quick-character-portrait"><Avatar options={{...normalizeWardrobe({presetId:c.id,bodyStyle:c.gender}),
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
-        hatStyle:'none'}} svgOnly pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
+        hatStyle:'none',shirtStyle:'polo',shoeColor:'black'}} svgOnly pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
       <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
