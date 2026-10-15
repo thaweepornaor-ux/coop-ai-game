@@ -5,6 +5,7 @@ import {renderAvatar} from '../shared/avatar.js';
 
 const poses=['stand','wave','celebrate','think','confident'];
 const fullMatrix=process.argv.includes('--all');
+const validate=process.argv.includes('--validate');
 // Read committed preset definitions so the expanded sheet checks the actual
 // hairstyle, color, glasses and clothing choices rather than stand-in defaults.
 const catalog=readFileSync(new URL('../shared/characters.ts',import.meta.url),'utf8');
@@ -18,9 +19,12 @@ const people=(fullMatrix?presets:presets.filter(p=>['M01','F01'].includes(p.id))
 }));
 const escape=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cards=[];
+const audited=[];
 for(const person of people) for(const pose of poses) {
  const options={...person,shirtStyle:'polo',pose,materialPrefix:'proof-'+person.presetId+'-'+pose};
- cards.push('<article><div class="portrait">'+renderAvatar(options)+'</div><strong>'+escape(person.presetId)+' — '+escape(pose)+'</strong></article>');
+ const svg=renderAvatar(options);
+ audited.push({id:person.presetId,pose,svg});
+ cards.push('<article><div class="portrait">'+svg+'</div><strong>'+escape(person.presetId)+' — '+escape(pose)+'</strong></article>');
 }
 const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
  '<title>Avatar pose review (not a release)</title><style>'+
@@ -36,3 +40,17 @@ const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="vie
 mkdirSync('artifacts/avatar-qa',{recursive:true});
 writeFileSync(fullMatrix?'artifacts/avatar-qa/all-presets-contact-sheet.html':'artifacts/avatar-qa/pose-contact-sheet.html',html,'utf8');
 console.log('Wrote avatar pose review ('+cards.length+' poses; full='+fullMatrix+')');
+
+if(validate){
+ const faults=[];
+ for(const {id,pose,svg} of audited){
+  const label=id+'/'+pose;
+  if(!svg.includes('viewBox="0 0 160 220"'))faults.push(label+' missing figure bounds');
+  if((svg.match(/data-sleeve-side=/g)||[]).length!==2)faults.push(label+' incomplete shirt sleeves');
+  if(/fill="none" fill="none"/.test(svg))faults.push(label+' duplicate SVG fill attributes');
+  if(/NaN|undefined|<script/.test(svg))faults.push(label+' invalid markup value');
+  if(!svg.includes('id="proof-'+id+'-'+pose+'-skin-lit"'))faults.push(label+' material mismatch');
+ }
+ if(faults.length){console.error(faults.join('\n'));process.exitCode=1;}
+ else console.log('Validated all '+audited.length+' figure SVGs (structural only; review images manually).');
+}
