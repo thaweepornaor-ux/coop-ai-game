@@ -1,10 +1,10 @@
-name: Inspect source and derivative Snow collar rings
+name: Compare Snow collar normal map controls
 on:
   push:
     branches: [codex/game-recovery]
     paths:
       - 'scripts/bpy-inspect-avatar-garments.py'
-      - 'scripts/bpy-inspect-snow-collar.py'
+      - 'scripts/bpy-render-snow-normalmap-pair.py'
       - 'scripts/ci-restore-snow-prototype.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
       - 'scripts/avatar-render-configs/**'
@@ -17,7 +17,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  snow-collar-inspection:
+  snow-normal-map-pair:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -31,26 +31,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-prototype.py scripts/bpy-inspect-snow-collar.py
-          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-collar-inspection/frozen-source-restore.json"
-          python scripts/ci-restore-snow-prototype.py --out "$RUNNER_TEMP/avatar-prototype-restored" --report "$RUNNER_TEMP/avatar-collar-inspection/frozen-prototype-restore.json"
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-prototype.py scripts/bpy-render-snow-normalmap-pair.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-normal-map-pair/frozen-source-restore.json"
+          python scripts/ci-restore-snow-prototype.py --out "$RUNNER_TEMP/avatar-prototype-restored" --report "$RUNNER_TEMP/avatar-normal-map-pair/frozen-prototype-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Inspect collar rings, face angles and material links without rendering
+      - name: Render two matched neck crops with normal strength one and zero
         run: |
           source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-inspect-snow-collar.py --source-blend "$source_root/snow/original/Snow/snow_v4.2.blend" --derivative-blend "$RUNNER_TEMP/avatar-prototype-restored/checkpoint/snow-crewneck-orientation-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-collar-inspection/snow"
-      - name: Preserve bounded collar inspection and restore reports
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-render-snow-normalmap-pair.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-prototype-restored/checkpoint/snow-crewneck-orientation-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-normal-map-pair/snow" --emit-preview
+      - name: Preserve controlled neck crops and bounded audit
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-collar-ring-inspection
+          name: avatar-snow-normal-map-pair
           path: |
-            ${{ runner.temp }}/avatar-collar-inspection/
+            ${{ runner.temp }}/avatar-normal-map-pair/
             bpy-proof/
           if-no-files-found: error
           compression-level: 6
