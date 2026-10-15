@@ -467,7 +467,7 @@ async function realRoom(browser, browserName) {
       const mp3=await q.body();
       assert.ok(mp3.byteLength>50_000);
       const selector=host.locator('.reveal-voice-settings');
-      assert.match(await selector.locator('summary').innerText(),/ยังไม่มีเสียงเฉลย/);
+      assert.match(await selector.locator('summary').innerText(),/เพิ่มเสียงเฉลย|ยังไม่มีเสียงเฉลย/);
       await selector.locator('summary').click();
       await selector.locator('input[type=file]').setInputFiles({
         name:'ci-only-R01-R15.zip',mimeType:'application/zip',buffer:zipTestRevealAudio(mp3)
@@ -641,7 +641,7 @@ async function realRoom(browser, browserName) {
           assert.equal(await answerPanel.getByRole('button',{name:'▶ เล่นเสียงเฉลยข้อนี้'}).count(),1,
             'An installed R pack must expose manual replay during reveal');
         }else{
-          assert.match(await answerPanel.innerText(),/ยังไม่มีเสียงเฉลย/);
+          assert.match(await answerPanel.innerText(),/เพิ่มเสียงเฉลย|ยังไม่มีเสียงเฉลย/);
           assert.equal(await answerPanel.locator('input[type=file]').count(),1,
             'Without R pack, instructor must be able to import it DURING reveal');
         }
@@ -790,10 +790,10 @@ async function realRoom(browser, browserName) {
     row.checks.push('No giant podium, personal, or table avatars in 720p/1080p/mobile final screens');
 
     await stage('teacher-export-scores');
-    assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).count(),0,'Learners cannot use the teacher CSV export');
+    assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดคะแนน/}).count(),0,'Learners cannot use the teacher CSV export');
     const [download]=await Promise.all([
       host.waitForEvent('download',{timeout:15000}),
-      host.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).click()
+      host.getByRole('button',{name:/ดาวน์โหลดคะแนน/}).click()
     ]);
     assert.match(download.suggestedFilename(),/^AI-Assessment-Results-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]csv$/);
     row.checks.push('Instructor can export final score CSV, but learner cannot');
