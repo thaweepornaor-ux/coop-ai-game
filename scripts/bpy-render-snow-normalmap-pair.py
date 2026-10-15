@@ -77,13 +77,19 @@ def collect_images(materials):
         visit(material.node_tree)
     return [result[name] for name in sorted(result)]
 
-def relink_and_reload(images,texture_root):
+def relink_and_reload(images,texture_root,records,checkpoint):
     texture_root=texture_root.resolve(strict=True)
-    records=[]
     for image in images:
+        filename=str(image.filepath).replace("\\","/").split("/")[-1]
+        record={"image":image.name,"filename":filename,"source":image.source,"files":[],
+            "stage":"start","packed_files_before":len(image.packed_files),
+            "filepath_inside_original_textures":False,"reload_requested":False,
+            "reload_completed":False,"size_acquisition_requested":False,"size_guard_passed":False}
+        # Shared audit list is populated BEFORE any reload/guard can raise.
+        records.append(record)
+        checkpoint()
         if image.source not in ("FILE","TILED"):
             raise ValueError("used_image_requires_verified_external_source")
-        filename=str(image.filepath).replace("\\","/").split("/")[-1]
         if not filename or filename in (".",".."):
             raise ValueError("used_image_filename_missing")
         candidate=texture_root/filename
@@ -99,21 +105,51 @@ def relink_and_reload(images,texture_root):
                 raise ValueError("used_tiled_image_has_no_declared_tiles")
         else:
             filenames=[candidate]
-        files=[]
         for path in filenames:
             resolved=path.resolve(strict=True)
             if not resolved.is_relative_to(texture_root) or not resolved.is_file():
                 raise ValueError("used_texture_not_inside_verified_originals")
-            files.append({"file":resolved.name,"sha256":sha(resolved),"bytes":resolved.stat().st_size})
-        packed_before=len(image.packed_files)
+            record["files"].append({"file":resolved.name,"sha256":sha(resolved),
+                                    "bytes":resolved.stat().st_size})
+        record["filepath_inside_original_textures"]=True
+        record["stage"]="before_reload"
+        record["has_data_before_reload"]=bool(image.has_data)
         image.filepath=str(candidate)
+        record["reload_requested"]=True
+        checkpoint()
         image.reload()
-        if not image.has_data or min(image.size)<=0:
+        record["reload_completed"]=True
+        record["stage"]="after_reload"
+        record["has_data_after_reload"]=bool(image.has_data)
+        record["source_after_reload"]=image.source
+        record["packed_files_after"]=len(image.packed_files)
+        checkpoint()
+        # Official v4.5.9 RNA: has_data checks loaded buffers; size acquires/releases
+        # an image buffer. Access size explicitly before the unchanged readiness test.
+        record["size_acquisition_requested"]=True
+        checkpoint()
+        size=list(image.size)
+        record["size"]=size
+        record["has_data_after_size_acquisition"]=bool(image.has_data)
+        record["stage"]="after_size_acquisition"
+        record["size_guard_passed"]=(record["has_data_after_size_acquisition"]
+            and len(size)==2 and min(size)>0)
+        checkpoint()
+        marker={key:record.get(key) for key in (
+            "image","filename","source","source_after_reload","stage",
+            "filepath_inside_original_textures","packed_files_before","packed_files_after",
+            "has_data_before_reload","has_data_after_reload",
+            "size_acquisition_requested","size","has_data_after_size_acquisition","size_guard_passed")}
+        marker["verified_file_count"]=len(record["files"])
+        marker["verified_file_sha256"]=[f["sha256"] for f in record["files"]]
+        marker_text=json.dumps(marker,allow_nan=False)
+        if len(marker_text.encode())>4096:
+            raise ValueError("texture_state_stdout_byte_budget_exceeded")
+        print("SNOW_TEXTURE_RELOAD_STATE "+marker_text,flush=True)
+        if (not record["has_data_after_size_acquisition"] or len(size)!=2 or min(size)<=0):
             raise ValueError("used_image_reload_has_no_pixel_data")
-        records.append({"image":image.name,"filename":filename,"source":image.source,
-            "files":files,"size":list(image.size),"packed_files_before":packed_before,
-            "packed_files_after":len(image.packed_files),"reload_requested":True,
-            "filepath_inside_original_textures":True})
+        record["stage"]="ready"
+        checkpoint()
     return records
 
 def find_target(bpy,garment):
@@ -383,8 +419,16 @@ def main():
         audit["linked_missing_modifier_dependencies"]=ensure_saved_dependency_closure(bpy,scene,objects)
         materials=used_materials([o for o in scene.objects if o.type=="MESH" and not o.hide_render])
         images=collect_images(materials)
-        textures=relink_and_reload(images,source.parent/"textures")
         audit["used_textures"]=textures
+        audit["texture_expected_image_count"]=len(images)
+        audit["texture_preparation_complete"]=False
+        def checkpoint_texture_state():
+            audit["texture_attempted_image_count"]=len(textures)
+            audit["texture_ready_image_count"]=sum(r.get("size_guard_passed",False) for r in textures)
+            write_audit(audit_path,audit)
+        relink_and_reload(images,source.parent/"textures",textures,checkpoint_texture_state)
+        audit["texture_preparation_complete"]=True
+        checkpoint_texture_state()
         tree,node,socket,target=find_target(bpy,bpy.data.objects["GEO-snow-shirt"])
         original_strength=float(socket.default_value)
         audit["normalmap_target"]=target
@@ -452,24 +496,39 @@ def main():
         unchanged=sha(source)==SOURCE_SHA and sha(derivative)==DERIVATIVE_SHA
         audit["source_and_derivative_unchanged"]=unchanged
         texture_unchanged=True
+        checked_files=0
         for image in textures:
             for record in image["files"]:
                 path=source.parent/"textures"/record["file"]
-                texture_unchanged=texture_unchanged and sha(path)==record["sha256"]
-        audit["used_texture_hashes_rechecked"]=texture_unchanged
+                matches=sha(path)==record["sha256"]
+                texture_unchanged=texture_unchanged and matches
+                checked_files+=1
+        expected_images=audit.get("texture_expected_image_count")
+        ready_images=sum(r.get("size_guard_passed",False) for r in textures)
+        recheck_complete=(expected_images is not None and expected_images>0
+            and len(textures)==expected_images and ready_images==expected_images
+            and audit.get("texture_preparation_complete",False) and checked_files>0)
+        audit["texture_hash_recheck"]={"checked_file_count":checked_files,
+            "attempted_image_count":len(textures),"ready_image_count":ready_images,
+            "expected_image_count":expected_images,"complete":recheck_complete,
+            "all_checked_files_unchanged":texture_unchanged if checked_files else None}
+        audit["used_texture_hashes_rechecked"]=recheck_complete and texture_unchanged
         write_audit(audit_path,audit)
         marker={"pair_completed":audit.get("pair_completed",False),
             "renders":len(audit["renders"]),"control_phases":[p["phase"] for p in audit["controls"]],
             "control_hash":audit.get("control_reference",{}).get("sha256"),
             "target":audit.get("normalmap_target"),"normal_strength_restored":audit["normal_strength_restored"],
-            "source_and_derivative_unchanged":unchanged,"used_texture_hashes_rechecked":texture_unchanged,
+            "source_and_derivative_unchanged":unchanged,
+            "used_texture_hashes_rechecked":audit["used_texture_hashes_rechecked"],
+            "texture_hash_recheck":audit["texture_hash_recheck"],
             "evaluated_counts":audit.get("evaluated_counts_after",audit.get("evaluated_counts_before")),
             "failure":audit.get("failure"),"models_saved":0,"solver_runs":0,
             "garment_art_approved":False,"production_glb_approved":False,"animation_approved":False}
         if len(encoded(marker))>24000:
             raise ValueError("pair_stdout_byte_budget_exceeded")
         print("SNOW_NORMALMAP_PAIR "+encoded(marker).decode().strip(),flush=True)
-        if failure is None and (not unchanged or not texture_unchanged or not audit["normal_strength_restored"]):
+        if failure is None and (not unchanged or not audit["used_texture_hashes_rechecked"]
+                                or not audit["normal_strength_restored"]):
             raise ValueError("pair_cleanup_or_readonly_input_check_failed")
 
 if __name__=="__main__":
