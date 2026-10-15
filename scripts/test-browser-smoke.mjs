@@ -31,7 +31,7 @@ const sizes = [
   { label: 'desktop-1280', width: 1280, height: 900, mobile: false },
 ];
 const syntheticName = 'ผู้เล่นทดสอบ';
-const nameLabel = '2. ชื่อผู้เล่น';
+const nameLabel = 'ชื่อที่ใช้ในเกม';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
 
