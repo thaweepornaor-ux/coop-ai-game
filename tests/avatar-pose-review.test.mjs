@@ -22,11 +22,11 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
   for(const prefix of ['M','F'])for(let n=1;n<=10;n++)for(const pose of ['stand','wave','celebrate','think','confident']){
    assert.ok(full.includes(prefix+String(n).padStart(2,'0')+' — '+pose));
   }
-  const ids=[...full.matchAll(/<linearGradient id="(proof-[MF]\\d{2}-(?:stand|wave|celebrate|think|confident)-skin-lit)"/g)].map(m=>m[1]);
+  const ids=[...full.matchAll(/<linearGradient id="(proof-[MF]\d{2}-(?:stand|wave|celebrate|think|confident)-skin-lit)"/g)].map(m=>m[1]);
   assert.equal(ids.length,100,'every rendered avatar must have its own skin gradient');
   assert.equal(new Set(ids).size,100,'material identifiers must be unique across 100 SVGs');
   const catalog=readFileSync('shared/characters.ts','utf8');
-  const match=catalog.match(/export const CHARACTERS:CharacterPreset\\[\\]\\s*=\\s*(\\[[\\s\\S]*?\\]);/);
+  const match=catalog.match(/export const CHARACTERS:CharacterPreset\[\]\s*=\s*(\[[\s\S]*?\]);/);
   assert.ok(match,'catalog must be readable');
   const presets=JSON.parse(match[1]);
   assert.equal(presets.length,20);
