@@ -59,7 +59,7 @@ def positive_local_y_structure(expression,variable):
     Proves nondecreasing dependence using positive affine operations/min-max clamps.
     Strict positive response must separately be observed in Blender's native driver.
     """
-    if len(expression)>2048 or variable in ("min","max"):
+    if len(expression)>2048 or variable in ("min","max","clamp"):
         return {"supported":False,"reason":"unsupported_expression_size_or_variable"}
     try:
         tree=ast.parse(expression,mode="eval")
@@ -104,6 +104,12 @@ def positive_local_y_structure(expression,variable):
                 if not result[0] and not math.isfinite(result[1]):
                     raise ValueError("nonfinite_literal_arithmetic")
                 return result
+            # Blender v4.5.9 unary op_clamp is the fixed [0,1] monotone clamp.
+            # Only this measured one-argument form is supported; no arbitrary call runs.
+            if (isinstance(node,ast.Call) and isinstance(node.func,ast.Name)
+                    and node.func.id=="clamp" and len(node.args)==1 and not node.keywords):
+                dependent,value=classify(node.args[0],depth+1)
+                return (True,None) if dependent else (False,min(max(value,0.0),1.0))
             if (isinstance(node,ast.Call) and isinstance(node.func,ast.Name)
                     and node.func.id in ("min","max") and len(node.args)==2 and not node.keywords):
                 a,b=[classify(arg,depth+1) for arg in node.args]
