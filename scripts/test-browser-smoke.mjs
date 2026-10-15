@@ -427,6 +427,21 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     }
     row.avatarRaster = await avatarPainted(page, size.width <= 900 ? '.quick-character.selected' : '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
+    // Keep actual per-pose raster evidence in the browser-proof artifact.
+    // This is artwork review material, not a claim that the anatomy is correct.
+    if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280','mobile-390'].includes(size.label)) {
+      const preview=page.locator('.quick-options .wardrobe-live-preview');
+      const poses=['stand','wave','think','confident','celebrate'];
+      for(let index=0;index<poses.length;index++){
+        const button=preview.locator('.wardrobe-pose-choices button').nth(index);
+        await button.click();
+        assert.equal(await button.getAttribute('aria-pressed'),'true',label+' '+poses[index]+' should be selected');
+        await preview.screenshot({path:path.join(out,label+'-avatar-'+poses[index]+'.png'),timeout:15_000});
+      }
+      await preview.locator('.wardrobe-pose-choices button').first().click();
+      row.checks.push({avatarPoseScreenshots:poses.length});
+    }
+
     if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
     await stage('motion-controls');
     // Learners should not face technical animation toggles on their quick-join screen.
