@@ -278,7 +278,7 @@ async function wardrobe(page) {
  assert.equal(await gallery.getByRole('button').count(),10);
  await page.getByRole('button',{name:'ตัวละครหญิง',exact:true}).click();
  assert.equal(await gallery.getByRole('button').count(),10);
- const chosen=gallery.getByRole('button',{name:/^F03 /});
+ const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
  await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
