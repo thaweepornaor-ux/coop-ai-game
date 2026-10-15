@@ -1,4 +1,4 @@
-name: Render one Snow natural-wrists proof
+name: Author one Snow native-clips candidate
 on:
   push:
     branches: [codex/game-recovery]
@@ -9,6 +9,7 @@ on:
       - 'scripts/bpy-prototype-snow-smile-width.py'
       - 'scripts/bpy-proof-snow-bent-elbows.py'
       - 'scripts/bpy-proof-snow-natural-wrists.py'
+      - 'scripts/bpy-prototype-snow-native-clips.py'
       - 'scripts/bpy-prototype-snow-soft-cloth.py'
       - 'scripts/bpy-render-snow-normalmap-pair.py'
       - 'scripts/bpy-prototype-snow-crewneck.py'
@@ -24,7 +25,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  snow-natural-wrists-proof:
+  snow-native-clips-candidate:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -38,29 +39,40 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-smile-width.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-friendly-face.py scripts/bpy-prototype-snow-smile-width.py scripts/bpy-proof-snow-bent-elbows.py scripts/bpy-proof-snow-natural-wrists.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
-          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-natural-wrists-proof/frozen-source-restore.json"
-          python scripts/ci-restore-snow-smile-width.py --out "$RUNNER_TEMP/avatar-smile-width-restored" --report "$RUNNER_TEMP/avatar-natural-wrists-proof/frozen-smile-width-restore.json"
+          python -m py_compile scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-smile-width.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-friendly-face.py scripts/bpy-prototype-snow-smile-width.py scripts/bpy-proof-snow-bent-elbows.py scripts/bpy-proof-snow-natural-wrists.py scripts/bpy-prototype-snow-native-clips.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
+          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-native-clips-candidate/frozen-source-restore.json"
+          python scripts/ci-restore-snow-smile-width.py --out "$RUNNER_TEMP/avatar-smile-width-restored" --report "$RUNNER_TEMP/avatar-native-clips-candidate/frozen-smile-width-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Render two natural-wrists hand proof views from the frozen smile-width checkpoint
+      - name: Author, play back and reopen three native clip candidates
         run: |
           source_root="$RUNNER_TEMP/avatar-originals/originals/sources/assets/characters"
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-proof-snow-natural-wrists.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-smile-width-restored/checkpoint/snow-smile-width-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-natural-wrists-proof/snow" --emit-preview
-      - name: Preserve natural-wrists proof images, bounded audit and credits
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-prototype-snow-native-clips.py --source-root "$source_root" --derivative-blend "$RUNNER_TEMP/avatar-smile-width-restored/checkpoint/snow-smile-width-prototype.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-native-clips-candidate/snow" --emit-preview
+      - name: Preserve native clip candidate, six proof images, audit and credits
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-natural-wrists-proof
+          name: avatar-snow-native-clips-candidate
           path: |
-            ${{ runner.temp }}/avatar-natural-wrists-proof/**/*.json
-            ${{ runner.temp }}/avatar-natural-wrists-proof/**/*.png
-            ${{ runner.temp }}/avatar-natural-wrists-proof/**/*.jpg
-            ${{ runner.temp }}/avatar-natural-wrists-proof/**/credits/**
+            ${{ runner.temp }}/avatar-native-clips-candidate/
+            bpy-proof/
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 14
+      - name: Preserve small native clip proof without blend files
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: avatar-snow-native-clips-proof
+          path: |
+            ${{ runner.temp }}/avatar-native-clips-candidate/**/*.json
+            ${{ runner.temp }}/avatar-native-clips-candidate/**/*.png
+            ${{ runner.temp }}/avatar-native-clips-candidate/**/*.jpg
+            ${{ runner.temp }}/avatar-native-clips-candidate/**/credits/**
             bpy-proof/
           if-no-files-found: error
           compression-level: 6
