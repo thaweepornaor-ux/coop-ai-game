@@ -1,12 +1,14 @@
-name: Pack and reopen one Snow used-texture native candidate
+name: Audit Snow packed actor resource closure
 on:
   push:
     branches: [codex/game-recovery]
     paths:
+      - 'scripts/ci-restore-snow-packed-native.py'
+      - 'scripts/bpy-proof-snow-packed-actor-closure.py'
       - 'scripts/bpy-pack-snow-used-textures.py'
       - 'scripts/bpy-verify-snow-packed-textures.py'
       - 'scripts/ci-restore-frozen-avatar-sources.py'
-      - 'scripts/ci-restore-snow-native-clips.py'
+      - 'scripts/avatar-render-configs/snow-crewneck-prototype.json'
       - '.github/workflows/avatar-render-proof.yml'
   workflow_dispatch:
 permissions:
@@ -16,7 +18,7 @@ concurrency:
   group: avatar-render-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  snow-packed-used-textures:
+  snow-packed-actor-closure:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -26,58 +28,29 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.11'
-      - name: Compile pack and fresh-process verification; restore pinned read-only inputs
+      - name: Compile reviewed consumers and restore only the selected packed native
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python -m py_compile scripts/bpy-pack-snow-used-textures.py scripts/bpy-verify-snow-packed-textures.py scripts/ci-restore-frozen-avatar-sources.py scripts/ci-restore-snow-native-clips.py scripts/ci-prove-bpy.py scripts/bpy-prototype-snow-glb-correctives.py scripts/bpy-prototype-snow-native-clips.py scripts/bpy-proof-snow-natural-wrists.py scripts/bpy-proof-snow-bent-elbows.py scripts/bpy-prototype-snow-friendly-face.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
-          python scripts/ci-restore-frozen-avatar-sources.py --out "$RUNNER_TEMP/avatar-originals" --report "$RUNNER_TEMP/avatar-packed-native/frozen-source-restore.json"
-          python scripts/ci-restore-snow-native-clips.py --out "$RUNNER_TEMP/avatar-native-clips-restored" --report "$RUNNER_TEMP/avatar-packed-native/frozen-native-clips-restore.json"
+          python -m py_compile scripts/ci-restore-snow-packed-native.py scripts/bpy-proof-snow-packed-actor-closure.py scripts/bpy-pack-snow-used-textures.py scripts/bpy-verify-snow-packed-textures.py scripts/ci-restore-frozen-avatar-sources.py scripts/ci-prove-bpy.py scripts/bpy-prototype-snow-glb-correctives.py scripts/bpy-prototype-snow-native-clips.py scripts/bpy-proof-snow-natural-wrists.py scripts/bpy-proof-snow-bent-elbows.py scripts/bpy-prototype-snow-friendly-face.py scripts/bpy-proof-snow-raised-arms.py scripts/bpy-prototype-snow-soft-cloth.py scripts/bpy-render-snow-normalmap-pair.py scripts/bpy-prototype-snow-crewneck.py scripts/bpy-inspect-avatar-garments.py
+          python scripts/ci-restore-snow-packed-native.py --out "$RUNNER_TEMP/avatar-packed-restored" --report "$RUNNER_TEMP/avatar-actor-closure/frozen-packed-native-restore.json"
       - name: Prepare the previously reviewed Blender runtime
         run: |
           python -m venv "$RUNNER_TEMP/bpy-runtime"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip download --index-url https://pypi.org/simple --no-deps --only-binary=:all: bpy==4.5.9 --dest "$RUNNER_TEMP/bpy-wheel"
           "$RUNNER_TEMP/bpy-runtime/bin/python" -m pip install --index-url https://pypi.org/simple --only-binary=:all: numpy==1.26.4 Cython==3.2.4 requests==2.32.5 zstandard==0.25.0
           "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/ci-prove-bpy.py --wheel-dir "$RUNNER_TEMP/bpy-wheel" --out bpy-proof
-      - name: Pack one texture-only native derivative, split and join it, then verify in a fresh process
+      - name: Audit locked actor and preservation roots without original sources
         run: |
-          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-pack-snow-used-textures.py --original-root "$RUNNER_TEMP/avatar-originals" --derivative-blend "$RUNNER_TEMP/avatar-native-clips-restored/checkpoint/snow-native-clips-candidate.blend" --config scripts/avatar-render-configs/snow-crewneck-prototype.json --out "$RUNNER_TEMP/avatar-packed-native"
-      - name: Identify actual candidate parts for preservation
-        if: always()
-        id: candidate_files
-        run: |
-          if [ -f "$RUNNER_TEMP/avatar-packed-native/parts/snow-packed-native.part-000.bin" ]; then echo "part0=true" >> "$GITHUB_OUTPUT"; fi
-          if [ -f "$RUNNER_TEMP/avatar-packed-native/parts/snow-packed-native.part-001.bin" ]; then echo "part1=true" >> "$GITHUB_OUTPUT"; fi
-      - name: Preserve first bounded candidate part and all three credits
-        if: always() && steps.candidate_files.outputs.part0 == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: avatar-snow-packed-native-part-0
-          path: |
-            ${{ runner.temp }}/avatar-packed-native/parts/snow-packed-native.part-000.bin
-            ${{ runner.temp }}/avatar-packed-native/snow/credits/**
-          if-no-files-found: ignore
-          compression-level: 6
-          retention-days: 14
-      - name: Preserve second bounded candidate part and all three credits
-        if: always() && steps.candidate_files.outputs.part1 == 'true'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: avatar-snow-packed-native-part-1
-          path: |
-            ${{ runner.temp }}/avatar-packed-native/parts/snow-packed-native.part-001.bin
-            ${{ runner.temp }}/avatar-packed-native/snow/credits/**
-          if-no-files-found: ignore
-          compression-level: 6
-          retention-days: 14
-      - name: Preserve JSON proof, multipart index and credits without model payloads
+          "$RUNNER_TEMP/bpy-runtime/bin/python" scripts/bpy-proof-snow-packed-actor-closure.py --input-root "$RUNNER_TEMP/avatar-packed-restored" --out "$RUNNER_TEMP/avatar-actor-closure"
+      - name: Preserve new closure proof and credits without model payloads
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: avatar-snow-packed-native-proof
+          name: avatar-snow-packed-actor-closure-proof
           path: |
-            ${{ runner.temp }}/avatar-packed-native/**/*.json
-            ${{ runner.temp }}/avatar-packed-native/**/credits/**
+            ${{ runner.temp }}/avatar-actor-closure/**/*.json
+            ${{ runner.temp }}/avatar-actor-closure/**/credits/**
             bpy-proof/**/*.json
           if-no-files-found: error
           compression-level: 6
