@@ -9,3 +9,11 @@ test('real character selector has reference-style selectable cards while retaini
  assert.match(css,/\.wardrobe-live-avatar\{/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 });
+
+test('customize control scrolls to editable options and remains a real button',()=>{
+ const src=readFileSync('app/components/simple-wardrobe.tsx','utf8');
+ assert.match(src,/className="wardrobe-live-indicator wardrobe-edit-action" type="button"/);
+ assert.match(src,/scrollIntoView\(\{behavior:"smooth",block:"start"\}\)/);
+ assert.match(src,/id="character-customization"/);
+ assert.match(src,/customizer-highlight/);
+});
