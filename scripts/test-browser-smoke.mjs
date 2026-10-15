@@ -301,6 +301,13 @@ async function wardrobe(page) {
  assert.equal(await poseButtons.count(),5,'Five live poses are immediately selectable');
  await poseButtons.nth(1).click();
  assert.equal(await poseButtons.nth(1).getAttribute('aria-pressed'),'true','Pose preview changes immediately');
+ const previewArtwork=livePreview.locator('.wardrobe-live-avatar');
+ assert.equal(await previewArtwork.locator('svg').count(),1,'Full body preview uses one coherent SVG across poses');
+ assert.equal(await previewArtwork.locator('img').count(),0,'Do not overlay differently proportioned PNG artwork in neutral pose');
+ await poseButtons.nth(4).click();
+ assert.equal(await poseButtons.nth(4).getAttribute('aria-pressed'),'true','Celebrate pose responds');
+ assert.equal(await previewArtwork.locator('svg').count(),1,'Switching poses preserves the same art renderer');
+
  await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
  assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
