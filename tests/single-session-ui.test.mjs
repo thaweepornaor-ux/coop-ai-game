@@ -54,7 +54,7 @@ test('editing learner identity preserves existing player and never creates a sec
  assert.match(api,/if \(body\.action === "profile"\) return await updatePlayerProfile/);
  assert.match(game,/send\('profile',\{name:updated,avatar\}\)/);
  assert.match(game,/className="inline-profile-form"/);
- assert.match(game,/เปลี่ยนชื่อ \/ ตัวละคร/);
+ assert.match(game,/แก้ไขตัวละคร/);
  assert.doesNotMatch(game,/\?\s*'เปลี่ยนตัวละคร \/ ชื่อ'\}\<\/button\>/);
 });
 test('lost instructor session can reopen a new QR without asking for codes',()=>{
