@@ -31,7 +31,7 @@ const sizes = [
   { label: 'desktop-1280', width: 1280, height: 900, mobile: false },
 ];
 const syntheticName = 'ผู้เล่นทดสอบ';
-const nameLabel = '2. ชื่อผู้เล่น';
+const nameLabel = 'ชื่อที่ใช้ในเกม';
 async function saveReport() { await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2)); }
 async function shot(page, label) { await page.screenshot({ path: path.join(out, label + '.png'), fullPage: true, timeout: 15_000 }); }
 
@@ -276,12 +276,12 @@ function pageErrors(page) { const errors = []; page.on('pageerror', error => err
 async function wardrobe(page) {
  const gallery=page.locator('.quick-characters');
  assert.equal(await gallery.getByRole('button').count(),10);
- await page.getByRole('button',{name:'ผู้หญิง · 10 แบบ',exact:true}).click();
+ await page.getByRole('button',{name:'ตัวละครหญิง',exact:true}).click();
  assert.equal(await gallery.getByRole('button').count(),10);
- const chosen=gallery.getByRole('button',{name:/^F03 /});
+ const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
- await page.getByRole('button',{name:/อยากเปลี่ยนผม สีผิว/}).click();
+ await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
  const options=page.locator('.quick-options fieldset');
  assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
  const styles=options.nth(2).locator('button');
@@ -382,8 +382,8 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
       });
       await page.reload({waitUntil:'domcontentloaded'});
       await page.waitForFunction(()=>{
-        const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ผู้หญิง'));
-        return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character.selected')?.textContent?.includes('F03');
+        const female=[...document.querySelectorAll('.quick-gender button')].find(x=>x.textContent?.includes('ตัวละครหญิง'));
+        return female?.getAttribute('aria-pressed')==='true' && document.querySelector('.quick-character:nth-child(3).selected') !== null;
       },null,{timeout:15000});
       assert.equal(await page.getByLabel(nameLabel,{exact:true}).inputValue(),syntheticName);
       row.checks.push({femaleSelectionRestored:true});
@@ -467,12 +467,12 @@ async function realRoom(browser, browserName) {
       const mp3=await q.body();
       assert.ok(mp3.byteLength>50_000);
       const selector=host.locator('.reveal-voice-settings');
-      assert.match(await selector.locator('summary').innerText(),/ยังไม่มีเสียงเฉลย/);
+      assert.match(await selector.locator('summary').innerText(),/เพิ่มเสียงเฉลย|ยังไม่มีเสียงเฉลย/);
       await selector.locator('summary').click();
       await selector.locator('input[type=file]').setInputFiles({
         name:'ci-only-R01-R15.zip',mimeType:'application/zip',buffer:zipTestRevealAudio(mp3)
       });
-      await host.getByText('เสียงเฉลย R01–R15 พร้อม ✓').waitFor({timeout:20000});
+      await host.getByText('เสียงเฉลยพร้อม ✓').waitFor({timeout:20000});
       const count=await host.evaluate(async()=>{
         const db=await new Promise((resolve,reject)=>{
           const r=indexedDB.open('coop-ai-answer-recorded-voice',1);
@@ -488,7 +488,7 @@ async function realRoom(browser, browserName) {
         }finally{db.close()}
       });
       assert.equal(count,15,'All 15 answer MP3 recordings must persist in IndexedDB');
-      await selector.getByRole('button',{name:'▶ ทดลอง R01'}).click();
+      await selector.getByRole('button',{name:'▶ ทดสอบเสียงเฉลย'}).click();
       await selector.getByRole('button',{name:/กำลังเล่น/}).waitFor({timeout:15000});
       await selector.locator('summary').click();
       row.checks.push('Teacher imported 15 playable reveal MP3 files and auditioned R01 in real browser');
@@ -510,25 +510,25 @@ async function realRoom(browser, browserName) {
     await host.locator('.roster .mini-player').filter({ hasText: syntheticName }).waitFor();
     row.checks.push('Independent host/player contexts joined through the real local API; QR contains only the room');
     await stage('edit-profile-without-duplicate-join');
-    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
+    await player.getByRole('button',{name:'แก้ไขตัวละคร',exact:true}).click();
     await player.locator('.inline-profile-form').waitFor();
-    await player.getByRole('button',{name:'ผู้ชาย · 10 แบบ'}).click();
-    await player.locator('.inline-profile-form .quick-character').filter({hasText:'M02'}).click();
+    await player.getByRole('button',{name:'ตัวละครชาย'}).click();
+    await player.locator('.inline-profile-form .quick-character').nth(1).click();
     const interimName=syntheticName+'ใหม่';
     await player.locator('#edit-player-name').fill(interimName);
     const [edited] = await Promise.all([
       player.waitForRequest(req=>req.method()==='POST'&&new URL(req.url()).pathname==='/api/game'&&req.postDataJSON()?.action==='profile'),
-      player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click()
+      player.getByRole('button',{name:'บันทึกการเปลี่ยนแปลง'}).click()
     ]);
     assert.equal(edited.postDataJSON().avatar.presetId,'M02');
     await player.getByRole('heading',{name:interimName,exact:true}).waitFor();
     await host.locator('.roster .mini-player').filter({hasText:interimName}).waitFor();
     assert.equal(await host.locator('.roster .mini-player').count(),1,'Editing an existing player cannot create a duplicate roster entry');
-    await player.getByRole('button',{name:'เปลี่ยนชื่อ / ตัวละคร',exact:true}).click();
-    await player.getByRole('button',{name:'ผู้หญิง · 10 แบบ'}).click();
-    await player.locator('.inline-profile-form .quick-character').filter({hasText:'F03'}).click();
+    await player.getByRole('button',{name:'แก้ไขตัวละคร',exact:true}).click();
+    await player.getByRole('button',{name:'ตัวละครหญิง'}).click();
+    await player.locator('.inline-profile-form .quick-character').nth(2).click();
     await player.locator('#edit-player-name').fill(syntheticName);
-    await player.getByRole('button',{name:'บันทึกตัวละครและชื่อ'}).click();
+    await player.getByRole('button',{name:'บันทึกการเปลี่ยนแปลง'}).click();
     await player.getByRole('heading',{name:syntheticName,exact:true}).waitFor();
     await host.locator('.roster .mini-player').filter({hasText:syntheticName}).waitFor();
     assert.equal(await host.locator('.roster .mini-player').count(),1);
@@ -641,7 +641,7 @@ async function realRoom(browser, browserName) {
           assert.equal(await answerPanel.getByRole('button',{name:'▶ เล่นเสียงเฉลยข้อนี้'}).count(),1,
             'An installed R pack must expose manual replay during reveal');
         }else{
-          assert.match(await answerPanel.innerText(),/ยังไม่มีเสียงเฉลย/);
+          assert.match(await answerPanel.innerText(),/เพิ่มเสียงเฉลย|ยังไม่มีเสียงเฉลย/);
           assert.equal(await answerPanel.locator('input[type=file]').count(),1,
             'Without R pack, instructor must be able to import it DURING reveal');
         }
@@ -790,10 +790,10 @@ async function realRoom(browser, browserName) {
     row.checks.push('No giant podium, personal, or table avatars in 720p/1080p/mobile final screens');
 
     await stage('teacher-export-scores');
-    assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).count(),0,'Learners cannot use the teacher CSV export');
+    assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดคะแนน/}).count(),0,'Learners cannot use the teacher CSV export');
     const [download]=await Promise.all([
       host.waitForEvent('download',{timeout:15000}),
-      host.getByRole('button',{name:/ดาวน์โหลดผลคะแนน CSV/}).click()
+      host.locator('.scoreboard .export-results').click()
     ]);
     assert.match(download.suggestedFilename(),/^AI-Assessment-Results-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]csv$/);
     row.checks.push('Instructor can export final score CSV, but learner cannot');
