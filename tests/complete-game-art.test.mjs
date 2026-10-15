@@ -54,6 +54,6 @@ test('Presentation-only layer cannot mutate 25-player grid, timing, audio or sco
   assert.equal(depth,0,'CSS must be balanced');
   assert.ok(game.includes('packedRoster=(snapshot?.players.length||0)>=12'));
   assert.ok(game.includes("'--cast-rows':Math.ceil(snapshot.players.length/5)"));
-  assert.ok(game.includes('timer/10'));
+  assert.ok(game.includes('timer/8'));
   assert.ok(game.includes('answerVoiceUrls.current'));
 });
