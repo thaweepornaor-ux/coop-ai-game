@@ -695,7 +695,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
 
     {!session&&role==='choose'&&<section className="welcome entry-stage enter">
       <div className="entry-copy"><div className="eyebrow"><i/> COOPERATIVE • AI ARENA</div><h1>ประเมิน<br/><em>ความเข้าใจ AI</em></h1><p className="entry-description">เข้าเวทีแห่งไอเดีย ท้าทายความเข้าใจ<br/>และเรียนรู้พลังของ AI ไปด้วยกัน</p><RulesStrip/><div className="entry-actions"><a className="button primary" href="/play">เข้าร่วมภารกิจ <span>↗</span></a><a className="button secondary" href="/host">สำหรับผู้สอน <span>→</span></a></div><p className="small-note">เล่นผ่านมือถือ · ไม่ต้องสมัครสมาชิก</p></div>
-      <div className="hero-stage"><div className="orbit-ring"/><img className="intro-artwork" src="/art/nhk-welcome-original.svg" alt="" aria-hidden="true" decoding="async"/><span className="stage-label">YOUR NEXT MISSION</span><Avatar options={initialAvatar()} className="hero-avatar" interactive motion={motion}/><div className="stage-platform"/><div className="stage-id"><i/> AI EXPLORER <span>01</span></div></div>
+      <div className="hero-stage"><div className="orbit-ring"/><img className="intro-artwork" src="/art/nhk-welcome-original.svg" alt="" aria-hidden="true" decoding="async"/><span className="stage-label">YOUR NEXT MISSION</span><Avatar options={initialAvatar()} className="hero-avatar" interactive motion={motion} pose="confident"/><div className="stage-platform"/><div className="stage-id"><i/> AI EXPLORER <span>01</span></div></div>
     </section>}
     {!session&&role==='host'&&<section className="single-host-welcome card" aria-label="หน้าผู้สอน">
       <div className="eyebrow">สำหรับผู้สอน · แสดงขึ้นโปรเจคเตอร์</div>
@@ -715,7 +715,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="customizer-preview">
         <div className="eyebrow">สำหรับผู้เรียน</div>
         <h1>เลือกตัวละคร<br/><em>แล้วเข้าเล่นเลย</em></h1>
-        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false}/></div>
+        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false} pose="confident"/></div>
         <div className="character-name"><strong>{name.trim()||'ตัวละครของฉัน'}</strong></div>
       </div>
       <form className="wardrobe card" onSubmit={e=>{e.preventDefault();join()}}>
@@ -746,7 +746,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <SimpleWardrobe avatar={avatar} onChange={setAvatar}/>
           <label htmlFor="edit-player-name">ชื่อผู้เล่น<input id="edit-player-name" maxLength={24} autoComplete="nickname" value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อเล่นของคุณ"/></label>
           <div className="inline-profile-actions"><button className="button secondary" type="button" onClick={()=>setEditingProfile(false)}>ยกเลิก</button><button className="button primary" disabled={!canInteract||!name.trim()} type="submit">{busy?'กำลังบันทึก…':'บันทึกการเปลี่ยนแปลง'}</button></div>
-        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion}/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · หลังฟังโจทย์มีเวลาตอบ 8 วินาที</p>
+        </form>:<><Avatar options={own?.avatar||avatar} className="waiting-avatar" interactive motion={motion} pose="wave"/><h2>{own?.name||name}</h2><p>รอผู้สอนเริ่มเกม · หลังฟังโจทย์มีเวลาตอบ 8 วินาที</p>
           <button className="button secondary edit-player-profile" type="button" onClick={()=>{if(own){setName(own.name);setAvatar(normalizeWardrobe(own.avatar))}setEditingProfile(true)}}>แก้ไขตัวละคร</button>
           <div className="waiting-dots" aria-label="กำลังรอผู้สอน"><i/><i/><i/></div></>}</>}
       </div>
@@ -772,7 +772,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <label className="button secondary reveal-audio-import"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={answerVoiceImporting} onChange={e=>{void importAnswerSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{answerVoiceImporting?'กำลังติดตั้ง…':'เลือก ZIP เสียงเฉลย'}</label>}
           {!narrationEnabled&&<button className="button secondary" type="button" onClick={toggleNarration}>เปิดเสียงพากย์</button>}
         </div>}
-        {reveal&&!isHost&&<div className={'own-result '+(ownResult?.status||'unanswered')} role="status"><strong>{ownResult?.status==='correct'?'ตอบถูก! เก่งมาก ✦':ownResult?.status==='incorrect'?'ข้อนี้ยังไม่ถูก ลองดูเฉลยกัน':'ข้อนี้ไม่ได้ตอบ ไม่เป็นไร เรียนรู้ไปด้วยกัน'}</strong><span>คะแนนตอนนี้ {ownResult?.score??own?.score??0} / 15</span><Avatar options={own?.avatar||avatar}/><img className="learner-reveal-art" src={ownResult?.status==='correct'?'/art/nhk-celebrate-original.svg':'/art/nhk-presenter-original.svg'} alt="" aria-hidden="true" decoding="async"/><p>รอผู้สอนเริ่มข้อถัดไป</p></div>}
+        {reveal&&!isHost&&<div className={'own-result '+(ownResult?.status||'unanswered')} role="status"><strong>{ownResult?.status==='correct'?'ตอบถูก! เก่งมาก ✦':ownResult?.status==='incorrect'?'ข้อนี้ยังไม่ถูก ลองดูเฉลยกัน':'ข้อนี้ไม่ได้ตอบ ไม่เป็นไร เรียนรู้ไปด้วยกัน'}</strong><span>คะแนนตอนนี้ {ownResult?.score??own?.score??0} / 15</span><Avatar options={own?.avatar||avatar} pose={ownResult?.status==='correct'?'celebrate':'think'}/><img className="learner-reveal-art" src={ownResult?.status==='correct'?'/art/nhk-celebrate-original.svg':'/art/nhk-presenter-original.svg'} alt="" aria-hidden="true" decoding="async"/><p>รอผู้สอนเริ่มข้อถัดไป</p></div>}
         {reveal&&isHost&&<div className="host-controls"><span>อ่านเฉลยและคุยทบทวนได้เต็มที่</span><button className="button primary" disabled={!canInteract} onClick={()=>void send(snapshot.room.questionIndex===14?'finish':'next')}>{snapshot.room.questionIndex===14?'ดูสรุปคะแนน 🏆':'เริ่มข้อถัดไป →'}</button></div>}
       </div>
       {isHost&&<aside className="card question-roster">{!reveal&&<div className="projector-timer-wrap">{countdownNode}</div>}<h2>{reveal?'ผลคำตอบข้อนี้':'คะแนนสะสม'} {!reveal&&<span className="host-score-count">ส่งคำตอบแล้ว {answered} / {snapshot.players.length}</span>}</h2>
@@ -787,7 +787,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         </div>}
         {!reveal&&snapshot.players.length>0&&snapshot.players.length<=3&&<div className="score-spotlight" aria-label="ผู้เล่นบนเวที">
           {rankedPlayers.slice(0,3).map((player,index)=><div className="spotlight-person" key={player.id}>
-            <div className="spotlight-avatar"><Avatar options={player.avatar} motion={motion}/></div>
+            <div className="spotlight-avatar"><Avatar options={player.avatar} motion={motion} pose="confident"/></div>
             <div className="spotlight-meta"><small>ผู้เล่น {String(index+1).padStart(2,'0')}</small><strong>{player.name}</strong><b>{player.score}<span> / 15</span></b></div>
             <span className={'spotlight-state '+(player.answered?'done':'waiting')}>{player.answered?'✓ ตอบแล้ว':'รอคำตอบ'}</span>
           </div>)}
@@ -802,7 +802,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <div className="reveal-tiles" role="list" aria-label="ผลคำตอบผู้เรียนทั้งหมด">
             {([...snapshot.results||[]].sort((a,b)=>({correct:0,incorrect:1,unanswered:2}[a.status]-{correct:0,incorrect:1,unanswered:2}[b.status]))).map(r=>
               <div className={'reveal-person '+r.status} data-answer-status={r.status} role="listitem" key={r.playerId} title={r.name+' · '+(r.status==='correct'?'ตอบถูก':r.status==='incorrect'?'ตอบผิด':'ไม่ได้ตอบ')}>
-                <div className="reveal-avatar"><Avatar options={r.avatar} motion={motion}/></div>
+                <div className="reveal-avatar"><Avatar options={r.avatar} motion={motion} pose={r.status==='correct'?'celebrate':'think'}/></div>
                 <div className="reveal-details"><strong>{r.name}</strong><small>{r.status==='correct'?'✓ ตอบถูก':r.status==='incorrect'?'✕ ตอบผิด':'– ไม่ได้ตอบ'} {r.choice==null?'':' · '+letters[r.choice]}</small></div>
                 <b className="reveal-points">{r.score}<span>/15</span></b>
               </div>)}
