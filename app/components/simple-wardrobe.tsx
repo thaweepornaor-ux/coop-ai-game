@@ -12,7 +12,6 @@ const choices: {key:AvatarOptionKey;label:string;max?:number}[]=[
 ];
 export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;onChange:(next:Record<string,string>)=>void}){
  const [gender,setGender]=useState<'male'|'female'>(avatar.bodyStyle==='female'?'female':'male');
- const [more,setMore]=useState(false);
  useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
  const selectedId=avatar.presetId;
  const selectPreset=(person:CharacterPreset)=>{
@@ -41,22 +40,20 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
      <button type="button" aria-pressed={gender==='female'} onClick={()=>chooseGender('female')}>ตัวละครหญิง</button>
    </div>
    <div className="quick-characters" aria-label={gender==='male'?'ตัวละครผู้ชาย':'ตัวละครผู้หญิง'}>
-    {CHARACTERS.filter(c=>c.gender===gender).map(c=><button type="button" key={c.id}
+    {CHARACTERS.filter(c=>c.gender===gender).map((c,index)=><button type="button" key={c.id}
       className={'quick-character'+(selectedId===c.id?' selected':'')}
       aria-label={c.label+(selectedId===c.id?' เลือกอยู่':'')}
       aria-pressed={selectedId===c.id} onClick={()=>selectPreset(c)}>
       <span className="quick-character-portrait"><Avatar options={{...avatar,
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
-        hatStyle:'none'}} motion={false}/></span>
+        hatStyle:'none'}} pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
       <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
    </div>
-   <button type="button" className="quick-more-toggle" aria-expanded={more} onClick={()=>setMore(v=>!v)}>
-      {more?'ซ่อนการปรับแต่ง −':'ปรับแต่งตัวละคร +'}
-   </button>
-   {more&&<div className="quick-options">
+   <div className="quick-customize-title"><strong>ปรับแต่งตัวละคร</strong><span>เลือกทรงผม เสื้อผ้า สีผิว และแว่นตาได้เลย</span></div>
+   <div className="quick-options">
      <div className="wardrobe-live-preview" aria-label="ตัวละครตัวอย่างที่เปลี่ยนตามการปรับแต่ง">
        <div className="wardrobe-live-avatar"><Avatar options={avatar} motion={false}/></div>
        <div className="wardrobe-live-caption"><strong>ตัวละครของฉัน</strong><span>ลองเปลี่ยนสีผิว ทรงผม หรือเสื้อผ้า แล้วดูผลตรงนี้ได้เลย</span></div>
@@ -71,6 +68,6 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
              title={option.label}>{option.color&&<i style={{backgroundColor:option.color}}/>}{option.label}</button>)}
         </div>
      </fieldset>)}
-   </div>}
+   </div>
  </div>;
 }
