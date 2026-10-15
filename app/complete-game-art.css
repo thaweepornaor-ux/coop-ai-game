@@ -370,3 +370,167 @@
   outline:3px solid #ffe8a3;
   outline-offset:3px;
 }
+
+/* Mobile reveal v2: a dedicated one-screen result, not a long quiz with an
+ * explanation appended. The instructor and unrevealed question are unchanged. */
+@media(max-width:650px){
+  .game-shell[data-role="player"] .player-question:has(.own-result){
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-card{
+    display:flex!important;
+    flex-direction:column;
+    gap:clamp(5px,1.2dvh,10px)!important;
+    min-width:0;
+    width:100%;
+    box-sizing:border-box;
+    padding:clamp(10px,2.8vw,16px)!important;
+    border-radius:20px;
+    max-height:calc(100dvh - 90px);
+    overflow:hidden;
+  }
+  /* Result first, then the original question and confirmed correct answer.
+     Options become unnecessary once answering is closed. */
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result{
+    order:-4;
+    position:relative;
+    flex:none;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:flex-start;
+    gap:3px;
+    width:100%;
+    min-height:88px;
+    max-height:clamp(88px,16dvh,126px);
+    padding:12px 68px 12px 16px!important;
+    border-radius:17px;
+    border:2px solid rgba(255,255,255,.6);
+    text-align:left;
+    overflow:hidden;
+    box-sizing:border-box;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result.correct{
+    background:linear-gradient(110deg,#087c5b,#0f9d83 65%,#146f99)!important;
+    border-color:#7affc1!important;
+    box-shadow:0 0 0 2px #1af5a52e,0 7px 23px #0a6c5c80!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result.incorrect{
+    background:linear-gradient(110deg,#9b3150,#b64750 65%,#723b80)!important;
+    border-color:#ffb6a9!important;
+    box-shadow:0 0 0 2px #ff9a9030,0 7px 23px #7a284a73!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result.unanswered{
+    background:linear-gradient(110deg,#48617f,#4b5b94)!important;
+    border-color:#b4d5fa!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result>strong{
+    display:block;
+    color:#fff!important;
+    font-size:clamp(1.3rem,5.7vw,1.85rem)!important;
+    font-weight:950;
+    line-height:1.17;
+    text-wrap:balance;
+    text-shadow:0 2px 7px #10254c5e;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result>span{
+    color:#fff!important;
+    font-size:clamp(.83rem,3.4vw,1rem)!important;
+    font-weight:800;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result>p,
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result>div:not(.learner-reveal-art){
+    display:none!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .learner-reveal-art{
+    right:8px;bottom:3px;
+    width:clamp(46px,13vw,62px);
+    height:86px;
+    max-height:94%;
+    opacity:1;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-meta{
+    order:-3;flex:none;
+    margin:0!important;min-height:0;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-meta .countdown{
+    width:48px;height:48px;min-width:0;min-height:0;
+    font-size:.8rem;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .mission-progress{
+    order:-2;flex:none;margin:2px 0!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .topic{
+    order:-1;flex:none;margin:0!important;
+    font-size:clamp(.75rem,3vw,.9rem);
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-card>h1{
+    order:0;flex:none;
+    font-size:clamp(1.07rem,4.6vw,1.48rem)!important;
+    line-height:1.32!important;
+    margin:0!important;
+    max-height:3.96em;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .answer-grid{
+    display:none!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .explanation{
+    order:1;
+    flex:0 1 auto;
+    min-height:0;
+    margin:0!important;
+    padding:clamp(10px,2.8vw,14px)!important;
+    overflow:auto;
+    overscroll-behavior:contain;
+    border:1px solid #83ffe3!important;
+    border-radius:15px;
+    background:linear-gradient(135deg,#0d626c,#167ca2)!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .explanation h2{
+    font-size:clamp(.97rem,4vw,1.22rem)!important;
+    line-height:1.32;
+    margin:0 0 6px!important;
+    overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .explanation p{
+    font-size:clamp(.83rem,3.25vw,.98rem)!important;
+    line-height:1.4;
+    margin:0!important;
+    overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="player"].motion-on .player-question .own-result.correct{
+    animation:mobile-result-enter .38s cubic-bezier(.18,.8,.2,1) both;
+  }
+  .game-shell[data-role="player"].motion-on .player-question .own-result.incorrect{
+    animation:mobile-result-enter .38s ease-out both;
+  }
+}
+@keyframes mobile-result-enter{
+  from{opacity:.65;transform:translateY(7px) scale(.985)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+@media(max-width:650px) and (max-height:700px){
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-card{
+    max-height:calc(100dvh - 65px);
+    padding:9px!important;gap:5px!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result{
+    min-height:74px;max-height:88px;padding:8px 56px 8px 12px!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .own-result>strong{
+    font-size:1.22rem!important;
+  }
+  .game-shell[data-role="player"] .player-question:has(.own-result) .question-card>h1{
+    max-height:2.64em;font-size:1rem!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell[data-role="player"] .player-question .own-result{
+    animation:none!important;
+  }
+}
