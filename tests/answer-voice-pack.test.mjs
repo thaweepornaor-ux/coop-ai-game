@@ -69,7 +69,7 @@ test('Voice files are persisted separately and used for reveal in place of TTS',
 test('New voice selector is compact and honors existing show layout',()=>{
   assert.ok(layout.includes("import './answer-voice-controls.css';"));
   assert.ok(game.includes('className="reveal-voice-settings"'));
-  assert.ok(game.includes("เสียงเฉลย R01–R15 พร้อม ✓"));
+  assert.ok(game.includes("เสียงเฉลยพร้อม ✓"));
   assert.ok(css.includes('prefers-reduced-motion:reduce'));
   assert.ok(css.includes('max-width:1260px'));
   let n=0;for(const ch of css){if(ch==='{')n++;if(ch==='}')n--;}assert.equal(n,0);
