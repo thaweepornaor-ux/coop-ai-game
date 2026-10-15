@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 // Local visual QA contact sheet. No game routes, publishing or user data.
-import {writeFileSync,mkdirSync} from 'node:fs';
+import {writeFileSync,mkdirSync,readFileSync} from 'node:fs';
 import {renderAvatar} from '../shared/avatar.js';
 
 const poses=['stand','wave','celebrate','think','confident'];
 const fullMatrix=process.argv.includes('--all');
-const people=[
- {bodyStyle:'male',presetId:'M01',hairStyle:'sidepart',shirtColor:'indigo',skinTone:'warm'},
- {bodyStyle:'female',presetId:'F01',hairStyle:'long',shirtColor:'teal',skinTone:'tan'}
-];
-if(fullMatrix){
- for(const gender of ['male','female']) for(let number=2;number<=10;number++){
-  const id=(gender==='male'?'M':'F')+String(number).padStart(2,'0');
-  people.push({bodyStyle:gender,presetId:id,hairStyle:gender==='male'?'short':'bob',shirtColor:gender==='male'?'indigo':'teal',skinTone:'warm'});
- }
-}
+// Read committed preset definitions so the expanded sheet checks the actual
+// hairstyle, color, glasses and clothing choices rather than stand-in defaults.
+const catalog=readFileSync(new URL('../shared/characters.ts',import.meta.url),'utf8');
+const match=catalog.match(/export const CHARACTERS:CharacterPreset\\[\\]\\s*=\\s*(\\[[\\s\\S]*?\\]);/);
+if(!match)throw new Error('Cannot locate committed character presets');
+const presets=JSON.parse(match[1]);
+const people=(fullMatrix?presets:presets.filter(p=>['M01','F01'].includes(p.id))).map(p=>({
+ bodyStyle:p.gender,presetId:p.id,hairStyle:p.hairStyle,hairColor:p.hairColor,
+ shirtColor:p.shirtColor,skinTone:p.skinTone,bottomStyle:p.bottomStyle,
+ bottomColor:p.bottomColor,glassesStyle:p.glasses?(p.glassesStyle==='round'?'round':'rectangle'):'none'
+}));
 const escape=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const cards=[];
 for(const person of people) for(const pose of poses) {
