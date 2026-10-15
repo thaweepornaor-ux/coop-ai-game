@@ -45,7 +45,7 @@ test('Instructor sees unmistakable spoken-audio ZIP and preview controls, separa
  const app=readFileSync(new URL('../app/game.tsx',import.meta.url),'utf8');
  assert.match(app,/importVoiceSelection/);
  assert.match(app,/unpackQuizVoiceZip\(chosen\[0\]\)/);
- assert.match(app,/🎙 เลือก ZIP เสียงโจทย์/);
+ assert.match(app,/เลือกไฟล์เสียงโจทย์/);
  assert.match(app,/▶ ทดลองฟังข้อ 1/);
  assert.match(app,/voice-setup-panel/);
  assert.match(app,/เอฟเฟกต์เปิด/);
