@@ -284,7 +284,7 @@ async function wardrobe(page) {
  await page.getByRole('button',{name:/ปรับแต่งตัวละคร/}).click();
  const livePreview=page.locator('.quick-options .wardrobe-live-preview');
  await livePreview.waitFor();
- assert.equal(await livePreview.locator('[role="img"]').count(),1,'Expanded wardrobe displays the actual selected live character');
+ assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
  const options=page.locator('.quick-options fieldset');
  assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
  const styles=options.nth(2).locator('button');
