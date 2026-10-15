@@ -10,9 +10,15 @@ const choices: {key:AvatarOptionKey;label:string;max?:number}[]=[
  {key:'bottomStyle',label:'กางเกง / กระโปรง'},{key:'shoeColor',label:'สีรองเท้า'},
  {key:'glassesStyle',label:'แว่นตา'}
 ];
+const previewPoses=[
+ {value:'stand',label:'ยืน'}, {value:'wave',label:'ทักทาย'},
+ {value:'think',label:'คิด'}, {value:'confident',label:'มั่นใจ'},
+ {value:'celebrate',label:'ดีใจ'}
+] as const;
 export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;onChange:(next:Record<string,string>)=>void}){
  const [gender,setGender]=useState<'male'|'female'>(avatar.bodyStyle==='female'?'female':'male');
  useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
+ const [previewPose,setPreviewPose]=useState<(typeof previewPoses)[number]['value']>('stand');
  const selectedId=avatar.presetId;
  const selectPreset=(person:CharacterPreset)=>{
    const next=normalizeWardrobe({...avatar,presetId:person.id,bodyStyle:person.gender,
@@ -55,9 +61,12 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
    <div className="quick-customize-title"><strong>ปรับแต่งตัวละคร</strong><span>เลือกทรงผม เสื้อผ้า สีผิว และแว่นตาได้เลย</span></div>
    <div className="quick-options">
      <div className="wardrobe-live-preview" aria-label="ตัวละครตัวอย่างที่เปลี่ยนตามการปรับแต่ง">
-       <div className="wardrobe-live-avatar"><Avatar options={avatar} motion={false}/></div>
+       <div className="wardrobe-live-avatar"><Avatar options={avatar} pose={previewPose} motion={false}/></div>
        <div className="wardrobe-live-caption"><strong>ตัวละครของฉัน</strong><span>ลองเปลี่ยนสีผิว ทรงผม หรือเสื้อผ้า แล้วดูผลตรงนี้ได้เลย</span></div>
        <span className="wardrobe-live-indicator">● เปลี่ยนทันที</span>
+       <div className="wardrobe-pose-choices" role="group" aria-label="ทดลองท่าทางตัวละคร">
+        {previewPoses.map(item=><button key={item.value} type="button" aria-pressed={previewPose===item.value} onClick={()=>setPreviewPose(item.value)}>{item.label}</button>)}
+       </div>
      </div>
      {choices.map(({key,label})=><fieldset key={key}>
         <legend>{label}</legend>
