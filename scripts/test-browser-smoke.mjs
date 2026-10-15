@@ -488,7 +488,7 @@ async function realRoom(browser, browserName) {
         }finally{db.close()}
       });
       assert.equal(count,15,'All 15 answer MP3 recordings must persist in IndexedDB');
-      await selector.getByRole('button',{name:'▶ ทดลอง R01'}).click();
+      await selector.getByRole('button',{name:'▶ ทดสอบเสียงเฉลย'}).click();
       await selector.getByRole('button',{name:/กำลังเล่น/}).waitFor({timeout:15000});
       await selector.locator('summary').click();
       row.checks.push('Teacher imported 15 playable reveal MP3 files and auditioned R01 in real browser');
@@ -793,7 +793,7 @@ async function realRoom(browser, browserName) {
     assert.equal(await player.getByRole('button',{name:/ดาวน์โหลดคะแนน/}).count(),0,'Learners cannot use the teacher CSV export');
     const [download]=await Promise.all([
       host.waitForEvent('download',{timeout:15000}),
-      host.getByRole('button',{name:/ดาวน์โหลดคะแนน/}).click()
+      host.locator('.scoreboard .export-results').click()
     ]);
     assert.match(download.suggestedFilename(),/^AI-Assessment-Results-[0-9]{4}-[0-9]{2}-[0-9]{2}[.]csv$/);
     row.checks.push('Instructor can export final score CSV, but learner cannot');
