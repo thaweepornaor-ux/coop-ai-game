@@ -43,6 +43,28 @@ def load_helper():
     return module
 def encoded(value):
     return (json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode()
+def checked_archive_name(info):
+    name = info.filename
+    clean = name[:-1] if info.is_dir() else name
+    path = PurePosixPath(clean)
+    kind = stat.S_IFMT(info.external_attr >> 16)
+    if (not clean or info.orig_filename != name or len(name) > 1024
+            or clean.startswith("/") or "\\" in name or ":" in name
+            or any(ord(c) < 32 or ord(c) == 127 for c in name)
+            or path.as_posix() != clean or ".." in path.parts
+            or len(path.parts) > 16 or info.flag_bits & 1
+            or kind not in (0, stat.S_IFREG, stat.S_IFDIR)
+            or (info.is_dir() and kind == stat.S_IFREG)
+            or (not info.is_dir() and kind == stat.S_IFDIR)
+            or info.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)):
+        raise ValueError("unsafe_zip_entry")
+    if info.is_dir():
+        if info.file_size != 0:
+            raise ValueError("nonempty_directory")
+    elif not 0 <= info.file_size <= MAX_ENTRY:
+        raise ValueError("unsafe_zip_entry")
+    return clean
+
 def no_zip64(info):
     if info.extract_version >= 45:
         raise ValueError("unsafe_zip_entry")
@@ -119,7 +141,7 @@ def main():
             infos = source.infolist()
             if not 1 <= len(infos) <= MAX_ENTRIES:
                 raise ValueError("archive_entry_limit_exceeded")
-            paths = [helper.checked_name(info) for info in infos]
+            paths = [checked_archive_name(info) for info in infos]
             portable = [unicodedata.normalize("NFC", name).casefold() for name in paths]
             if len(paths) != len(set(paths)) or len(portable) != len(set(portable)):
                 raise ValueError("duplicate_archive_entry")
