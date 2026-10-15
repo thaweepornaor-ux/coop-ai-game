@@ -19,6 +19,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
  const [gender,setGender]=useState<'male'|'female'>(avatar.bodyStyle==='female'?'female':'male');
  useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
  const [previewPose,setPreviewPose]=useState<(typeof previewPoses)[number]['value']>('stand');
+ const [customizationFocus,setCustomizationFocus]=useState(false);
  const selectedId=avatar.presetId;
  const activePreset=CHARACTERS.find(c=>c.id===selectedId);
  const activePoseLabel=previewPoses.find(p=>p.value===previewPose)?.label||'ยืน';
@@ -61,12 +62,12 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
    </div>
-   <div className="quick-customize-title"><strong>ปรับแต่งตัวละคร</strong><span>เลือกทรงผม เสื้อผ้า สีผิว และแว่นตาได้เลย</span></div>
-   <div className="quick-options">
+   <div className="quick-customize-title" id="character-customization"><strong>ปรับแต่งตัวละคร</strong><span>เลือกทรงผม เสื้อผ้า สีผิว และแว่นตาได้เลย</span></div>
+   <div className={"quick-options"+(customizationFocus?" customizer-highlight":"")}>
      <div className="wardrobe-live-preview" aria-label="ตัวละครตัวอย่างที่เปลี่ยนตามการปรับแต่ง">
        <div className="wardrobe-live-avatar"><Avatar options={avatar} svgOnly pose={previewPose} motion={false}/></div>
        <div className="wardrobe-live-caption"><strong>ตัวละครของฉัน{activePreset?' — '+activePreset.label:''}</strong><span>ท่า{activePoseLabel} · แต่งตัวและตรวจแขนเสื้อ มือ นิ้ว ได้ทันที</span></div>
-       <span className="wardrobe-live-indicator">● เปลี่ยนทันที</span>
+       <button className="wardrobe-live-indicator wardrobe-edit-action" type="button" onClick={()=>{setCustomizationFocus(true);document.getElementById("character-customization")?.scrollIntoView({behavior:"smooth",block:"start"});}}>ปรับแต่งเลย →</button>
        <div className="wardrobe-pose-choices" role="group" aria-label="ทดลองท่าทางตัวละคร">
         {previewPoses.map(item=><button key={item.value} type="button" aria-pressed={previewPose===item.value} onClick={()=>setPreviewPose(item.value)}>{item.label}</button>)}
        </div>
