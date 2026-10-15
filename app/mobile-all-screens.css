@@ -1,0 +1,91 @@
+/* Mobile-wide responsive pass: all learner screens, not just reveal.
+ * Do not constrain long form/content to one viewport at the cost of clipping.
+ * Core actions remain accessible; phone viewport is vertically scrollable. */
+@media (max-width: 767px) {
+  html, body { width:100%; max-width:100%; overflow-x:clip; }
+  .game-shell[data-role="player"], .game-shell[data-role="choose"] {
+    width:100%; min-width:0; max-width:100%;
+    box-sizing:border-box; padding:clamp(8px,2.6vw,16px);
+    overflow-x:clip;
+  }
+  .game-shell[data-role="player"] *, .game-shell[data-role="choose"] * {box-sizing:border-box;}
+  .game-shell[data-role="player"] :is(.card,.question-layout,.question-card,.answer-grid,.answer,.explanation,.own-result,.lobby,.lobby-main,.results-page,.scoreboard,.score-table,.score-row,.score-player,.customizer,.wardrobe,.quick-player,.quick-wardrobe),
+  .game-shell[data-role="choose"] :is(.entry-stage,.entry-copy,.hero-stage) {
+    min-width:0; max-width:100%; overflow-wrap:anywhere;
+  }
+  .game-shell[data-role="player"] .topbar, .game-shell[data-role="choose"] .topbar {
+    display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; margin-bottom:8px;
+  }
+  .game-shell[data-role="player"] .topbar .brand, .game-shell[data-role="choose"] .topbar .brand {min-width:0;}
+  .game-shell[data-role="player"] .topbar .brand img, .game-shell[data-role="choose"] .topbar .brand img {width:33px;height:35px;object-fit:contain;}
+  .game-shell[data-role="player"] .topbar .brand strong, .game-shell[data-role="choose"] .topbar .brand strong {font-size:clamp(.82rem,3.8vw,1rem);}
+  .game-shell[data-role="player"] .topbar .preferences, .game-shell[data-role="choose"] .topbar .preferences {flex-wrap:wrap;gap:5px;}
+  .game-shell[data-role="player"] .topbar .preferences button, .game-shell[data-role="choose"] .topbar .preferences button {font-size:.72rem;min-height:34px;padding:6px 8px;}
+  .game-shell[data-role="player"] .connection {padding:5px 10px;margin:3px 0 8px;font-size:.78rem;}
+  .game-shell[data-role="player"] .quick-player, .game-shell[data-role="player"] .quick-player .wardrobe {width:100%;max-width:100%;margin:0;}
+  .game-shell[data-role="player"] .quick-player .wardrobe {padding:clamp(10px,3vw,16px);border-radius:17px;}
+  .game-shell[data-role="player"] .quick-player .quick-gender {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+  .game-shell[data-role="player"] .quick-player .quick-gender button {min-width:0;min-height:44px;}
+  .game-shell[data-role="player"] .quick-player .quick-character {min-width:0;min-height:98px;}
+  .game-shell[data-role="player"] .quick-player .join-fields {margin:10px 0 8px;}
+  .game-shell[data-role="player"] .quick-player .join-fields input {width:100%;max-width:100%;min-height:48px;font-size:16px;}
+  .game-shell[data-role="player"] .quick-player .join-button {min-height:50px;margin-top:4px;}
+  .game-shell[data-role="player"] .player-lobby {width:100%;display:block;}
+  .game-shell[data-role="player"] .player-lobby .lobby-main {padding:clamp(12px,3vw,20px);min-height:0;}
+  .game-shell[data-role="player"] .player-lobby .waiting-avatar {max-height:clamp(130px,26dvh,220px);}
+  .game-shell[data-role="player"] .player-lobby .inline-profile-form {max-width:100%;gap:9px;}
+  .game-shell[data-role="player"] .question-layout {display:block;width:100%;margin:0;}
+  .game-shell[data-role="player"] .question-card {width:100%;padding:clamp(10px,3vw,18px);border-radius:18px;}
+  .game-shell[data-role="player"] .question-card .question-meta {gap:5px;min-width:0;flex-wrap:wrap;}
+  .game-shell[data-role="player"] .question-card .mission-progress {margin:7px 0;gap:3px;min-width:0;}
+  .game-shell[data-role="player"] .question-card .mission-progress i {min-width:0;}
+  .game-shell[data-role="player"] .question-card .topic {margin:6px 0;font-size:clamp(.75rem,3vw,.9rem);}
+  .game-shell[data-role="player"] .question-card > h1 {
+    font-size:clamp(1.06rem,4.7vw,1.48rem);line-height:1.36;
+    margin:7px 0 12px;overflow-wrap:anywhere;text-wrap:pretty;
+  }
+  .game-shell[data-role="player"] .answer-grid {display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(6px,1.2dvh,10px);}
+  .game-shell[data-role="player"] .answer-grid .answer {
+    width:100%;min-width:0;min-height:clamp(55px,9dvh,72px);
+    padding:9px 12px;gap:10px;border-radius:16px;
+    font-size:clamp(.91rem,3.9vw,1.06rem);line-height:1.34;
+    border-width:2px;
+  }
+  .game-shell[data-role="player"] .answer-grid .answer-letter {
+    flex:0 0 38px;width:38px;height:38px;min-width:38px;
+    font-size:1.02rem;border-radius:11px;
+  }
+  .game-shell[data-role="player"] .answer-status {margin:8px 0 0;font-size:.85rem;line-height:1.35;}
+  .game-shell[data-role="player"] .results-page {display:block;width:100%;}
+  .game-shell[data-role="player"] .results-page > .card {padding:clamp(12px,3vw,18px);margin-bottom:10px;}
+  .game-shell[data-role="player"] .results-page .finish-heading h1 {font-size:clamp(1.25rem,5vw,1.8rem);line-height:1.28;}
+  .game-shell[data-role="player"] .results-page .personal-finish {min-width:0;}
+  .game-shell[data-role="player"] .results-page .result-level-overview {display:grid;grid-template-columns:minmax(0,1fr);gap:6px;}
+  .game-shell[data-role="player"] .results-page .score-table {width:100%;overflow-x:auto;overscroll-behavior-inline:contain;}
+  .game-shell[data-role="player"] .results-page .score-row {min-width:0;grid-template-columns:32px minmax(0,1fr) 52px;}
+  .game-shell[data-role="player"] .results-page .score-row > :nth-child(4) {display:none;}
+  .game-shell[data-role="player"] .results-page .score-row .score-player {min-width:0;}
+  .game-shell[data-role="player"] .results-page .score-row .score-player strong {overflow-wrap:anywhere;}
+  .game-shell[data-role="player"] .modal-backdrop, .game-shell[data-role="choose"] .modal-backdrop {
+    padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  }
+  .game-shell[data-role="player"] .reset-modal, .game-shell[data-role="choose"] .reset-modal {
+    width:min(100%,460px);max-width:100%;max-height:calc(100dvh - 32px);overflow:auto;
+    padding:clamp(14px,4vw,22px);
+  }
+  .game-shell[data-role="player"] :is(button,input,a):focus-visible {outline:3px solid #ffdc87;outline-offset:2px;}
+}
+@media(max-width:360px){
+  .game-shell[data-role="player"] .question-card {padding:9px;}
+  .game-shell[data-role="player"] .answer-grid .answer {padding:8px;gap:7px;min-height:52px;font-size:.88rem;}
+  .game-shell[data-role="player"] .answer-grid .answer-letter {flex-basis:32px;width:32px;height:32px;min-width:32px;}
+  .game-shell[data-role="player"] .quick-player .wardrobe {padding:9px;}
+}
+@media(max-width:767px) and (max-height:700px) {
+  .game-shell[data-role="player"] .question-card {padding:9px;}
+  .game-shell[data-role="player"] .question-card .answer-grid {gap:5px;}
+  .game-shell[data-role="player"] .question-card .answer {min-height:49px;padding:7px 10px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .game-shell[data-role="player"] .answer, .game-shell[data-role="player"] .question-card {animation:none!important;transition:none!important;}
+}
