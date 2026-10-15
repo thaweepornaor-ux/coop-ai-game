@@ -982,7 +982,7 @@ async function realTwentyFive(browser,browserName){
    await host.setViewportSize({width:1280,height:720});
    await shot(host,browserName+'-25-real-lobby');
    await stage('begin-game-with-25-players');
-   await host.getByRole('button',{name:/เริ่มเกม/}).click();
+   await host.getByRole('button',{name:'▶ เริ่มเกม',exact:true}).click();
    await question(host,1);
    await stage('verify-all-25-live-score-cells-are-visible');
    await host.waitForFunction(()=>document.querySelectorAll('.host-scored-roster.packed-players .mini-player').length===25,null,{timeout:15000});
