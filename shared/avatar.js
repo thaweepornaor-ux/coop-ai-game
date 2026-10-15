@@ -174,18 +174,35 @@ export function renderAvatar(options = {}) {
     : pose === 'think' ? leftRest+`<path d="M108 106Q117 110 116 121L106 134Q102 137 98 133L91 91Q90 86 94 84Q99 84 101 90L108 119Z"/><g transform="translate(93 86)"><ellipse rx="4.5" ry="6"/><path d="M-2 -3L-3 -10M1 -5L2 -12" stroke="${skinShade}" stroke-width="1.3" stroke-linecap="round"/></g>`
     : pose === 'confident' ? `<path d="M53 105Q44 108 44 121L42 133Q42 138 47 139L60 138Q64 135 60 133L51 131L57 112Z"/><ellipse cx="60" cy="135" rx="5" ry="4"/>`+`<path d="M107 105Q116 108 116 121L118 133Q118 138 113 139L100 138Q96 135 100 133L109 131L103 112Z"/><ellipse cx="100" cy="135" rx="5" ry="4"/>`
     : leftRest+rightRest;
-  // Sleeve endpoints follow the exact arm direction for each pose.
-  // Overlay after the torso so every arm emerges from a visible fabric sleeve.
-  const sleeveSegments = pose === 'wave'
-    ? ['M54 106 Q48 103 43 98','M107 107 Q114 112 115 119']
-    : pose === 'celebrate'
-    ? ['M54 106 Q47 103 43 94','M106 106 Q113 103 117 94']
-    : pose === 'think'
-    ? ['M53 106 Q47 111 45 120','M107 106 Q114 110 114 118']
-    : pose === 'confident'
-    ? ['M53 106 Q47 111 45 120','M107 106 Q113 111 115 120']
-    : ['M53 106 Q47 111 45 120','M107 106 Q113 111 115 120'];
-  const sleeveOverlay = sleeveSegments.map(d=>`<path d="${d}" fill="none" stroke="url(#${materialPrefix}-shirt-lit)" stroke-width="12" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${shade(shirtColor)}" stroke-width=".8" stroke-linecap="round" opacity=".4"/>`).join('');
+  // Each pose has its own closed fabric sleeve silhouettes, rather than
+  // fixed-width strokes laid over skin. Shoulder ends overlap the shirt body;
+  // cuff ends terminate at the actual forearm direction of that pose.
+  const sleevesByPose = {
+    stand: [
+      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
+      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+    ],
+    wave: [
+      'M54 98Q48 96 44 92L37 86Q33 87 30 93L39 104Q47 114 55 114L59 108Z',
+      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+    ],
+    celebrate: [
+      'M54 99Q49 96 46 88L41 82Q35 83 32 88L38 102Q44 114 55 114L59 107Z',
+      'M106 99Q111 96 114 88L119 82Q125 83 128 88L122 102Q116 114 105 114L101 107Z',
+    ],
+    think: [
+      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
+      'M109 99Q115 101 118 109L120 118Q117 123 109 124L102 110Q100 104 109 99Z',
+    ],
+    confident: [
+      'M51 99Q46 101 43 109L40 118Q42 123 50 124L57 110Q60 104 51 99Z',
+      'M109 99Q114 101 117 109L120 118Q118 123 110 124L103 110Q100 104 109 99Z',
+    ],
+  };
+  const sleeves = sleevesByPose[pose];
+  const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
+    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-width="1" stroke-linejoin="round"/>`
+  ).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
   // All fills still derive from the user's exact selected outfit palette.
