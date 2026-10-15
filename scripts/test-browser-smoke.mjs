@@ -595,6 +595,18 @@ async function realRoom(browser, browserName) {
       row.checks.push('Question '+number+' fits 720p with no Thai text clipping, all answer choices and presenter actions');
       if (number === 1) {
         await noOverflow(player,'mobile active question');
+        if (size.mobile && size.width<=430) {
+          const frame=await player.evaluate(()=>{
+            const card=document.querySelector('.player-question .question-card');
+            const answers=[...document.querySelectorAll('.player-question .answer-grid .answer')];
+            const rect=card?.getBoundingClientRect();
+            return {viewport:innerWidth,left:rect?.left,right:rect?.right,
+              count:answers.length,overflow:answers.filter(el=>{const b=el.getBoundingClientRect();return b.left < -1 || b.right > innerWidth+1}).length};
+          });
+          assert.equal(frame.count,3);
+          assert.equal(frame.overflow,0,'Mobile answer buttons extend beyond viewport '+JSON.stringify(frame));
+          assert.ok(frame.left>=-1 && frame.right<=frame.viewport+1,'Mobile question card extends beyond viewport '+JSON.stringify(frame));
+        }
         const timerSize=await host.locator('.countdown').boundingBox();
         assert.ok(timerSize && timerSize.width>=130 && timerSize.height>=130,'Projector countdown must be large and visible');
         const titleSize=await host.locator('.question-card h1').evaluate(el=>parseFloat(getComputedStyle(el).fontSize));
@@ -641,6 +653,22 @@ async function realRoom(browser, browserName) {
       await player.locator('.own-result').filter({ hasText: 'คะแนนตอนนี้ ' + expectedScore + ' / 15' }).waitFor();
       assert.equal(await player.locator('.answer-grid button:disabled').count(), 3);
       if (number === 1) {
+        if(size.mobile && size.width<=430){
+          await noOverflow(player,'mobile reveal frame');
+          const result=await player.evaluate(()=>{
+            const card=document.querySelector('.player-question .question-card');
+            const hero=card?.querySelector('.own-result');
+            const explanation=card?.querySelector('.explanation');
+            const b=card?.getBoundingClientRect(),h=hero?.getBoundingClientRect(),e=explanation?.getBoundingClientRect();
+            return {viewport:innerWidth,right:b?.right,
+              heroVisible:!!h&&h.width>0&&h.height>0,
+              explanationVisible:!!e&&e.width>0&&e.height>0,
+              resultFirst:!!h&&!!e&&h.top<e.top};
+          });
+          assert.ok(result.heroVisible && result.explanationVisible && result.resultFirst,
+            'Mobile reveal must show feedback above correct answer '+JSON.stringify(result));
+          assert.ok(result.right<=result.viewport+1,'Mobile reveal card extends beyond viewport');
+        }
         await noOverflow(host,'desktop reveal');
         // Layout stress-test with twenty-five players without changing the actual room.
         // Synthetic cloned cells are only a visual geometry probe, not fake API players.
