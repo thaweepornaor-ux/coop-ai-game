@@ -43,6 +43,17 @@ def load_helper():
     return module
 def encoded(value):
     return (json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode()
+def hash_crc_bounded(path):
+    digest, crc, size = hashlib.sha256(), 0, 0
+    with path.open("rb") as stream:
+        for data in iter(lambda: stream.read(CHUNK), b""):
+            size += len(data)
+            if size > MAX_ENTRY:
+                raise ValueError("entry_exceeds_size")
+            digest.update(data)
+            crc = binascii.crc32(data, crc)
+    return size, digest.hexdigest(), format(crc & 0xffffffff, "08x")
+
 def checked_archive_name(info):
     name = info.filename
     clean = name[:-1] if info.is_dir() else name
@@ -202,7 +213,7 @@ def main():
                     "bytes": size, "sha256": checksum.hexdigest(), "crc32": format(crc, "08x"),
                     "restored": target is not None}
                 if target:
-                    check_size, check_hash, check_crc = helper.hash_crc(target)
+                    check_size, check_hash, check_crc = hash_crc_bounded(target)
                     if (check_size, check_hash, check_crc) != (size, checksum.hexdigest(), format(crc, "08x")):
                         raise ValueError("written_entry_mismatch")
                 if canonical in PINNED_FILES:
