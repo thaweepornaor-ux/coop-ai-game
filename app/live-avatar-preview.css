@@ -237,3 +237,17 @@
 @media(prefers-reduced-motion:reduce){
  .game-shell[data-role="player"] .quick-wardrobe .quick-character{transition:none}
 }
+
+.game-shell[data-role="player"] .wardrobe-edit-action{
+ border:1px solid rgba(127,255,229,.56);border-radius:9px;
+ background:rgba(8,56,113,.65);padding:8px 11px;
+ cursor:pointer;text-align:left;min-height:36px;width:max-content;
+ max-width:100%;font-weight:800;
+}
+.game-shell[data-role="player"] .wardrobe-edit-action:focus-visible{
+ outline:3px solid #fff;outline-offset:2px;
+}
+.game-shell[data-role="player"] .customizer-highlight{
+ border-radius:14px;outline:2px solid rgba(96,236,214,.35);
+ outline-offset:5px;
+}
