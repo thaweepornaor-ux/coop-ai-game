@@ -200,8 +200,17 @@ export function renderAvatar(options = {}) {
     ],
   };
   const sleeves = sleevesByPose[pose];
+  // The cuff follows each shoulder-to-forearm direction.  A soft fabric edge
+  // reads as a rolled hem instead of a hard painted outline over the skin.
+  const cuffsByPose = {
+    stand:['M39 118Q43 122 49 124','M121 118Q117 122 111 124'],
+    wave:['M30 93Q34 99 39 104','M121 118Q117 122 111 124'],
+    celebrate:['M32 88Q35 95 38 102','M128 88Q125 95 122 102'],
+    think:['M39 118Q43 122 49 124','M120 118Q116 123 109 124'],
+    confident:['M40 118Q44 122 50 124','M120 118Q116 122 110 124'],
+  };
   const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
-    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-width="1" stroke-linejoin="round"/>`
+    `<g data-sleeve-side="${side === 0 ? 'left' : 'right'}"><path d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".25" stroke-width=".65" stroke-linejoin="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".58" stroke-width="1.45" stroke-linecap="round"/></g>`
   ).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
