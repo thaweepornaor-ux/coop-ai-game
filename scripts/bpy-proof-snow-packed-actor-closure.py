@@ -1606,6 +1606,638 @@ def surface_node_trees(bpy, roots, labels):
     return result
 
 
+
+# Source-reviewed bounded PNG witness; runtime/asset evidence is reported separately.
+# No asset/RNA access or PNG output.
+# PNG sample reconstruction is independent of Blender/OIIO.
+# Locked revision: 8-bit only, bounded inflate then in-place pixel-diagonal wavefront.
+import hashlib
+import json
+import struct
+import zlib
+import numpy as np
+
+
+def pants_png_require(condition, code):
+    if not condition:
+        raise ValueError("pants_png_" + code)
+
+
+def pants_png_metadata(data, expected_size=(4096, 4096)):
+    """Validate PNG core framing/order/CRCs; do not interpret color transforms."""
+    pants_png_require(isinstance(data, (bytes, memoryview)), "input_type")
+    source = memoryview(data)
+    pants_png_require(source.contiguous and source.ndim == 1, "input_layout")
+    source = source.cast("B")
+    pants_png_require(8 <= len(source) <= 32 * 1024 * 1024, "source_size")
+    pants_png_require(source[:8].tobytes() == b"\x89PNG\r\n\x1a\n", "signature")
+    position = 8
+    header = None
+    idat_spans = []
+    idat_state = 0
+    palette_entries = None
+    seen = set()
+    chunks = {}
+    chunk_count = 0
+    unsupported = []
+    ancillary_metadata = {}
+    pre_palette = {b"cHRM", b"gAMA", b"iCCP", b"sBIT", b"sRGB",
+                   b"cICP", b"mDCV", b"cLLI"}
+    singleton = pre_palette | {b"PLTE", b"tRNS", b"bKGD", b"hIST", b"pHYs",
+                              b"tIME", b"eXIf"}
+    known_ancillary = pre_palette | {b"tRNS", b"bKGD", b"hIST", b"pHYs",
+                                   b"tIME", b"eXIf", b"tEXt", b"zTXt", b"iTXt"}
+    ended = False
+    while position < len(source):
+        chunk_count += 1
+        pants_png_require(chunk_count <= 4096, "chunk_count_budget")
+        pants_png_require(position + 12 <= len(source), "chunk_header_bounds")
+        length = struct.unpack_from(">I", source, position)[0]
+        kind = source[position + 4:position + 8].tobytes()
+        pants_png_require(length <= 0x7FFFFFFF, "chunk_length")
+        pants_png_require(all(65 <= x <= 90 or 97 <= x <= 122 for x in kind),
+                          "chunk_type")
+        pants_png_require(not (kind[2] & 32), "chunk_reserved_bit")
+        start = position + 8
+        end = start + length
+        pants_png_require(end + 4 <= len(source), "chunk_payload_bounds")
+        payload = source[start:end]
+        expected_crc = struct.unpack_from(">I", source, end)[0]
+        actual_crc = zlib.crc32(payload, zlib.crc32(kind)) & 0xFFFFFFFF
+        pants_png_require(actual_crc == expected_crc, "chunk_crc")
+        name = kind.decode("ascii")
+        pants_png_require(name in chunks or len(chunks) < 64, "chunk_type_budget")
+        entry = chunks.setdefault(name, {"count": 0, "payload_bytes": 0})
+        entry["count"] += 1
+        entry["payload_bytes"] += length
+        if chunk_count == 1:
+            pants_png_require(kind == b"IHDR", "ihdr_not_first")
+        if kind == b"IHDR":
+            pants_png_require(header is None and chunk_count == 1 and length == 13,
+                              "ihdr_structure")
+            width, height, depth, color, compression, filtering, interlace = \
+                struct.unpack(">IIBBBBB", payload)
+            legal = {0: (1, 2, 4, 8, 16), 2: (8, 16), 3: (1, 2, 4, 8),
+                     4: (8, 16), 6: (8, 16)}
+            pants_png_require(0 < width <= 0x7FFFFFFF and 0 < height <= 0x7FFFFFFF,
+                              "ihdr_dimensions")
+            pants_png_require(color in legal and depth in legal[color],
+                              "ihdr_sample_format")
+            pants_png_require(compression == 0 and filtering == 0 and interlace in (0, 1),
+                              "ihdr_methods")
+            header = {"width": width, "height": height, "bit_depth": depth,
+                      "color_type": color, "compression": compression,
+                      "filter_method": filtering, "interlace": interlace}
+            if (width, height) != tuple(expected_size) or width > 4096 or height > 4096:
+                unsupported.append("dimensions_outside_fixed_contract")
+            if depth != 8:
+                unsupported.append("16bit_decode_budget_unsupported" if depth == 16 else
+                                   "subbyte_samples_unsupported")
+            if color == 3:
+                unsupported.append("palette_color_type_unsupported")
+            if interlace:
+                unsupported.append("interlace_unsupported")
+        else:
+            pants_png_require(header is not None, "missing_ihdr")
+        if kind in singleton:
+            pants_png_require(kind not in seen, "duplicate_singleton_chunk")
+        if kind in pre_palette:
+            pants_png_require(idat_state == 0 and palette_entries is None,
+                              "color_metadata_order")
+        if kind == b"PLTE":
+            pants_png_require(idat_state == 0 and header["color_type"] not in (0, 4)
+                              and b"tRNS" not in seen and b"bKGD" not in seen
+                              and 0 < length <= 768 and length % 3 == 0,
+                              "plte_structure_or_order")
+            palette_entries = length // 3
+            if header["color_type"] == 3:
+                pants_png_require(palette_entries <= (1 << header["bit_depth"]),
+                                  "plte_sample_range")
+            unsupported.append("palette_chunk_unsupported")
+        elif kind == b"tRNS":
+            pants_png_require(idat_state == 0, "trns_order")
+            color = header["color_type"]
+            valid = ((color == 0 and length == 2)
+                     or (color == 2 and length == 6)
+                     or (color == 3 and palette_entries is not None
+                         and 0 < length <= palette_entries))
+            pants_png_require(valid, "trns_structure")
+            unsupported.append("transparency_chunk_unsupported")
+        elif kind == b"IDAT":
+            pants_png_require(idat_state != 2, "idat_not_contiguous")
+            if header["color_type"] == 3:
+                pants_png_require(palette_entries is not None, "palette_missing")
+            idat_state = 1
+            idat_spans.append((start, end))
+        elif kind == b"IEND":
+            pants_png_require(length == 0 and idat_state != 0, "iend_structure")
+            pants_png_require(end + 4 == len(source), "trailing_data")
+            ended = True
+        elif kind != b"IHDR":
+            if not (kind[0] & 32) and kind != b"PLTE":
+                unsupported.append("unknown_critical_chunk_" + name)
+            elif kind not in known_ancillary:
+                unsupported.append("unsupported_ancillary_chunk_" + name)
+            if kind in {b"bKGD", b"hIST", b"pHYs"}:
+                pants_png_require(idat_state == 0, "ancillary_pre_idat_order")
+            if kind == b"hIST":
+                pants_png_require(palette_entries is not None
+                                  and length == 2 * palette_entries, "hist_structure")
+            if kind == b"bKGD":
+                required = {0: 2, 2: 6, 3: 1, 4: 2, 6: 6}[header["color_type"]]
+                pants_png_require(length == required, "bkgd_structure")
+                if header["color_type"] == 3:
+                    pants_png_require(palette_entries is not None
+                                      and payload[0] < palette_entries, "bkgd_palette")
+            if kind == b"gAMA":
+                pants_png_require(length == 4 and struct.unpack(">I", payload)[0] != 0,
+                                  "gama_structure")
+                ancillary_metadata["gAMA_integer"] = struct.unpack(">I", payload)[0]
+            elif kind == b"cHRM":
+                pants_png_require(length == 32, "chrm_structure")
+                ancillary_metadata["cHRM_integers"] = list(struct.unpack(">8I", payload))
+            elif kind == b"sRGB":
+                pants_png_require(length == 1 and payload[0] <= 3, "srgb_structure")
+                ancillary_metadata["sRGB_rendering_intent"] = int(payload[0])
+            elif kind == b"sBIT":
+                count = {0: 1, 2: 3, 3: 3, 4: 2, 6: 4}[header["color_type"]]
+                ceiling = 8 if header["color_type"] == 3 else header["bit_depth"]
+                pants_png_require(length == count and all(0 < x <= ceiling for x in payload),
+                                  "sbit_structure")
+                ancillary_metadata["sBIT"] = list(payload)
+            elif kind == b"pHYs":
+                pants_png_require(length == 9 and payload[8] <= 1, "phys_structure")
+            if kind not in {b"IDAT", b"IEND"}:
+                # Do not expose text, profiles, URLs, paths, or arbitrary chunk payloads.
+                ancillary_metadata[name + "_payload_sha256"] = hashlib.sha256(payload).hexdigest()
+        if kind != b"IDAT" and idat_state == 1:
+            idat_state = 2
+        seen.add(kind)
+        position = end + 4
+        if ended:
+            break
+    pants_png_require(ended and idat_spans and position == len(source), "incomplete_png")
+    return source, idat_spans, {
+        "source_bytes": len(source), "source_sha256": hashlib.sha256(source).hexdigest(),
+        "ihdr": header, "chunk_count": chunk_count, "chunks": dict(sorted(chunks.items())),
+        "all_chunk_crcs_verified": True, "core_chunk_order_verified": True,
+        "ancillary_payload_color_transforms_interpreted": False,
+        "ancillary_metadata": ancillary_metadata,
+        "unsupported_reasons": sorted(set(unsupported)),
+        "format_supported": not unsupported,
+    }
+
+
+def pants_png_filtered_rows(source, spans, scanline_bytes, height):
+    """Yield exactly height scanlines; zlib output is capped to one scanline."""
+    expected = scanline_bytes * height
+    pants_png_require(expected <= 67112960 and scanline_bytes <= 16385,
+                      "expanded_budget")
+    stream = zlib.decompressobj()
+    row = bytearray()
+    produced = 0
+    yielded = 0
+    try:
+        for start, end in spans:
+            for offset in range(start, end, 65536):
+                pending = source[offset:min(offset + 65536, end)]
+                while True:
+                    if stream.eof:
+                        pants_png_require(len(pending) == 0, "compressed_trailing_data")
+                        break
+                    before = len(pending)
+                    limit = 1 if yielded >= height else scanline_bytes - len(row)
+                    block = stream.decompress(pending, limit)
+                    pending = stream.unconsumed_tail
+                    pants_png_require(not stream.unused_data, "compressed_trailing_data")
+                    produced += len(block)
+                    pants_png_require(produced <= expected, "expanded_size_exceeded")
+                    if block:
+                        row.extend(block)
+                        if len(row) == scanline_bytes:
+                            yielded += 1
+                            yield row
+                            row = bytearray()
+                    if not pending:
+                        if not block or stream.eof:
+                            break
+                        pending = b""
+                    elif not block:
+                        pants_png_require(len(pending) < before, "inflate_no_progress")
+    except zlib.error:
+        raise ValueError("pants_png_zlib_stream") from None
+    pants_png_require(stream.eof and not stream.unused_data and not stream.unconsumed_tail,
+                      "zlib_incomplete_or_trailing")
+    pants_png_require(produced == expected and yielded == height and not row,
+                      "scanline_count_or_size")
+
+
+def pants_png_wavefront8(source, spans, width, height, channels):
+    """One filtered buffer; every pixel depends only on prior row+column diagonals."""
+    stride = width * channels + 1
+    size = stride * height
+    pants_png_require(size <= 67112960 and channels in (1, 2, 3, 4),
+                      "wavefront_allocation_budget")
+    filtered = bytearray(size)
+    storage = memoryview(filtered)
+    copied = 0
+    for scanline in pants_png_filtered_rows(source, spans, stride, height):
+        storage[copied:copied + stride] = scanline
+        copied += stride
+    pants_png_require(copied == size, "filtered_copy_size")
+    # Explicit strides avoid a reshape that could silently allocate a full copy.
+    rows = np.ndarray((height, stride), dtype=np.uint8, buffer=filtered)
+    pixels = np.ndarray((height, width, channels), dtype=np.uint8, buffer=filtered,
+                        offset=1, strides=(stride, channels, 1))
+    pants_png_require(np.shares_memory(rows, pixels)
+                      and np.shares_memory(pixels, np.frombuffer(filtered, dtype=np.uint8)),
+                      "wavefront_view_ownership")
+    filters = rows[:, 0]
+    pants_png_require(bool((filters <= 4).all()), "filter_type")
+    filter_counts = [int(x) for x in np.bincount(filters, minlength=5)]
+    for diagonal in range(height + width - 1):
+        ys = np.arange(max(0, diagonal - width + 1),
+                       min(height - 1, diagonal) + 1, dtype=np.intp)
+        xs = diagonal - ys
+        # int16 covers raw+predictor, signed Paeth p, and every distance exactly.
+        raw = pixels[ys, xs, :].astype(np.int16)
+        left = np.zeros_like(raw)
+        up = np.zeros_like(raw)
+        upper_left = np.zeros_like(raw)
+        has_left, has_up = xs > 0, ys > 0
+        both = has_left & has_up
+        left[has_left] = pixels[ys[has_left], xs[has_left] - 1, :]
+        up[has_up] = pixels[ys[has_up] - 1, xs[has_up], :]
+        upper_left[both] = pixels[ys[both] - 1, xs[both] - 1, :]
+        p = left + up - upper_left
+        dl, du, dc = np.abs(p - left), np.abs(p - up), np.abs(p - upper_left)
+        paeth = np.where((dl <= du) & (dl <= dc), left,
+                         np.where(du <= dc, up, upper_left))
+        kind = filters[ys, None]
+        predictor = np.where(kind == 0, 0,
+                            np.where(kind == 1, left,
+                                     np.where(kind == 2, up,
+                                              np.where(kind == 3, (left + up) // 2, paeth))))
+        pixels[ys, xs, :] = ((raw + predictor) & 255).astype(np.uint8)
+    return filtered, pixels, filter_counts
+
+
+def pants_png_stream_witness(data, *, native_row_provider=None,
+                             comparison_mode="none", expected_size=(4096, 4096)):
+    """8-bit source only. Provider returns a C-contiguous F32 RGBA bottom-up row."""
+    pants_png_require(comparison_mode in ("none", "byte8_native_f32"), "comparison_mode")
+    source, spans, metadata = pants_png_metadata(data, expected_size)
+    report = {
+        "schema_version": 1, "kind": "PANTS_DECODED_SOURCE_WITNESS",
+        "decoder_policy": "bounded_inflate_inplace_pixel_diagonal_wavefront8_v1",
+        "metadata": metadata, "raw_decode_complete": False, "passed": False,
+        "native_comparison": {"requested": comparison_mode != "none", "mode": comparison_mode,
+                              "complete": False, "passed": False, "rows_compared": 0},
+        "incomplete_reasons": list(metadata["unsupported_reasons"]),
+        "scope": {"png_written": False, "rna_access_by_decoder": False,
+                  "colorspace_transform_applied": False, "native_material_equivalence": False,
+                  "filtered_uv_equivalence": False, "render_or_browser_approved": False},
+    }
+    if not metadata["format_supported"]:
+        return report
+    width, height = metadata["ihdr"]["width"], metadata["ihdr"]["height"]
+    depth, color = metadata["ihdr"]["bit_depth"], metadata["ihdr"]["color_type"]
+    channels = {0: 1, 2: 3, 4: 2, 6: 4}[color]
+    pants_png_require(depth == 8, "internal_8bit_policy")
+    maximum = 255
+    filtered, decoded, filter_counts = pants_png_wavefront8(source, spans, width, height, channels)
+    sums = np.zeros(4, dtype=np.uint64)
+    square_sums = np.zeros(4, dtype=np.uint64)
+    minima = np.full(4, maximum, dtype=np.uint64)
+    maxima = np.zeros(4, dtype=np.uint64)
+    zero_counts = np.zeros(4, dtype=np.uint64)
+    full_counts = np.zeros(4, dtype=np.uint64)
+    unequal = np.zeros(3, dtype=np.uint64)
+    largest_difference = np.zeros(3, dtype=np.int64)
+    rgba_digest = hashlib.sha256()
+    expected_digest, native_digest = hashlib.sha256(), hashlib.sha256()
+    compare = report["native_comparison"]
+    eligible = (comparison_mode == "byte8_native_f32" and callable(native_row_provider))
+    if not eligible:
+        reason = ("native_comparison_not_requested" if comparison_mode == "none" else
+                  "native_row_provider_unavailable")
+        report["incomplete_reasons"].append(reason)
+    mismatches = 0
+    maximum_error = 0.0
+    first_mismatch = None
+    for top_row in range(height):
+        codes = decoded[top_row]
+        rgba = np.empty((width, 4), dtype=np.uint8)
+        if color in (0, 4):
+            rgba[:, :3] = codes[:, 0:1]
+            rgba[:, 3] = codes[:, 1] if color == 4 else maximum
+        else:
+            rgba[:, :3] = codes[:, :3]
+            rgba[:, 3] = codes[:, 3] if color == 6 else maximum
+        rgba_digest.update(rgba.tobytes(order="C"))
+        sums += rgba.sum(axis=0, dtype=np.uint64)
+        wide = rgba.astype(np.uint64)
+        square_sums += np.multiply(wide, wide).sum(axis=0, dtype=np.uint64)
+        minima = np.minimum(minima, rgba.min(axis=0))
+        maxima = np.maximum(maxima, rgba.max(axis=0))
+        zero_counts += np.count_nonzero(rgba == 0, axis=0).astype(np.uint64)
+        full_counts += np.count_nonzero(rgba == maximum, axis=0).astype(np.uint64)
+        signed = rgba[:, :3].astype(np.int64)
+        for pair, (a, b) in enumerate(((0, 1), (0, 2), (1, 2))):
+            difference = np.abs(signed[:, a] - signed[:, b])
+            unequal[pair] += np.count_nonzero(difference)
+            largest_difference[pair] = max(largest_difference[pair], int(difference.max()))
+        if eligible:
+            try:
+                native_row = native_row_provider(height - 1 - top_row)
+                pants_png_require(isinstance(native_row, np.ndarray)
+                                  and native_row.dtype == np.dtype(np.float32)
+                                  and native_row.flags.c_contiguous
+                                  and native_row.size == width * 4
+                                  and native_row.shape in ((width * 4,), (width, 4)),
+                                  "native_row_layout")
+                native_row = native_row.reshape(width, 4)
+                pants_png_require(bool(np.isfinite(native_row).all()), "native_row_nonfinite")
+                # Mirror the audited byte Image.pixels getter, not division in double precision.
+                expected_row = rgba.astype(np.float32)
+                expected_row *= np.float32(1.0 / 255.0)
+                different = native_row.view(np.uint32) != expected_row.view(np.uint32)
+                count = int(np.count_nonzero(different))
+                if count and first_mismatch is None:
+                    index = int(np.flatnonzero(different.reshape(-1))[0])
+                    first_mismatch = {"png_top_down_row": top_row,
+                                      "pixel_in_row": index // 4, "channel": index % 4}
+                mismatches += count
+                error = np.abs(native_row.astype(np.float64) - expected_row.astype(np.float64))
+                maximum_error = max(maximum_error, float(error.max()))
+                expected_digest.update(expected_row.astype("<f4", copy=False).tobytes(order="C"))
+                native_digest.update(native_row.astype("<f4", copy=False).tobytes(order="C"))
+                compare["rows_compared"] += 1
+            except Exception as error:
+                eligible = False
+                compare.setdefault("inspection_error_type", type(error).__name__[:64])
+                code = error.args[0] if isinstance(error, ValueError) and error.args else None
+                if (isinstance(code, str) and code.startswith("pants_png_") and len(code) <= 160
+                        and all(c in "abcdefghijklmnopqrstuvwxyz0123456789_" for c in code)):
+                    compare.setdefault("inspection_error_code", code)
+                report["incomplete_reasons"].append("native_row_comparison_unavailable")
+    pixels = width * height
+    report["raw_decode_complete"] = True
+    report["statistics"] = {
+        "space": "expanded_RGBA_integer_source_samples_no_color_transform",
+        "sample_encoding": "u8",
+        "digest_order": "PNG_top_down_rows_RGBA",
+        "rgba_samples_sha256": rgba_digest.hexdigest(), "pixel_count": pixels,
+        "sample_code_maximum": maximum, "min": [int(x) for x in minima],
+        "max": [int(x) for x in maxima], "sum": [int(x) for x in sums],
+        "sum_of_squares": [int(x) for x in square_sums],
+        "zero_count": [int(x) for x in zero_counts], "full_count": [int(x) for x in full_counts],
+        "mean_code": [int(x) / pixels for x in sums],
+        "RGB_all_equal": not any(int(x) for x in unequal),
+        "RGB_pair_order": ["R_G", "R_B", "G_B"],
+        "RGB_pair_unequal_pixel_counts": [int(x) for x in unequal],
+        "RGB_pair_maximum_code_difference": [int(x) for x in largest_difference],
+        "alpha": {"source_has_alpha": color in (4, 6),
+                  "transparent_pixels": int(zero_counts[3]),
+                  "opaque_pixels": int(full_counts[3]),
+                  "partial_pixels": pixels - int(zero_counts[3]) - int(full_counts[3])},
+        "filter_row_counts": filter_counts,
+    }
+    compare.update({"complete": bool(eligible and compare["rows_compared"] == height),
+                    "mismatching_f32_components": mismatches,
+                    "maximum_absolute_error": maximum_error, "first_mismatch": first_mismatch,
+                    "digest_order": "PNG_top_down_rows_RGBA_F32_little_endian"})
+    if compare["complete"]:
+        compare["expected_f32_sha256"] = expected_digest.hexdigest()
+        compare["actual_native_f32_sha256"] = native_digest.hexdigest()
+        compare["passed"] = mismatches == 0
+    report["incomplete_reasons"] = sorted(set(report["incomplete_reasons"]))
+    report["passed"] = bool(report["raw_decode_complete"] and compare["complete"] and compare["passed"])
+    report["memory_contract"] = {
+        "compressed_feed_bytes": 65536, "maximum_filtered_scanline_bytes": 16385,
+        "filtered_buffer_bytes": len(filtered), "maximum_filtered_buffer_bytes": 67112960,
+        "raw_samples_reconstruct_in_place_in_filtered_buffer": True,
+        "second_full_decoded_sample_array_allocated": False,
+        "wavefront_count": height + width - 1,
+        "maximum_diagonal_pixel_count": min(width, height),
+        "maximum_diagonal_channel_count": channels,
+        "declared_decoder_scratch_budget_bytes": 16 * 1024 * 1024,
+        "native_provider_may_own_one_external_full_f32_copy": True,
+        "external_native_cache_and_provider_copy_budget_not_enforced_by_decoder": True,
+        "whole_job_timing_or_peak_RSS_measured": False,
+    }
+    pants_png_require(len(json.dumps(report, sort_keys=True, ensure_ascii=True,
+                                     allow_nan=False).encode("utf-8")) <= 128 * 1024,
+                      "report_budget")
+    return report
+
+
+def pants_png_decoder_selftest():
+    # Fixed independent scalar-spec vectors, not character images or asset evidence.
+    raw = np.array([[0,20,40,255,60,80,100,255,120,140,160,255],[255,0,128,255,10,240,1,255,77,31,201,255],[12,15,18,200,14,2,17,150,16,19,1,100],[200,1,50,0,45,78,99,0,51,68,90,255],[10,40,80,255,13,44,88,128,17,49,99,1]], dtype=np.uint8).reshape(5,3,4)
+    filtered = bytes([0,0,20,40,255,60,80,100,255,120,140,160,255,1,255,0,128,255,11,240,129,0,67,47,200,0,2,13,15,146,201,4,18,16,151,195,244,56,101,3,194,250,41,156,194,77,66,181,21,20,40,205,4,66,39,30,255,3,222,245,129,4,5,11,2])
+    def chunk(kind, payload):
+        return struct.pack(">I", len(payload))+kind+payload+struct.pack(">I", zlib.crc32(payload,zlib.crc32(kind))&0xffffffff)
+    def png(depth=8, trailing=b""):
+        return b"\x89PNG\r\n\x1a\n"+chunk(b"IHDR",struct.pack(">IIBBBBB",3,5,depth,6,0,0,0))+chunk(b"IDAT",zlib.compress(filtered)+trailing)+chunk(b"IEND",b"")
+    native = raw[::-1].astype(np.float32)
+    native *= np.float32(1.0/255.0)
+    good = png()
+    report = pants_png_stream_witness(good,native_row_provider=lambda bottom_y:native[bottom_y],
+        comparison_mode="byte8_native_f32",expected_size=(3,5))
+    require(report["passed"] is True and report["statistics"]["filter_row_counts"]==[1,1,1,1,1],
+        "pants_png_selftest_filters_or_native_orientation")
+    require(report["statistics"]["rgba_samples_sha256"]==hashlib.sha256(raw.tobytes()).hexdigest(),
+        "pants_png_selftest_raw_digest")
+    failures=[]
+    corrupt=bytearray(good);corrupt[-1]^=1
+    for data,code in ((bytes(corrupt),"pants_png_chunk_crc"),
+                      (png(trailing=b"x"),"pants_png_compressed_trailing_data")):
+        caught=None
+        try:
+            pants_png_stream_witness(data,expected_size=(3,5))
+        except ValueError as error:
+            caught=error.args[0]
+        require(caught==code,"pants_png_selftest_rejection")
+        failures.append(code)
+    unsupported=pants_png_stream_witness(png(depth=16),native_row_provider=lambda _:None,
+        comparison_mode="byte8_native_f32",expected_size=(3,5))
+    require(unsupported["metadata"]["all_chunk_crcs_verified"] is True
+        and unsupported["raw_decode_complete"] is False and unsupported["passed"] is False
+        and unsupported["native_comparison"]["rows_compared"]==0,
+        "pants_png_selftest_16bit_stop_before_decode")
+    return {"passed":True,"synthetic_only_not_asset_proof":True,"filters":[0,1,2,3,4],
+        "corrupt_or_extra_compressed_stream_rejected":failures,
+        "unsupported16_stopped_before_decode_or_native_compare":True}
+
+
+# NEW bounded pants decoded-source witnesses; no conversion or asset writes.
+PANTS_WITNESS_PINS = (
+    ("pants_diffuse.png", 22205417, "8503904e867bf5c6481b45dc6baa0177e1bbe54e68b06cbe88811db9c623209b", "sRGB"),
+    ("pants_normal.png", 24855323, "32a898effd3950a850496f82b707ae810b05cf8608b6c24e867ebfabe9e5d89e", "Non-Color"),
+    ("pants_roughness.png", 7087235, "2bbe19d63ec1b50508ffed0fe7147c80ba22b433dfcae40c058b329eeeed52ae", "sRGB"),
+)
+
+def pants_process_memory():
+    # Linux runner observation, no shell/process mutation and no environment values.
+    values = {}
+    text = Path("/proc/self/status").read_text()
+    require(len(text) <= 64*1024, "pants_process_status_budget")
+    for line in text.splitlines():
+        key, _, value = line.partition(":")
+        if key in ("VmRSS", "VmHWM"):
+            fields = value.split()
+            require(len(fields) == 2 and fields[1] == "kB", "pants_process_memory_units")
+            values[key+"_bytes"] = int(fields[0])*1024
+    require(set(values) == {"VmRSS_bytes", "VmHWM_bytes"}, "pants_process_memory_unavailable")
+    require(max(values.values()) <= 6*1024**3, "pants_whole_process_memory_budget")
+    return values
+
+def pants_color_backend_observations(bpy):
+    import os
+    record = {"engine": str(bpy.context.scene.render.engine),
+        "blender_version": list(bpy.app.version),
+        "build_hash": bpy.app.build_hash.decode("ascii", "strict"),
+        "ocio_environment_present": bool(os.environ.get("OCIO")),
+        "active_configuration_verified": False,
+        "cycles_rgb_to_y_verified": False,
+        "mathutils_basis_is_cycles_coefficients": False,
+        "embedded_or_addon_scripts_imported": False,
+        "config_file_read": False,
+        "configuration_limit": "Version/name/config-file presence does not identify the actual active processor or Cycles coefficient construction.",
+        "library_observations": {}}
+    for name in ("ocio", "oiio"):
+        info = getattr(bpy.app, name)
+        record["library_observations"][name] = {"supported": bool(info.supported),
+            "version": list(info.version), "version_string": str(info.version_string)}
+    cycles = getattr(bpy.context.scene, "cycles", None)
+    if cycles is None:
+        record["saved_cycles_backend"] = {"accessor_registered": False,
+            "backend_verified": False, "reason": "No registered Cycles property accessor; no registration/import fallback."}
+    else:
+        value = cycles.shading_system
+        require(isinstance(value, bool), "pants_cycles_backend_type")
+        record["saved_cycles_backend"] = {"accessor_registered": True,
+            "saved_shading_system": value,
+            "requested_backend": "OSL" if value else "SVM",
+            "actual_render_backend_executed": False,
+            "backend_verified": False}
+    require(len(encoded(record)) <= 8*1024, "pants_backend_observation_budget")
+    return record
+
+def pants_decoded_source_witness(bpy, expected, context):
+    import numpy as np
+    import struct
+    import time
+    started = time.monotonic()
+    witness = {"scope": "EXACT3 packed pants PNG decoded-source observations; no material conversion",
+        "complete": False, "source_decode_and_native_byte_comparison_passed": False,
+        "native_material_configuration_verified": False,
+        "arbitrary_uv_filtered_equivalence_approved": False,
+        "normal_tbn_export_equivalence_approved": False,
+        "textures_written": 0, "pixel_arrays_logged": False,
+        "backend": pants_color_backend_observations(bpy),
+        "budget": {"new_stage_working_set_bytes": 512*1024**2,
+            "whole_process_rss_and_hwm_bytes": 6*1024**3,
+            "compressed_png_bytes": 32*1024**2, "new_json_bytes": 128*1024,
+            "one_native_copy_only_for_byte_buffer": True,
+            "float_native_full_copy_forbidden": True,
+            "numpy_foreach_get_direct_buffer_required": True,
+            "streamed_independent_decoder": True},
+        "memory_before": pants_process_memory(), "images": [], "unsupported": []}
+    context["report"] = witness
+    source_expected = {row["name"]:row for row in expected["images"]}
+    for name, size, checksum, colorspace in PANTS_WITNESS_PINS:
+        context["image"] = name
+        context["stage"] = "source_identity"
+        image = bpy.data.images.get(name)
+        require(image is not None and image.source == "FILE" and image.type == "IMAGE"
+            and image.library is None and image.override_library is None,
+            "pants_image_identity")
+        require(image.colorspace_settings.name == colorspace and image.alpha_mode == "STRAIGHT"
+            and len(image.packed_files) == 1, "pants_image_policy")
+        entry = image.packed_files[0]
+        require(entry.view == 0 and entry.tile_number == 1001 and entry.packed_file is not None
+            and entry.packed_file.size == size and size <= 32*1024**2, "pants_packed_entry")
+        require(source_expected[name]["files"][0]["sha256"] == checksum, "pants_expected_pin")
+        data = entry.packed_file.data
+        require(isinstance(data, bytes) and len(data) == size
+            and hashlib.sha256(data).hexdigest() == checksum, "pants_png_source_hash")
+        preflight_meta = pants_png_metadata(data, (4096,4096))[2]
+        context["png_metadata"] = preflight_meta
+        require(data[:8] == b"\x89PNG\r\n\x1a\n", "pants_png_signature")
+        require(len(data) >= 33 and data[8:16] == b"\x00\x00\x00\x0dIHDR", "pants_png_first_header")
+        width, height, depth, ctype, compression, filtering, interlace = struct.unpack(">IIBBBBB", data[16:29])
+        require((width,height) == (4096,4096) and compression == 0 and filtering == 0,
+            "pants_png_dimensions_or_method")
+        size_before = list(image.size)
+        require(size_before == [4096,4096] and image.channels == 4, "pants_native_dimensions")
+        native_float = bool(image.is_float)
+        native = None
+        rows = None
+        copy_bytes = width*height*4*4
+        # <=64MiB native+256MiB NumPy+32MiB packed+64MiB filtered+16MiB scratch.
+        # A float native buffer plus full RNA copy is forbidden BEFORE allocation.
+        native_bytes = width*height*4*(4 if native_float else 1)
+        compare = not native_float and preflight_meta["format_supported"] is True
+        filtered_bytes = height*(width*4+1) if preflight_meta["format_supported"] else 0
+        planned = native_bytes + (copy_bytes if compare else 0) + size + filtered_bytes + 16*1024**2
+        require(planned <= 512*1024**2, "pants_new_stage_preflight")
+        memory_before = pants_process_memory()
+        if compare:
+            require(memory_before["VmRSS_bytes"] + copy_bytes + filtered_bytes + 16*1024**2 <= 6*1024**3,
+                "pants_process_preallocation_budget")
+            require(len(image.pixels) == width*height*4, "pants_native_pixel_count")
+            context["stage"] = "native_byte_copy"
+            native = np.empty(width*height*4, dtype=np.float32)
+            native.fill(np.nan)
+            view = memoryview(native)
+            require(view.format == "f" and view.itemsize == 4 and view.c_contiguous
+                and view.ndim == 1 and view.nbytes == copy_bytes, "pants_native_direct_buffer")
+            view.release()
+            image.pixels.foreach_get(native)
+            require(image.is_float is False, "pants_native_branch_changed")
+            rows = native.reshape((height,width*4))
+            require(np.shares_memory(native, rows), "pants_native_row_view_copy")
+        context["stage"] = "independent_png_decode"
+        try:
+            report = pants_png_stream_witness(data,
+                native_row_provider=(lambda bottom_y: rows[bottom_y]) if compare else None,
+                comparison_mode="byte8_native_f32" if compare else "none",
+                expected_size=(4096,4096))
+        finally:
+            rows = None
+            native = None
+        record = {"image": name, "source_bytes": size, "source_sha256": checksum,
+            "colorspace": colorspace, "alpha_mode": image.alpha_mode,
+            "native_is_float": native_float, "native_dimensions": size_before,
+            "planned_new_stage_bytes": planned, "native_full_copy_requested": compare,
+            "memory_before": memory_before, "memory_after": pants_process_memory(),
+            "png": report}
+        if not compare:
+            witness["unsupported"].append({"image":name,
+                "reason":"No full native copy/comparison for float,16bit,interlace or unsupportedPNG source branch."})
+        require(bool(image.is_float) == native_float and list(image.size) == size_before,
+            "pants_native_buffer_metadata_changed")
+        del data
+        again = entry.packed_file.data
+        require(len(again) == size and hashlib.sha256(again).hexdigest() == checksum,
+            "pants_packed_bytes_changed_after_witness")
+        del again
+        record["packed_bytes_after_same_sha256"] = True
+        witness["images"].append(record)
+        require(len(encoded(witness)) <= 128*1024, "pants_witness_json_budget")
+    witness["memory_after"] = pants_process_memory()
+    witness["elapsed_seconds"] = time.monotonic()-started
+    witness["source_decode_and_native_byte_comparison_passed"] = bool(
+        len(witness["images"]) == 3 and not witness["unsupported"]
+        and all(row["png"].get("passed") is True for row in witness["images"]))
+    witness["incomplete_reasons"] = ["current_native_color_configuration_and_cycles_coefficients_unverified"]
+    witness["complete"] = bool(witness["source_decode_and_native_byte_comparison_passed"]
+        and witness["native_material_configuration_verified"] is True)
+    require(len(encoded(witness)) <= 128*1024, "pants_witness_final_budget")
+    return witness
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-root", required=True)
@@ -1617,7 +2249,9 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     audit_path = out/"packed-actor-closure-audit.json"
     require(not audit_path.exists(), "audit_already_exists")
-    audit = {"purpose": "Read-only exact17 Snow SOURCE-CAGE material/UV/modifier planning with locked actor resource prerequisites",
+    audit = {"purpose": "Read-only EXACT3 pants PNG decoded-source witnesses with inherited17-source/native/resource prerequisites",
+             "pants_decoded_source_witness_complete": False,
+             "pants_source_decode_and_native_byte_comparison_passed": False,
              "source_surface_report_passed": False,
              "used_actor_external_closure_passed": False, "saved_packed_native_readback_passed": False,
              "full_scene_portable": False, "art_approved": False, "glb_pbr_approved": False,
@@ -1633,6 +2267,9 @@ def main():
     surface_report = None
     surface_failure = None
     surface_context = {}
+    pants_witness = None
+    pants_failure = None
+    pants_context = {}
     try:
         before = verify_inputs(root)
         checkpoint = root/"checkpoint"
@@ -1645,6 +2282,8 @@ def main():
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(checkpoint/name, destination)
         shutil.copyfile(root/"restore-manifest.json", out/"metadata/restore-manifest.json")
+        stage = "pants_png_decoder_selftest"
+        audit["pants_png_decoder_selftest"] = pants_png_decoder_selftest()
         stage = "pinned_modules"
         wrapper = load_module("bpy-pack-snow-used-textures.py", WRAPPER_BLOB, "closure_packed_wrapper")
         worker = load_module("bpy-verify-snow-packed-textures.py", WORKER_BLOB, "closure_packed_worker")
@@ -1724,6 +2363,18 @@ def main():
                 surface_failure = failure_record(error, stage)
                 audit["source_surface_failure"] = surface_failure
                 audit["source_surface_failure_context"] = dict(surface_context)
+        if resources["passed"] and surface_report is not None and surface_failure is None:
+            try:
+                stage = "pants_decoded_source_witness"
+                pants_witness = pants_decoded_source_witness(bpy, expected, pants_context)
+                audit["pants_decoded_source_witness"] = pants_witness
+            except Exception as error:
+                pants_failure = failure_record(error, stage)
+                audit["pants_decoded_source_failure"] = pants_failure
+                pants_witness = pants_context.pop("report", None)
+                if pants_witness is not None:
+                    audit["pants_decoded_source_witness"] = pants_witness
+                audit["pants_decoded_source_failure_context"] = dict(pants_context)
         stage = "native_after"
         final = wrapper.capture_state(bpy, modules, rig, expected["action_names"])
         require(final == first and wrapper.digest(final) == SNAPSHOT_SHA, "native_snapshot_after")
@@ -1734,6 +2385,16 @@ def main():
         require(wrapper.binding_state(bpy, rig) == expected["reference_binding"]
                 and not bpy.context.preferences.filepaths.use_scripts_auto_execute, "native_policy_after")
         audit["native_after"] = {"snapshot_sha256": wrapper.digest(final), "driver_status": final["driver_status"]}
+        stage = "packed_bytes_after_pants"
+        packed_after = wrapper.packed_state(bpy, images, expected["images"], Path(expected["missing_root"]), decode=False)
+        require(packed_after["all_passed"] is True and packed_after["records"] == packed["records"],
+                "packed_bytes_after_pants_changed")
+        audit["packed_after_pants_witness"] = packed_after
+        if pants_witness is not None:
+            stage = "pants_backend_metadata_after"
+            backend_after = pants_color_backend_observations(bpy)
+            require(backend_after == pants_witness["backend"], "pants_backend_metadata_changed")
+            audit["pants_backend_metadata_unchanged"] = True
         stage = "resource_metadata_after"
         resource_metadata_after = resource_metadata_state(bpy, ids, labels, resource_dependencies)
         audit["resource_metadata_after"] = {"sha256": hashlib.sha256(encoded(resource_metadata_after)).hexdigest(),
@@ -1778,12 +2439,28 @@ def main():
             and surface_report is not None and surface_failure is None
             and surface_report.get("source_exposed_parameter_capture_complete") is True
             and audit.get("source_surface_metadata_unchanged") is True)
+        audit["pants_source_decode_and_native_byte_comparison_passed"] = bool(
+            audit["source_surface_report_passed"] and pants_failure is None and pants_witness is not None
+            and pants_witness.get("source_decode_and_native_byte_comparison_passed") is True
+            and audit.get("pants_backend_metadata_unchanged") is True)
+        audit["pants_decoded_source_witness_complete"] = bool(
+            audit["pants_source_decode_and_native_byte_comparison_passed"]
+            and pants_witness.get("complete") is True)
         write_json(audit_path, audit)
-        summary = {key: audit.get(key) for key in ("purpose", "source_surface_report_passed", "source_surface_failure", "used_actor_external_closure_passed",
+        summary = {key: audit.get(key) for key in ("purpose", "pants_decoded_source_witness_complete", "pants_source_decode_and_native_byte_comparison_passed", "pants_decoded_source_failure", "source_surface_report_passed", "source_surface_failure", "used_actor_external_closure_passed",
             "saved_packed_native_readback_passed", "failure", "hash_recheck_failure",
             "all_eight_inputs_and_manifest_unchanged", "reviewed_code_and_runtime_unchanged",
             "full_scene_portable", "art_approved", "glb_pbr_approved", "browser_animation_approved",
             "models_saved", "original_assets_restored", "model_payload_reuploaded")}
+        if pants_witness is not None:
+            summary["pants_source_data"] = {"complete":pants_witness["complete"],
+                "decoded_and_native_byte_compared":pants_witness["source_decode_and_native_byte_comparison_passed"],
+                "native_configuration_verified":pants_witness["native_material_configuration_verified"],
+                "unsupported":pants_witness["unsupported"],
+                "elapsed_seconds":pants_witness.get("elapsed_seconds"),
+                "images":[{"image":row["image"],"native_is_float":row["native_is_float"],
+                    "ihdr":row["png"]["metadata"]["ihdr"],"passed":row["png"]["passed"],
+                    "incomplete":row["png"]["incomplete_reasons"]} for row in pants_witness["images"]]}
         if resources is not None:
             summary["resource_closure"] = {key: resources[key] for key in
                 ("passed", "unsupported_count", "unsupported_details_omitted", "issue_counts_by_code",
@@ -1796,7 +2473,7 @@ def main():
                  "final_evaluated_material_assignments_complete","pbr_semantic_mapping_approved")}
         require(len(encoded(summary)) <= 24*1024, "stdout_budget")
         print("SNOW_PACKED_ACTOR_CLOSURE "+encoded(summary).decode("utf-8").strip(), flush=True)
-    return 0 if audit["source_surface_report_passed"] else 1
+    return 0 if audit["pants_decoded_source_witness_complete"] else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())
