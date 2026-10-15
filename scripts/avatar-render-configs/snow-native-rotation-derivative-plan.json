@@ -1,0 +1,6017 @@
+{
+  "schema_version": 1,
+  "contract": "snow_native_rotation_derivative_eps1024_split_v1",
+  "source_fps": 24,
+  "source_native_blend_sha256": "b22306981a809bdb2e537c52087efe8d503bc30a0efe73573a51bb6200aeffa3",
+  "source_glb_sha256": "7308349db07a0542b54b3ec29949f2610562a2b3501ceaa51633ad0930571c06",
+  "source_epsilon_frames": 0.0009765625,
+  "seconds_per_difference": 0.000040690104166666664,
+  "derivative_formula": "normalized_F64_native_qfield incoming=(qkey-qminus)/h,outgoing=(qplus-qkey)/h; no_projection; align_to_stored_key_hemisphere",
+  "unused_endpoint_tangents_zero": true,
+  "auxiliary_identity_tangents_zero": true,
+  "sentinel": {
+    "clip": "wave",
+    "frame": 12.5,
+    "maximum_joint_matrix_abs_error": 0.000001,
+    "maximum_position_world_error_m": 0.000001,
+    "adds_unique_pose": false
+  },
+  "proof_counts": {
+    "inherited_geometry": 315,
+    "fresh_geometry": 24,
+    "complete_geometry": 339,
+    "epsilon_joint_only": 576,
+    "epsilon_geometry_count": 0,
+    "sentinel_unique": 0
+  },
+  "packets": [
+    {
+      "id": 0,
+      "epsilon_id_inclusive": [
+        0,
+        287
+      ],
+      "fresh_geometry_count": 24,
+      "unique_new_pose_count": 312,
+      "requested_pose_samples_including_sentinel": 313
+    },
+    {
+      "id": 1,
+      "epsilon_id_inclusive": [
+        288,
+        575
+      ],
+      "fresh_geometry_count": 0,
+      "unique_new_pose_count": 288,
+      "requested_pose_samples_including_sentinel": 289
+    }
+  ],
+  "epsilon_joint_only_samples": [
+    {
+      "id": 0,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 0,
+      "authored_row": 0,
+      "key_frame": 0,
+      "side": "outgoing",
+      "sample_frame": 0.0009765625
+    },
+    {
+      "id": 1,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 1,
+      "authored_row": 1,
+      "key_frame": 0.5,
+      "side": "incoming",
+      "sample_frame": 0.4990234375
+    },
+    {
+      "id": 2,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 1,
+      "authored_row": 1,
+      "key_frame": 0.5,
+      "side": "outgoing",
+      "sample_frame": 0.5009765625
+    },
+    {
+      "id": 3,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 2,
+      "authored_row": 2,
+      "key_frame": 1,
+      "side": "incoming",
+      "sample_frame": 0.9990234375
+    },
+    {
+      "id": 4,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 2,
+      "authored_row": 2,
+      "key_frame": 1,
+      "side": "outgoing",
+      "sample_frame": 1.0009765625
+    },
+    {
+      "id": 5,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 3,
+      "authored_row": 3,
+      "key_frame": 1.5,
+      "side": "incoming",
+      "sample_frame": 1.4990234375
+    },
+    {
+      "id": 6,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 3,
+      "authored_row": 3,
+      "key_frame": 1.5,
+      "side": "outgoing",
+      "sample_frame": 1.5009765625
+    },
+    {
+      "id": 7,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 4,
+      "authored_row": 4,
+      "key_frame": 2,
+      "side": "incoming",
+      "sample_frame": 1.9990234375
+    },
+    {
+      "id": 8,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 4,
+      "authored_row": 4,
+      "key_frame": 2,
+      "side": "outgoing",
+      "sample_frame": 2.0009765625
+    },
+    {
+      "id": 9,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 5,
+      "authored_row": 5,
+      "key_frame": 2.5,
+      "side": "incoming",
+      "sample_frame": 2.4990234375
+    },
+    {
+      "id": 10,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 5,
+      "authored_row": 5,
+      "key_frame": 2.5,
+      "side": "outgoing",
+      "sample_frame": 2.5009765625
+    },
+    {
+      "id": 11,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 6,
+      "authored_row": 6,
+      "key_frame": 3,
+      "side": "incoming",
+      "sample_frame": 2.9990234375
+    },
+    {
+      "id": 12,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 6,
+      "authored_row": 6,
+      "key_frame": 3,
+      "side": "outgoing",
+      "sample_frame": 3.0009765625
+    },
+    {
+      "id": 13,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 7,
+      "authored_row": 7,
+      "key_frame": 3.5,
+      "side": "incoming",
+      "sample_frame": 3.4990234375
+    },
+    {
+      "id": 14,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 7,
+      "authored_row": 7,
+      "key_frame": 3.5,
+      "side": "outgoing",
+      "sample_frame": 3.5009765625
+    },
+    {
+      "id": 15,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 8,
+      "authored_row": 8,
+      "key_frame": 4,
+      "side": "incoming",
+      "sample_frame": 3.9990234375
+    },
+    {
+      "id": 16,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 8,
+      "authored_row": 8,
+      "key_frame": 4,
+      "side": "outgoing",
+      "sample_frame": 4.0009765625
+    },
+    {
+      "id": 17,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 9,
+      "authored_row": 9,
+      "key_frame": 4.5,
+      "side": "incoming",
+      "sample_frame": 4.4990234375
+    },
+    {
+      "id": 18,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 9,
+      "authored_row": 9,
+      "key_frame": 4.5,
+      "side": "outgoing",
+      "sample_frame": 4.5009765625
+    },
+    {
+      "id": 19,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 10,
+      "authored_row": 10,
+      "key_frame": 5,
+      "side": "incoming",
+      "sample_frame": 4.9990234375
+    },
+    {
+      "id": 20,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 10,
+      "authored_row": 10,
+      "key_frame": 5,
+      "side": "outgoing",
+      "sample_frame": 5.0009765625
+    },
+    {
+      "id": 21,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 11,
+      "authored_row": 11,
+      "key_frame": 5.5,
+      "side": "incoming",
+      "sample_frame": 5.4990234375
+    },
+    {
+      "id": 22,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 11,
+      "authored_row": 11,
+      "key_frame": 5.5,
+      "side": "outgoing",
+      "sample_frame": 5.5009765625
+    },
+    {
+      "id": 23,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 12,
+      "authored_row": 12,
+      "key_frame": 6,
+      "side": "incoming",
+      "sample_frame": 5.9990234375
+    },
+    {
+      "id": 24,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 12,
+      "authored_row": 12,
+      "key_frame": 6,
+      "side": "outgoing",
+      "sample_frame": 6.0009765625
+    },
+    {
+      "id": 25,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 13,
+      "authored_row": 13,
+      "key_frame": 6.5,
+      "side": "incoming",
+      "sample_frame": 6.4990234375
+    },
+    {
+      "id": 26,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 13,
+      "authored_row": 13,
+      "key_frame": 6.5,
+      "side": "outgoing",
+      "sample_frame": 6.5009765625
+    },
+    {
+      "id": 27,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 14,
+      "authored_row": 14,
+      "key_frame": 7,
+      "side": "incoming",
+      "sample_frame": 6.9990234375
+    },
+    {
+      "id": 28,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 14,
+      "authored_row": 14,
+      "key_frame": 7,
+      "side": "outgoing",
+      "sample_frame": 7.0009765625
+    },
+    {
+      "id": 29,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 15,
+      "authored_row": 15,
+      "key_frame": 7.5,
+      "side": "incoming",
+      "sample_frame": 7.4990234375
+    },
+    {
+      "id": 30,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 15,
+      "authored_row": 15,
+      "key_frame": 7.5,
+      "side": "outgoing",
+      "sample_frame": 7.5009765625
+    },
+    {
+      "id": 31,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 16,
+      "authored_row": 16,
+      "key_frame": 8,
+      "side": "incoming",
+      "sample_frame": 7.9990234375
+    },
+    {
+      "id": 32,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 16,
+      "authored_row": 16,
+      "key_frame": 8,
+      "side": "outgoing",
+      "sample_frame": 8.0009765625
+    },
+    {
+      "id": 33,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 17,
+      "authored_row": 17,
+      "key_frame": 8.5,
+      "side": "incoming",
+      "sample_frame": 8.4990234375
+    },
+    {
+      "id": 34,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 17,
+      "authored_row": 17,
+      "key_frame": 8.5,
+      "side": "outgoing",
+      "sample_frame": 8.5009765625
+    },
+    {
+      "id": 35,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 18,
+      "authored_row": 18,
+      "key_frame": 9,
+      "side": "incoming",
+      "sample_frame": 8.9990234375
+    },
+    {
+      "id": 36,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 18,
+      "authored_row": 18,
+      "key_frame": 9,
+      "side": "outgoing",
+      "sample_frame": 9.0009765625
+    },
+    {
+      "id": 37,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 19,
+      "authored_row": 19,
+      "key_frame": 9.5,
+      "side": "incoming",
+      "sample_frame": 9.4990234375
+    },
+    {
+      "id": 38,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 19,
+      "authored_row": 19,
+      "key_frame": 9.5,
+      "side": "outgoing",
+      "sample_frame": 9.5009765625
+    },
+    {
+      "id": 39,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 20,
+      "authored_row": 20,
+      "key_frame": 10,
+      "side": "incoming",
+      "sample_frame": 9.9990234375
+    },
+    {
+      "id": 40,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 20,
+      "authored_row": 20,
+      "key_frame": 10,
+      "side": "outgoing",
+      "sample_frame": 10.0009765625
+    },
+    {
+      "id": 41,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 21,
+      "authored_row": 21,
+      "key_frame": 10.5,
+      "side": "incoming",
+      "sample_frame": 10.4990234375
+    },
+    {
+      "id": 42,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 21,
+      "authored_row": 21,
+      "key_frame": 10.5,
+      "side": "outgoing",
+      "sample_frame": 10.5009765625
+    },
+    {
+      "id": 43,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 22,
+      "authored_row": 22,
+      "key_frame": 11,
+      "side": "incoming",
+      "sample_frame": 10.9990234375
+    },
+    {
+      "id": 44,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 22,
+      "authored_row": 22,
+      "key_frame": 11,
+      "side": "outgoing",
+      "sample_frame": 11.0009765625
+    },
+    {
+      "id": 45,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 23,
+      "authored_row": 23,
+      "key_frame": 11.5,
+      "side": "incoming",
+      "sample_frame": 11.4990234375
+    },
+    {
+      "id": 46,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 23,
+      "authored_row": 23,
+      "key_frame": 11.5,
+      "side": "outgoing",
+      "sample_frame": 11.5009765625
+    },
+    {
+      "id": 47,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 24,
+      "authored_row": 24,
+      "key_frame": 12,
+      "side": "incoming",
+      "sample_frame": 11.9990234375
+    },
+    {
+      "id": 48,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 24,
+      "authored_row": 24,
+      "key_frame": 12,
+      "side": "outgoing",
+      "sample_frame": 12.0009765625
+    },
+    {
+      "id": 49,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 25,
+      "authored_row": 25,
+      "key_frame": 12.5,
+      "side": "incoming",
+      "sample_frame": 12.4990234375
+    },
+    {
+      "id": 50,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 25,
+      "authored_row": 25,
+      "key_frame": 12.5,
+      "side": "outgoing",
+      "sample_frame": 12.5009765625
+    },
+    {
+      "id": 51,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 26,
+      "authored_row": 26,
+      "key_frame": 13,
+      "side": "incoming",
+      "sample_frame": 12.9990234375
+    },
+    {
+      "id": 52,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 26,
+      "authored_row": 26,
+      "key_frame": 13,
+      "side": "outgoing",
+      "sample_frame": 13.0009765625
+    },
+    {
+      "id": 53,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 27,
+      "authored_row": 27,
+      "key_frame": 13.5,
+      "side": "incoming",
+      "sample_frame": 13.4990234375
+    },
+    {
+      "id": 54,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 27,
+      "authored_row": 27,
+      "key_frame": 13.5,
+      "side": "outgoing",
+      "sample_frame": 13.5009765625
+    },
+    {
+      "id": 55,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 28,
+      "authored_row": 28,
+      "key_frame": 14,
+      "side": "incoming",
+      "sample_frame": 13.9990234375
+    },
+    {
+      "id": 56,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 28,
+      "authored_row": 28,
+      "key_frame": 14,
+      "side": "outgoing",
+      "sample_frame": 14.0009765625
+    },
+    {
+      "id": 57,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 29,
+      "authored_row": 29,
+      "key_frame": 14.5,
+      "side": "incoming",
+      "sample_frame": 14.4990234375
+    },
+    {
+      "id": 58,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 29,
+      "authored_row": 29,
+      "key_frame": 14.5,
+      "side": "outgoing",
+      "sample_frame": 14.5009765625
+    },
+    {
+      "id": 59,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 30,
+      "authored_row": 30,
+      "key_frame": 15,
+      "side": "incoming",
+      "sample_frame": 14.9990234375
+    },
+    {
+      "id": 60,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 30,
+      "authored_row": 30,
+      "key_frame": 15,
+      "side": "outgoing",
+      "sample_frame": 15.0009765625
+    },
+    {
+      "id": 61,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 31,
+      "authored_row": 31,
+      "key_frame": 15.5,
+      "side": "incoming",
+      "sample_frame": 15.4990234375
+    },
+    {
+      "id": 62,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 31,
+      "authored_row": 31,
+      "key_frame": 15.5,
+      "side": "outgoing",
+      "sample_frame": 15.5009765625
+    },
+    {
+      "id": 63,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 32,
+      "authored_row": 32,
+      "key_frame": 16,
+      "side": "incoming",
+      "sample_frame": 15.9990234375
+    },
+    {
+      "id": 64,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 32,
+      "authored_row": 32,
+      "key_frame": 16,
+      "side": "outgoing",
+      "sample_frame": 16.0009765625
+    },
+    {
+      "id": 65,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 33,
+      "authored_row": 33,
+      "key_frame": 16.5,
+      "side": "incoming",
+      "sample_frame": 16.4990234375
+    },
+    {
+      "id": 66,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 33,
+      "authored_row": 33,
+      "key_frame": 16.5,
+      "side": "outgoing",
+      "sample_frame": 16.5009765625
+    },
+    {
+      "id": 67,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 34,
+      "authored_row": 34,
+      "key_frame": 17,
+      "side": "incoming",
+      "sample_frame": 16.9990234375
+    },
+    {
+      "id": 68,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 34,
+      "authored_row": 34,
+      "key_frame": 17,
+      "side": "outgoing",
+      "sample_frame": 17.0009765625
+    },
+    {
+      "id": 69,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 35,
+      "authored_row": 35,
+      "key_frame": 17.5,
+      "side": "incoming",
+      "sample_frame": 17.4990234375
+    },
+    {
+      "id": 70,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 35,
+      "authored_row": 35,
+      "key_frame": 17.5,
+      "side": "outgoing",
+      "sample_frame": 17.5009765625
+    },
+    {
+      "id": 71,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 36,
+      "authored_row": 36,
+      "key_frame": 18,
+      "side": "incoming",
+      "sample_frame": 17.9990234375
+    },
+    {
+      "id": 72,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 36,
+      "authored_row": 36,
+      "key_frame": 18,
+      "side": "outgoing",
+      "sample_frame": 18.0009765625
+    },
+    {
+      "id": 73,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 37,
+      "authored_row": 37,
+      "key_frame": 18.5,
+      "side": "incoming",
+      "sample_frame": 18.4990234375
+    },
+    {
+      "id": 74,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 37,
+      "authored_row": 37,
+      "key_frame": 18.5,
+      "side": "outgoing",
+      "sample_frame": 18.5009765625
+    },
+    {
+      "id": 75,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 38,
+      "authored_row": 38,
+      "key_frame": 19,
+      "side": "incoming",
+      "sample_frame": 18.9990234375
+    },
+    {
+      "id": 76,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 38,
+      "authored_row": 38,
+      "key_frame": 19,
+      "side": "outgoing",
+      "sample_frame": 19.0009765625
+    },
+    {
+      "id": 77,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 39,
+      "authored_row": 39,
+      "key_frame": 19.5,
+      "side": "incoming",
+      "sample_frame": 19.4990234375
+    },
+    {
+      "id": 78,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 39,
+      "authored_row": 39,
+      "key_frame": 19.5,
+      "side": "outgoing",
+      "sample_frame": 19.5009765625
+    },
+    {
+      "id": 79,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 40,
+      "authored_row": 40,
+      "key_frame": 20,
+      "side": "incoming",
+      "sample_frame": 19.9990234375
+    },
+    {
+      "id": 80,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 40,
+      "authored_row": 40,
+      "key_frame": 20,
+      "side": "outgoing",
+      "sample_frame": 20.0009765625
+    },
+    {
+      "id": 81,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 41,
+      "authored_row": 41,
+      "key_frame": 20.5,
+      "side": "incoming",
+      "sample_frame": 20.4990234375
+    },
+    {
+      "id": 82,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 41,
+      "authored_row": 41,
+      "key_frame": 20.5,
+      "side": "outgoing",
+      "sample_frame": 20.5009765625
+    },
+    {
+      "id": 83,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 42,
+      "authored_row": 42,
+      "key_frame": 21,
+      "side": "incoming",
+      "sample_frame": 20.9990234375
+    },
+    {
+      "id": 84,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 42,
+      "authored_row": 42,
+      "key_frame": 21,
+      "side": "outgoing",
+      "sample_frame": 21.0009765625
+    },
+    {
+      "id": 85,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 43,
+      "authored_row": 43,
+      "key_frame": 21.5,
+      "side": "incoming",
+      "sample_frame": 21.4990234375
+    },
+    {
+      "id": 86,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 43,
+      "authored_row": 43,
+      "key_frame": 21.5,
+      "side": "outgoing",
+      "sample_frame": 21.5009765625
+    },
+    {
+      "id": 87,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 44,
+      "authored_row": 44,
+      "key_frame": 22,
+      "side": "incoming",
+      "sample_frame": 21.9990234375
+    },
+    {
+      "id": 88,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 44,
+      "authored_row": 44,
+      "key_frame": 22,
+      "side": "outgoing",
+      "sample_frame": 22.0009765625
+    },
+    {
+      "id": 89,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 45,
+      "authored_row": 45,
+      "key_frame": 22.5,
+      "side": "incoming",
+      "sample_frame": 22.4990234375
+    },
+    {
+      "id": 90,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 45,
+      "authored_row": 45,
+      "key_frame": 22.5,
+      "side": "outgoing",
+      "sample_frame": 22.5009765625
+    },
+    {
+      "id": 91,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 46,
+      "authored_row": 46,
+      "key_frame": 23,
+      "side": "incoming",
+      "sample_frame": 22.9990234375
+    },
+    {
+      "id": 92,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 46,
+      "authored_row": 46,
+      "key_frame": 23,
+      "side": "outgoing",
+      "sample_frame": 23.0009765625
+    },
+    {
+      "id": 93,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 47,
+      "authored_row": 47,
+      "key_frame": 23.5,
+      "side": "incoming",
+      "sample_frame": 23.4990234375
+    },
+    {
+      "id": 94,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 47,
+      "authored_row": 47,
+      "key_frame": 23.5,
+      "side": "outgoing",
+      "sample_frame": 23.5009765625
+    },
+    {
+      "id": 95,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 48,
+      "authored_row": 48,
+      "key_frame": 24,
+      "side": "incoming",
+      "sample_frame": 23.9990234375
+    },
+    {
+      "id": 96,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 48,
+      "authored_row": 48,
+      "key_frame": 24,
+      "side": "outgoing",
+      "sample_frame": 24.0009765625
+    },
+    {
+      "id": 97,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 49,
+      "authored_row": 49,
+      "key_frame": 24.5,
+      "side": "incoming",
+      "sample_frame": 24.4990234375
+    },
+    {
+      "id": 98,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 49,
+      "authored_row": 49,
+      "key_frame": 24.5,
+      "side": "outgoing",
+      "sample_frame": 24.5009765625
+    },
+    {
+      "id": 99,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 50,
+      "authored_row": 50,
+      "key_frame": 25,
+      "side": "incoming",
+      "sample_frame": 24.9990234375
+    },
+    {
+      "id": 100,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 50,
+      "authored_row": 50,
+      "key_frame": 25,
+      "side": "outgoing",
+      "sample_frame": 25.0009765625
+    },
+    {
+      "id": 101,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 51,
+      "authored_row": 51,
+      "key_frame": 25.5,
+      "side": "incoming",
+      "sample_frame": 25.4990234375
+    },
+    {
+      "id": 102,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 51,
+      "authored_row": 51,
+      "key_frame": 25.5,
+      "side": "outgoing",
+      "sample_frame": 25.5009765625
+    },
+    {
+      "id": 103,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 52,
+      "authored_row": 52,
+      "key_frame": 26,
+      "side": "incoming",
+      "sample_frame": 25.9990234375
+    },
+    {
+      "id": 104,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 52,
+      "authored_row": 52,
+      "key_frame": 26,
+      "side": "outgoing",
+      "sample_frame": 26.0009765625
+    },
+    {
+      "id": 105,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 53,
+      "authored_row": 53,
+      "key_frame": 26.5,
+      "side": "incoming",
+      "sample_frame": 26.4990234375
+    },
+    {
+      "id": 106,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 53,
+      "authored_row": 53,
+      "key_frame": 26.5,
+      "side": "outgoing",
+      "sample_frame": 26.5009765625
+    },
+    {
+      "id": 107,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 54,
+      "authored_row": 54,
+      "key_frame": 27,
+      "side": "incoming",
+      "sample_frame": 26.9990234375
+    },
+    {
+      "id": 108,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 54,
+      "authored_row": 54,
+      "key_frame": 27,
+      "side": "outgoing",
+      "sample_frame": 27.0009765625
+    },
+    {
+      "id": 109,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 55,
+      "authored_row": 55,
+      "key_frame": 27.5,
+      "side": "incoming",
+      "sample_frame": 27.4990234375
+    },
+    {
+      "id": 110,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 55,
+      "authored_row": 55,
+      "key_frame": 27.5,
+      "side": "outgoing",
+      "sample_frame": 27.5009765625
+    },
+    {
+      "id": 111,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 56,
+      "authored_row": 56,
+      "key_frame": 28,
+      "side": "incoming",
+      "sample_frame": 27.9990234375
+    },
+    {
+      "id": 112,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 56,
+      "authored_row": 56,
+      "key_frame": 28,
+      "side": "outgoing",
+      "sample_frame": 28.0009765625
+    },
+    {
+      "id": 113,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 57,
+      "authored_row": 57,
+      "key_frame": 28.5,
+      "side": "incoming",
+      "sample_frame": 28.4990234375
+    },
+    {
+      "id": 114,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 57,
+      "authored_row": 57,
+      "key_frame": 28.5,
+      "side": "outgoing",
+      "sample_frame": 28.5009765625
+    },
+    {
+      "id": 115,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 58,
+      "authored_row": 58,
+      "key_frame": 29,
+      "side": "incoming",
+      "sample_frame": 28.9990234375
+    },
+    {
+      "id": 116,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 58,
+      "authored_row": 58,
+      "key_frame": 29,
+      "side": "outgoing",
+      "sample_frame": 29.0009765625
+    },
+    {
+      "id": 117,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 59,
+      "authored_row": 59,
+      "key_frame": 29.5,
+      "side": "incoming",
+      "sample_frame": 29.4990234375
+    },
+    {
+      "id": 118,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 59,
+      "authored_row": 59,
+      "key_frame": 29.5,
+      "side": "outgoing",
+      "sample_frame": 29.5009765625
+    },
+    {
+      "id": 119,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 60,
+      "authored_row": 60,
+      "key_frame": 30,
+      "side": "incoming",
+      "sample_frame": 29.9990234375
+    },
+    {
+      "id": 120,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 60,
+      "authored_row": 60,
+      "key_frame": 30,
+      "side": "outgoing",
+      "sample_frame": 30.0009765625
+    },
+    {
+      "id": 121,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 61,
+      "authored_row": 61,
+      "key_frame": 30.5,
+      "side": "incoming",
+      "sample_frame": 30.4990234375
+    },
+    {
+      "id": 122,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 61,
+      "authored_row": 61,
+      "key_frame": 30.5,
+      "side": "outgoing",
+      "sample_frame": 30.5009765625
+    },
+    {
+      "id": 123,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 62,
+      "authored_row": 62,
+      "key_frame": 31,
+      "side": "incoming",
+      "sample_frame": 30.9990234375
+    },
+    {
+      "id": 124,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 62,
+      "authored_row": 62,
+      "key_frame": 31,
+      "side": "outgoing",
+      "sample_frame": 31.0009765625
+    },
+    {
+      "id": 125,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 63,
+      "authored_row": 63,
+      "key_frame": 31.5,
+      "side": "incoming",
+      "sample_frame": 31.4990234375
+    },
+    {
+      "id": 126,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 63,
+      "authored_row": 63,
+      "key_frame": 31.5,
+      "side": "outgoing",
+      "sample_frame": 31.5009765625
+    },
+    {
+      "id": 127,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 64,
+      "authored_row": 64,
+      "key_frame": 32,
+      "side": "incoming",
+      "sample_frame": 31.9990234375
+    },
+    {
+      "id": 128,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 64,
+      "authored_row": 64,
+      "key_frame": 32,
+      "side": "outgoing",
+      "sample_frame": 32.0009765625
+    },
+    {
+      "id": 129,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 65,
+      "authored_row": 65,
+      "key_frame": 32.5,
+      "side": "incoming",
+      "sample_frame": 32.4990234375
+    },
+    {
+      "id": 130,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 65,
+      "authored_row": 65,
+      "key_frame": 32.5,
+      "side": "outgoing",
+      "sample_frame": 32.5009765625
+    },
+    {
+      "id": 131,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 66,
+      "authored_row": 66,
+      "key_frame": 33,
+      "side": "incoming",
+      "sample_frame": 32.9990234375
+    },
+    {
+      "id": 132,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 66,
+      "authored_row": 66,
+      "key_frame": 33,
+      "side": "outgoing",
+      "sample_frame": 33.0009765625
+    },
+    {
+      "id": 133,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 67,
+      "authored_row": 67,
+      "key_frame": 33.5,
+      "side": "incoming",
+      "sample_frame": 33.4990234375
+    },
+    {
+      "id": 134,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 67,
+      "authored_row": 67,
+      "key_frame": 33.5,
+      "side": "outgoing",
+      "sample_frame": 33.5009765625
+    },
+    {
+      "id": 135,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 68,
+      "authored_row": 68,
+      "key_frame": 34,
+      "side": "incoming",
+      "sample_frame": 33.9990234375
+    },
+    {
+      "id": 136,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 68,
+      "authored_row": 68,
+      "key_frame": 34,
+      "side": "outgoing",
+      "sample_frame": 34.0009765625
+    },
+    {
+      "id": 137,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 69,
+      "authored_row": 69,
+      "key_frame": 34.5,
+      "side": "incoming",
+      "sample_frame": 34.4990234375
+    },
+    {
+      "id": 138,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 69,
+      "authored_row": 69,
+      "key_frame": 34.5,
+      "side": "outgoing",
+      "sample_frame": 34.5009765625
+    },
+    {
+      "id": 139,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 70,
+      "authored_row": 70,
+      "key_frame": 35,
+      "side": "incoming",
+      "sample_frame": 34.9990234375
+    },
+    {
+      "id": 140,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 70,
+      "authored_row": 70,
+      "key_frame": 35,
+      "side": "outgoing",
+      "sample_frame": 35.0009765625
+    },
+    {
+      "id": 141,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 71,
+      "authored_row": 71,
+      "key_frame": 35.5,
+      "side": "incoming",
+      "sample_frame": 35.4990234375
+    },
+    {
+      "id": 142,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 71,
+      "authored_row": 71,
+      "key_frame": 35.5,
+      "side": "outgoing",
+      "sample_frame": 35.5009765625
+    },
+    {
+      "id": 143,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 72,
+      "authored_row": 72,
+      "key_frame": 36,
+      "side": "incoming",
+      "sample_frame": 35.9990234375
+    },
+    {
+      "id": 144,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 72,
+      "authored_row": 72,
+      "key_frame": 36,
+      "side": "outgoing",
+      "sample_frame": 36.0009765625
+    },
+    {
+      "id": 145,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 73,
+      "authored_row": 73,
+      "key_frame": 36.5,
+      "side": "incoming",
+      "sample_frame": 36.4990234375
+    },
+    {
+      "id": 146,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 73,
+      "authored_row": 73,
+      "key_frame": 36.5,
+      "side": "outgoing",
+      "sample_frame": 36.5009765625
+    },
+    {
+      "id": 147,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 74,
+      "authored_row": 74,
+      "key_frame": 37,
+      "side": "incoming",
+      "sample_frame": 36.9990234375
+    },
+    {
+      "id": 148,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 74,
+      "authored_row": 74,
+      "key_frame": 37,
+      "side": "outgoing",
+      "sample_frame": 37.0009765625
+    },
+    {
+      "id": 149,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 75,
+      "authored_row": 75,
+      "key_frame": 37.5,
+      "side": "incoming",
+      "sample_frame": 37.4990234375
+    },
+    {
+      "id": 150,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 75,
+      "authored_row": 75,
+      "key_frame": 37.5,
+      "side": "outgoing",
+      "sample_frame": 37.5009765625
+    },
+    {
+      "id": 151,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 76,
+      "authored_row": 76,
+      "key_frame": 38,
+      "side": "incoming",
+      "sample_frame": 37.9990234375
+    },
+    {
+      "id": 152,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 76,
+      "authored_row": 76,
+      "key_frame": 38,
+      "side": "outgoing",
+      "sample_frame": 38.0009765625
+    },
+    {
+      "id": 153,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 77,
+      "authored_row": 77,
+      "key_frame": 38.5,
+      "side": "incoming",
+      "sample_frame": 38.4990234375
+    },
+    {
+      "id": 154,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 77,
+      "authored_row": 77,
+      "key_frame": 38.5,
+      "side": "outgoing",
+      "sample_frame": 38.5009765625
+    },
+    {
+      "id": 155,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 78,
+      "authored_row": 78,
+      "key_frame": 39,
+      "side": "incoming",
+      "sample_frame": 38.9990234375
+    },
+    {
+      "id": 156,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 78,
+      "authored_row": 78,
+      "key_frame": 39,
+      "side": "outgoing",
+      "sample_frame": 39.0009765625
+    },
+    {
+      "id": 157,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 79,
+      "authored_row": 79,
+      "key_frame": 39.5,
+      "side": "incoming",
+      "sample_frame": 39.4990234375
+    },
+    {
+      "id": 158,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 79,
+      "authored_row": 79,
+      "key_frame": 39.5,
+      "side": "outgoing",
+      "sample_frame": 39.5009765625
+    },
+    {
+      "id": 159,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 80,
+      "authored_row": 80,
+      "key_frame": 40,
+      "side": "incoming",
+      "sample_frame": 39.9990234375
+    },
+    {
+      "id": 160,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 80,
+      "authored_row": 80,
+      "key_frame": 40,
+      "side": "outgoing",
+      "sample_frame": 40.0009765625
+    },
+    {
+      "id": 161,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 81,
+      "authored_row": 81,
+      "key_frame": 40.5,
+      "side": "incoming",
+      "sample_frame": 40.4990234375
+    },
+    {
+      "id": 162,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 81,
+      "authored_row": 81,
+      "key_frame": 40.5,
+      "side": "outgoing",
+      "sample_frame": 40.5009765625
+    },
+    {
+      "id": 163,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 82,
+      "authored_row": 82,
+      "key_frame": 41,
+      "side": "incoming",
+      "sample_frame": 40.9990234375
+    },
+    {
+      "id": 164,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 82,
+      "authored_row": 82,
+      "key_frame": 41,
+      "side": "outgoing",
+      "sample_frame": 41.0009765625
+    },
+    {
+      "id": 165,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 83,
+      "authored_row": 83,
+      "key_frame": 41.5,
+      "side": "incoming",
+      "sample_frame": 41.4990234375
+    },
+    {
+      "id": 166,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 83,
+      "authored_row": 83,
+      "key_frame": 41.5,
+      "side": "outgoing",
+      "sample_frame": 41.5009765625
+    },
+    {
+      "id": 167,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 84,
+      "authored_row": 84,
+      "key_frame": 42,
+      "side": "incoming",
+      "sample_frame": 41.9990234375
+    },
+    {
+      "id": 168,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 84,
+      "authored_row": 84,
+      "key_frame": 42,
+      "side": "outgoing",
+      "sample_frame": 42.0009765625
+    },
+    {
+      "id": 169,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 85,
+      "authored_row": 85,
+      "key_frame": 42.5,
+      "side": "incoming",
+      "sample_frame": 42.4990234375
+    },
+    {
+      "id": 170,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 85,
+      "authored_row": 85,
+      "key_frame": 42.5,
+      "side": "outgoing",
+      "sample_frame": 42.5009765625
+    },
+    {
+      "id": 171,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 86,
+      "authored_row": 86,
+      "key_frame": 43,
+      "side": "incoming",
+      "sample_frame": 42.9990234375
+    },
+    {
+      "id": 172,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 86,
+      "authored_row": 86,
+      "key_frame": 43,
+      "side": "outgoing",
+      "sample_frame": 43.0009765625
+    },
+    {
+      "id": 173,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 87,
+      "authored_row": 87,
+      "key_frame": 43.5,
+      "side": "incoming",
+      "sample_frame": 43.4990234375
+    },
+    {
+      "id": 174,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 87,
+      "authored_row": 87,
+      "key_frame": 43.5,
+      "side": "outgoing",
+      "sample_frame": 43.5009765625
+    },
+    {
+      "id": 175,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 88,
+      "authored_row": 88,
+      "key_frame": 44,
+      "side": "incoming",
+      "sample_frame": 43.9990234375
+    },
+    {
+      "id": 176,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 88,
+      "authored_row": 88,
+      "key_frame": 44,
+      "side": "outgoing",
+      "sample_frame": 44.0009765625
+    },
+    {
+      "id": 177,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 89,
+      "authored_row": 89,
+      "key_frame": 44.5,
+      "side": "incoming",
+      "sample_frame": 44.4990234375
+    },
+    {
+      "id": 178,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 89,
+      "authored_row": 89,
+      "key_frame": 44.5,
+      "side": "outgoing",
+      "sample_frame": 44.5009765625
+    },
+    {
+      "id": 179,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 90,
+      "authored_row": 90,
+      "key_frame": 45,
+      "side": "incoming",
+      "sample_frame": 44.9990234375
+    },
+    {
+      "id": 180,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 90,
+      "authored_row": 90,
+      "key_frame": 45,
+      "side": "outgoing",
+      "sample_frame": 45.0009765625
+    },
+    {
+      "id": 181,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 91,
+      "authored_row": 91,
+      "key_frame": 45.5,
+      "side": "incoming",
+      "sample_frame": 45.4990234375
+    },
+    {
+      "id": 182,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 91,
+      "authored_row": 91,
+      "key_frame": 45.5,
+      "side": "outgoing",
+      "sample_frame": 45.5009765625
+    },
+    {
+      "id": 183,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 92,
+      "authored_row": 92,
+      "key_frame": 46,
+      "side": "incoming",
+      "sample_frame": 45.9990234375
+    },
+    {
+      "id": 184,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 92,
+      "authored_row": 92,
+      "key_frame": 46,
+      "side": "outgoing",
+      "sample_frame": 46.0009765625
+    },
+    {
+      "id": 185,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 93,
+      "authored_row": 93,
+      "key_frame": 46.5,
+      "side": "incoming",
+      "sample_frame": 46.4990234375
+    },
+    {
+      "id": 186,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 93,
+      "authored_row": 93,
+      "key_frame": 46.5,
+      "side": "outgoing",
+      "sample_frame": 46.5009765625
+    },
+    {
+      "id": 187,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 94,
+      "authored_row": 94,
+      "key_frame": 47,
+      "side": "incoming",
+      "sample_frame": 46.9990234375
+    },
+    {
+      "id": 188,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 94,
+      "authored_row": 94,
+      "key_frame": 47,
+      "side": "outgoing",
+      "sample_frame": 47.0009765625
+    },
+    {
+      "id": 189,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 95,
+      "authored_row": 95,
+      "key_frame": 47.5,
+      "side": "incoming",
+      "sample_frame": 47.4990234375
+    },
+    {
+      "id": 190,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 95,
+      "authored_row": 95,
+      "key_frame": 47.5,
+      "side": "outgoing",
+      "sample_frame": 47.5009765625
+    },
+    {
+      "id": 191,
+      "packet": 0,
+      "clip": "idle",
+      "key_index": 96,
+      "authored_row": 96,
+      "key_frame": 48,
+      "side": "incoming",
+      "sample_frame": 47.9990234375
+    },
+    {
+      "id": 192,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 0,
+      "authored_row": 97,
+      "key_frame": 0,
+      "side": "outgoing",
+      "sample_frame": 0.0009765625
+    },
+    {
+      "id": 193,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 1,
+      "authored_row": 98,
+      "key_frame": 0.5,
+      "side": "incoming",
+      "sample_frame": 0.4990234375
+    },
+    {
+      "id": 194,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 1,
+      "authored_row": 98,
+      "key_frame": 0.5,
+      "side": "outgoing",
+      "sample_frame": 0.5009765625
+    },
+    {
+      "id": 195,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 2,
+      "authored_row": 99,
+      "key_frame": 1,
+      "side": "incoming",
+      "sample_frame": 0.9990234375
+    },
+    {
+      "id": 196,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 2,
+      "authored_row": 99,
+      "key_frame": 1,
+      "side": "outgoing",
+      "sample_frame": 1.0009765625
+    },
+    {
+      "id": 197,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 3,
+      "authored_row": 100,
+      "key_frame": 1.5,
+      "side": "incoming",
+      "sample_frame": 1.4990234375
+    },
+    {
+      "id": 198,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 3,
+      "authored_row": 100,
+      "key_frame": 1.5,
+      "side": "outgoing",
+      "sample_frame": 1.5009765625
+    },
+    {
+      "id": 199,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 4,
+      "authored_row": 101,
+      "key_frame": 2,
+      "side": "incoming",
+      "sample_frame": 1.9990234375
+    },
+    {
+      "id": 200,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 4,
+      "authored_row": 101,
+      "key_frame": 2,
+      "side": "outgoing",
+      "sample_frame": 2.0009765625
+    },
+    {
+      "id": 201,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 5,
+      "authored_row": 102,
+      "key_frame": 2.5,
+      "side": "incoming",
+      "sample_frame": 2.4990234375
+    },
+    {
+      "id": 202,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 5,
+      "authored_row": 102,
+      "key_frame": 2.5,
+      "side": "outgoing",
+      "sample_frame": 2.5009765625
+    },
+    {
+      "id": 203,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 6,
+      "authored_row": 103,
+      "key_frame": 3,
+      "side": "incoming",
+      "sample_frame": 2.9990234375
+    },
+    {
+      "id": 204,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 6,
+      "authored_row": 103,
+      "key_frame": 3,
+      "side": "outgoing",
+      "sample_frame": 3.0009765625
+    },
+    {
+      "id": 205,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 7,
+      "authored_row": 104,
+      "key_frame": 3.5,
+      "side": "incoming",
+      "sample_frame": 3.4990234375
+    },
+    {
+      "id": 206,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 7,
+      "authored_row": 104,
+      "key_frame": 3.5,
+      "side": "outgoing",
+      "sample_frame": 3.5009765625
+    },
+    {
+      "id": 207,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 8,
+      "authored_row": 105,
+      "key_frame": 4,
+      "side": "incoming",
+      "sample_frame": 3.9990234375
+    },
+    {
+      "id": 208,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 8,
+      "authored_row": 105,
+      "key_frame": 4,
+      "side": "outgoing",
+      "sample_frame": 4.0009765625
+    },
+    {
+      "id": 209,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 9,
+      "authored_row": 106,
+      "key_frame": 4.5,
+      "side": "incoming",
+      "sample_frame": 4.4990234375
+    },
+    {
+      "id": 210,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 9,
+      "authored_row": 106,
+      "key_frame": 4.5,
+      "side": "outgoing",
+      "sample_frame": 4.5009765625
+    },
+    {
+      "id": 211,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 10,
+      "authored_row": 107,
+      "key_frame": 5,
+      "side": "incoming",
+      "sample_frame": 4.9990234375
+    },
+    {
+      "id": 212,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 10,
+      "authored_row": 107,
+      "key_frame": 5,
+      "side": "outgoing",
+      "sample_frame": 5.0009765625
+    },
+    {
+      "id": 213,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 11,
+      "authored_row": 108,
+      "key_frame": 5.5,
+      "side": "incoming",
+      "sample_frame": 5.4990234375
+    },
+    {
+      "id": 214,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 11,
+      "authored_row": 108,
+      "key_frame": 5.5,
+      "side": "outgoing",
+      "sample_frame": 5.5009765625
+    },
+    {
+      "id": 215,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 12,
+      "authored_row": 109,
+      "key_frame": 6,
+      "side": "incoming",
+      "sample_frame": 5.9990234375
+    },
+    {
+      "id": 216,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 12,
+      "authored_row": 109,
+      "key_frame": 6,
+      "side": "outgoing",
+      "sample_frame": 6.0009765625
+    },
+    {
+      "id": 217,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 13,
+      "authored_row": 110,
+      "key_frame": 6.5,
+      "side": "incoming",
+      "sample_frame": 6.4990234375
+    },
+    {
+      "id": 218,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 13,
+      "authored_row": 110,
+      "key_frame": 6.5,
+      "side": "outgoing",
+      "sample_frame": 6.5009765625
+    },
+    {
+      "id": 219,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 14,
+      "authored_row": 111,
+      "key_frame": 7,
+      "side": "incoming",
+      "sample_frame": 6.9990234375
+    },
+    {
+      "id": 220,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 14,
+      "authored_row": 111,
+      "key_frame": 7,
+      "side": "outgoing",
+      "sample_frame": 7.0009765625
+    },
+    {
+      "id": 221,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 15,
+      "authored_row": 112,
+      "key_frame": 7.5,
+      "side": "incoming",
+      "sample_frame": 7.4990234375
+    },
+    {
+      "id": 222,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 15,
+      "authored_row": 112,
+      "key_frame": 7.5,
+      "side": "outgoing",
+      "sample_frame": 7.5009765625
+    },
+    {
+      "id": 223,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 16,
+      "authored_row": 113,
+      "key_frame": 8,
+      "side": "incoming",
+      "sample_frame": 7.9990234375
+    },
+    {
+      "id": 224,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 16,
+      "authored_row": 113,
+      "key_frame": 8,
+      "side": "outgoing",
+      "sample_frame": 8.0009765625
+    },
+    {
+      "id": 225,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 17,
+      "authored_row": 114,
+      "key_frame": 8.5,
+      "side": "incoming",
+      "sample_frame": 8.4990234375
+    },
+    {
+      "id": 226,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 17,
+      "authored_row": 114,
+      "key_frame": 8.5,
+      "side": "outgoing",
+      "sample_frame": 8.5009765625
+    },
+    {
+      "id": 227,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 18,
+      "authored_row": 115,
+      "key_frame": 9,
+      "side": "incoming",
+      "sample_frame": 8.9990234375
+    },
+    {
+      "id": 228,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 18,
+      "authored_row": 115,
+      "key_frame": 9,
+      "side": "outgoing",
+      "sample_frame": 9.0009765625
+    },
+    {
+      "id": 229,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 19,
+      "authored_row": 116,
+      "key_frame": 9.5,
+      "side": "incoming",
+      "sample_frame": 9.4990234375
+    },
+    {
+      "id": 230,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 19,
+      "authored_row": 116,
+      "key_frame": 9.5,
+      "side": "outgoing",
+      "sample_frame": 9.5009765625
+    },
+    {
+      "id": 231,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 20,
+      "authored_row": 117,
+      "key_frame": 10,
+      "side": "incoming",
+      "sample_frame": 9.9990234375
+    },
+    {
+      "id": 232,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 20,
+      "authored_row": 117,
+      "key_frame": 10,
+      "side": "outgoing",
+      "sample_frame": 10.0009765625
+    },
+    {
+      "id": 233,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 21,
+      "authored_row": 118,
+      "key_frame": 10.5,
+      "side": "incoming",
+      "sample_frame": 10.4990234375
+    },
+    {
+      "id": 234,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 21,
+      "authored_row": 118,
+      "key_frame": 10.5,
+      "side": "outgoing",
+      "sample_frame": 10.5009765625
+    },
+    {
+      "id": 235,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 22,
+      "authored_row": 119,
+      "key_frame": 11,
+      "side": "incoming",
+      "sample_frame": 10.9990234375
+    },
+    {
+      "id": 236,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 22,
+      "authored_row": 119,
+      "key_frame": 11,
+      "side": "outgoing",
+      "sample_frame": 11.0009765625
+    },
+    {
+      "id": 237,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 23,
+      "authored_row": 120,
+      "key_frame": 11.5,
+      "side": "incoming",
+      "sample_frame": 11.4990234375
+    },
+    {
+      "id": 238,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 23,
+      "authored_row": 120,
+      "key_frame": 11.5,
+      "side": "outgoing",
+      "sample_frame": 11.5009765625
+    },
+    {
+      "id": 239,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 24,
+      "authored_row": 121,
+      "key_frame": 12,
+      "side": "incoming",
+      "sample_frame": 11.9990234375
+    },
+    {
+      "id": 240,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 24,
+      "authored_row": 121,
+      "key_frame": 12,
+      "side": "outgoing",
+      "sample_frame": 12.0009765625
+    },
+    {
+      "id": 241,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 25,
+      "authored_row": 122,
+      "key_frame": 12.5,
+      "side": "incoming",
+      "sample_frame": 12.4990234375
+    },
+    {
+      "id": 242,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 25,
+      "authored_row": 122,
+      "key_frame": 12.5,
+      "side": "outgoing",
+      "sample_frame": 12.5009765625
+    },
+    {
+      "id": 243,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 26,
+      "authored_row": 123,
+      "key_frame": 13,
+      "side": "incoming",
+      "sample_frame": 12.9990234375
+    },
+    {
+      "id": 244,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 26,
+      "authored_row": 123,
+      "key_frame": 13,
+      "side": "outgoing",
+      "sample_frame": 13.0009765625
+    },
+    {
+      "id": 245,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 27,
+      "authored_row": 124,
+      "key_frame": 13.5,
+      "side": "incoming",
+      "sample_frame": 13.4990234375
+    },
+    {
+      "id": 246,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 27,
+      "authored_row": 124,
+      "key_frame": 13.5,
+      "side": "outgoing",
+      "sample_frame": 13.5009765625
+    },
+    {
+      "id": 247,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 28,
+      "authored_row": 125,
+      "key_frame": 14,
+      "side": "incoming",
+      "sample_frame": 13.9990234375
+    },
+    {
+      "id": 248,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 28,
+      "authored_row": 125,
+      "key_frame": 14,
+      "side": "outgoing",
+      "sample_frame": 14.0009765625
+    },
+    {
+      "id": 249,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 29,
+      "authored_row": 126,
+      "key_frame": 14.5,
+      "side": "incoming",
+      "sample_frame": 14.4990234375
+    },
+    {
+      "id": 250,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 29,
+      "authored_row": 126,
+      "key_frame": 14.5,
+      "side": "outgoing",
+      "sample_frame": 14.5009765625
+    },
+    {
+      "id": 251,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 30,
+      "authored_row": 127,
+      "key_frame": 15,
+      "side": "incoming",
+      "sample_frame": 14.9990234375
+    },
+    {
+      "id": 252,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 30,
+      "authored_row": 127,
+      "key_frame": 15,
+      "side": "outgoing",
+      "sample_frame": 15.0009765625
+    },
+    {
+      "id": 253,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 31,
+      "authored_row": 128,
+      "key_frame": 15.5,
+      "side": "incoming",
+      "sample_frame": 15.4990234375
+    },
+    {
+      "id": 254,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 31,
+      "authored_row": 128,
+      "key_frame": 15.5,
+      "side": "outgoing",
+      "sample_frame": 15.5009765625
+    },
+    {
+      "id": 255,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 32,
+      "authored_row": 129,
+      "key_frame": 16,
+      "side": "incoming",
+      "sample_frame": 15.9990234375
+    },
+    {
+      "id": 256,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 32,
+      "authored_row": 129,
+      "key_frame": 16,
+      "side": "outgoing",
+      "sample_frame": 16.0009765625
+    },
+    {
+      "id": 257,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 33,
+      "authored_row": 130,
+      "key_frame": 16.5,
+      "side": "incoming",
+      "sample_frame": 16.4990234375
+    },
+    {
+      "id": 258,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 33,
+      "authored_row": 130,
+      "key_frame": 16.5,
+      "side": "outgoing",
+      "sample_frame": 16.5009765625
+    },
+    {
+      "id": 259,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 34,
+      "authored_row": 131,
+      "key_frame": 17,
+      "side": "incoming",
+      "sample_frame": 16.9990234375
+    },
+    {
+      "id": 260,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 34,
+      "authored_row": 131,
+      "key_frame": 17,
+      "side": "outgoing",
+      "sample_frame": 17.0009765625
+    },
+    {
+      "id": 261,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 35,
+      "authored_row": 132,
+      "key_frame": 17.5,
+      "side": "incoming",
+      "sample_frame": 17.4990234375
+    },
+    {
+      "id": 262,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 35,
+      "authored_row": 132,
+      "key_frame": 17.5,
+      "side": "outgoing",
+      "sample_frame": 17.5009765625
+    },
+    {
+      "id": 263,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 36,
+      "authored_row": 133,
+      "key_frame": 18,
+      "side": "incoming",
+      "sample_frame": 17.9990234375
+    },
+    {
+      "id": 264,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 36,
+      "authored_row": 133,
+      "key_frame": 18,
+      "side": "outgoing",
+      "sample_frame": 18.0009765625
+    },
+    {
+      "id": 265,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 37,
+      "authored_row": 134,
+      "key_frame": 18.5,
+      "side": "incoming",
+      "sample_frame": 18.4990234375
+    },
+    {
+      "id": 266,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 37,
+      "authored_row": 134,
+      "key_frame": 18.5,
+      "side": "outgoing",
+      "sample_frame": 18.5009765625
+    },
+    {
+      "id": 267,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 38,
+      "authored_row": 135,
+      "key_frame": 19,
+      "side": "incoming",
+      "sample_frame": 18.9990234375
+    },
+    {
+      "id": 268,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 38,
+      "authored_row": 135,
+      "key_frame": 19,
+      "side": "outgoing",
+      "sample_frame": 19.0009765625
+    },
+    {
+      "id": 269,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 39,
+      "authored_row": 136,
+      "key_frame": 19.5,
+      "side": "incoming",
+      "sample_frame": 19.4990234375
+    },
+    {
+      "id": 270,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 39,
+      "authored_row": 136,
+      "key_frame": 19.5,
+      "side": "outgoing",
+      "sample_frame": 19.5009765625
+    },
+    {
+      "id": 271,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 40,
+      "authored_row": 137,
+      "key_frame": 20,
+      "side": "incoming",
+      "sample_frame": 19.9990234375
+    },
+    {
+      "id": 272,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 40,
+      "authored_row": 137,
+      "key_frame": 20,
+      "side": "outgoing",
+      "sample_frame": 20.0009765625
+    },
+    {
+      "id": 273,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 41,
+      "authored_row": 138,
+      "key_frame": 20.5,
+      "side": "incoming",
+      "sample_frame": 20.4990234375
+    },
+    {
+      "id": 274,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 41,
+      "authored_row": 138,
+      "key_frame": 20.5,
+      "side": "outgoing",
+      "sample_frame": 20.5009765625
+    },
+    {
+      "id": 275,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 42,
+      "authored_row": 139,
+      "key_frame": 21,
+      "side": "incoming",
+      "sample_frame": 20.9990234375
+    },
+    {
+      "id": 276,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 42,
+      "authored_row": 139,
+      "key_frame": 21,
+      "side": "outgoing",
+      "sample_frame": 21.0009765625
+    },
+    {
+      "id": 277,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 43,
+      "authored_row": 140,
+      "key_frame": 21.5,
+      "side": "incoming",
+      "sample_frame": 21.4990234375
+    },
+    {
+      "id": 278,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 43,
+      "authored_row": 140,
+      "key_frame": 21.5,
+      "side": "outgoing",
+      "sample_frame": 21.5009765625
+    },
+    {
+      "id": 279,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 44,
+      "authored_row": 141,
+      "key_frame": 22,
+      "side": "incoming",
+      "sample_frame": 21.9990234375
+    },
+    {
+      "id": 280,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 44,
+      "authored_row": 141,
+      "key_frame": 22,
+      "side": "outgoing",
+      "sample_frame": 22.0009765625
+    },
+    {
+      "id": 281,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 45,
+      "authored_row": 142,
+      "key_frame": 22.5,
+      "side": "incoming",
+      "sample_frame": 22.4990234375
+    },
+    {
+      "id": 282,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 45,
+      "authored_row": 142,
+      "key_frame": 22.5,
+      "side": "outgoing",
+      "sample_frame": 22.5009765625
+    },
+    {
+      "id": 283,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 46,
+      "authored_row": 143,
+      "key_frame": 23,
+      "side": "incoming",
+      "sample_frame": 22.9990234375
+    },
+    {
+      "id": 284,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 46,
+      "authored_row": 143,
+      "key_frame": 23,
+      "side": "outgoing",
+      "sample_frame": 23.0009765625
+    },
+    {
+      "id": 285,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 47,
+      "authored_row": 144,
+      "key_frame": 23.5,
+      "side": "incoming",
+      "sample_frame": 23.4990234375
+    },
+    {
+      "id": 286,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 47,
+      "authored_row": 144,
+      "key_frame": 23.5,
+      "side": "outgoing",
+      "sample_frame": 23.5009765625
+    },
+    {
+      "id": 287,
+      "packet": 0,
+      "clip": "wave",
+      "key_index": 48,
+      "authored_row": 145,
+      "key_frame": 24,
+      "side": "incoming",
+      "sample_frame": 23.9990234375
+    },
+    {
+      "id": 288,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 48,
+      "authored_row": 145,
+      "key_frame": 24,
+      "side": "outgoing",
+      "sample_frame": 24.0009765625
+    },
+    {
+      "id": 289,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 49,
+      "authored_row": 146,
+      "key_frame": 24.5,
+      "side": "incoming",
+      "sample_frame": 24.4990234375
+    },
+    {
+      "id": 290,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 49,
+      "authored_row": 146,
+      "key_frame": 24.5,
+      "side": "outgoing",
+      "sample_frame": 24.5009765625
+    },
+    {
+      "id": 291,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 50,
+      "authored_row": 147,
+      "key_frame": 25,
+      "side": "incoming",
+      "sample_frame": 24.9990234375
+    },
+    {
+      "id": 292,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 50,
+      "authored_row": 147,
+      "key_frame": 25,
+      "side": "outgoing",
+      "sample_frame": 25.0009765625
+    },
+    {
+      "id": 293,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 51,
+      "authored_row": 148,
+      "key_frame": 25.5,
+      "side": "incoming",
+      "sample_frame": 25.4990234375
+    },
+    {
+      "id": 294,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 51,
+      "authored_row": 148,
+      "key_frame": 25.5,
+      "side": "outgoing",
+      "sample_frame": 25.5009765625
+    },
+    {
+      "id": 295,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 52,
+      "authored_row": 149,
+      "key_frame": 26,
+      "side": "incoming",
+      "sample_frame": 25.9990234375
+    },
+    {
+      "id": 296,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 52,
+      "authored_row": 149,
+      "key_frame": 26,
+      "side": "outgoing",
+      "sample_frame": 26.0009765625
+    },
+    {
+      "id": 297,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 53,
+      "authored_row": 150,
+      "key_frame": 26.5,
+      "side": "incoming",
+      "sample_frame": 26.4990234375
+    },
+    {
+      "id": 298,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 53,
+      "authored_row": 150,
+      "key_frame": 26.5,
+      "side": "outgoing",
+      "sample_frame": 26.5009765625
+    },
+    {
+      "id": 299,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 54,
+      "authored_row": 151,
+      "key_frame": 27,
+      "side": "incoming",
+      "sample_frame": 26.9990234375
+    },
+    {
+      "id": 300,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 54,
+      "authored_row": 151,
+      "key_frame": 27,
+      "side": "outgoing",
+      "sample_frame": 27.0009765625
+    },
+    {
+      "id": 301,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 55,
+      "authored_row": 152,
+      "key_frame": 27.5,
+      "side": "incoming",
+      "sample_frame": 27.4990234375
+    },
+    {
+      "id": 302,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 55,
+      "authored_row": 152,
+      "key_frame": 27.5,
+      "side": "outgoing",
+      "sample_frame": 27.5009765625
+    },
+    {
+      "id": 303,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 56,
+      "authored_row": 153,
+      "key_frame": 28,
+      "side": "incoming",
+      "sample_frame": 27.9990234375
+    },
+    {
+      "id": 304,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 56,
+      "authored_row": 153,
+      "key_frame": 28,
+      "side": "outgoing",
+      "sample_frame": 28.0009765625
+    },
+    {
+      "id": 305,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 57,
+      "authored_row": 154,
+      "key_frame": 28.5,
+      "side": "incoming",
+      "sample_frame": 28.4990234375
+    },
+    {
+      "id": 306,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 57,
+      "authored_row": 154,
+      "key_frame": 28.5,
+      "side": "outgoing",
+      "sample_frame": 28.5009765625
+    },
+    {
+      "id": 307,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 58,
+      "authored_row": 155,
+      "key_frame": 29,
+      "side": "incoming",
+      "sample_frame": 28.9990234375
+    },
+    {
+      "id": 308,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 58,
+      "authored_row": 155,
+      "key_frame": 29,
+      "side": "outgoing",
+      "sample_frame": 29.0009765625
+    },
+    {
+      "id": 309,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 59,
+      "authored_row": 156,
+      "key_frame": 29.5,
+      "side": "incoming",
+      "sample_frame": 29.4990234375
+    },
+    {
+      "id": 310,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 59,
+      "authored_row": 156,
+      "key_frame": 29.5,
+      "side": "outgoing",
+      "sample_frame": 29.5009765625
+    },
+    {
+      "id": 311,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 60,
+      "authored_row": 157,
+      "key_frame": 30,
+      "side": "incoming",
+      "sample_frame": 29.9990234375
+    },
+    {
+      "id": 312,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 60,
+      "authored_row": 157,
+      "key_frame": 30,
+      "side": "outgoing",
+      "sample_frame": 30.0009765625
+    },
+    {
+      "id": 313,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 61,
+      "authored_row": 158,
+      "key_frame": 30.5,
+      "side": "incoming",
+      "sample_frame": 30.4990234375
+    },
+    {
+      "id": 314,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 61,
+      "authored_row": 158,
+      "key_frame": 30.5,
+      "side": "outgoing",
+      "sample_frame": 30.5009765625
+    },
+    {
+      "id": 315,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 62,
+      "authored_row": 159,
+      "key_frame": 31,
+      "side": "incoming",
+      "sample_frame": 30.9990234375
+    },
+    {
+      "id": 316,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 62,
+      "authored_row": 159,
+      "key_frame": 31,
+      "side": "outgoing",
+      "sample_frame": 31.0009765625
+    },
+    {
+      "id": 317,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 63,
+      "authored_row": 160,
+      "key_frame": 31.5,
+      "side": "incoming",
+      "sample_frame": 31.4990234375
+    },
+    {
+      "id": 318,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 63,
+      "authored_row": 160,
+      "key_frame": 31.5,
+      "side": "outgoing",
+      "sample_frame": 31.5009765625
+    },
+    {
+      "id": 319,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 64,
+      "authored_row": 161,
+      "key_frame": 32,
+      "side": "incoming",
+      "sample_frame": 31.9990234375
+    },
+    {
+      "id": 320,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 64,
+      "authored_row": 161,
+      "key_frame": 32,
+      "side": "outgoing",
+      "sample_frame": 32.0009765625
+    },
+    {
+      "id": 321,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 65,
+      "authored_row": 162,
+      "key_frame": 32.5,
+      "side": "incoming",
+      "sample_frame": 32.4990234375
+    },
+    {
+      "id": 322,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 65,
+      "authored_row": 162,
+      "key_frame": 32.5,
+      "side": "outgoing",
+      "sample_frame": 32.5009765625
+    },
+    {
+      "id": 323,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 66,
+      "authored_row": 163,
+      "key_frame": 33,
+      "side": "incoming",
+      "sample_frame": 32.9990234375
+    },
+    {
+      "id": 324,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 66,
+      "authored_row": 163,
+      "key_frame": 33,
+      "side": "outgoing",
+      "sample_frame": 33.0009765625
+    },
+    {
+      "id": 325,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 67,
+      "authored_row": 164,
+      "key_frame": 33.5,
+      "side": "incoming",
+      "sample_frame": 33.4990234375
+    },
+    {
+      "id": 326,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 67,
+      "authored_row": 164,
+      "key_frame": 33.5,
+      "side": "outgoing",
+      "sample_frame": 33.5009765625
+    },
+    {
+      "id": 327,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 68,
+      "authored_row": 165,
+      "key_frame": 34,
+      "side": "incoming",
+      "sample_frame": 33.9990234375
+    },
+    {
+      "id": 328,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 68,
+      "authored_row": 165,
+      "key_frame": 34,
+      "side": "outgoing",
+      "sample_frame": 34.0009765625
+    },
+    {
+      "id": 329,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 69,
+      "authored_row": 166,
+      "key_frame": 34.5,
+      "side": "incoming",
+      "sample_frame": 34.4990234375
+    },
+    {
+      "id": 330,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 69,
+      "authored_row": 166,
+      "key_frame": 34.5,
+      "side": "outgoing",
+      "sample_frame": 34.5009765625
+    },
+    {
+      "id": 331,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 70,
+      "authored_row": 167,
+      "key_frame": 35,
+      "side": "incoming",
+      "sample_frame": 34.9990234375
+    },
+    {
+      "id": 332,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 70,
+      "authored_row": 167,
+      "key_frame": 35,
+      "side": "outgoing",
+      "sample_frame": 35.0009765625
+    },
+    {
+      "id": 333,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 71,
+      "authored_row": 168,
+      "key_frame": 35.5,
+      "side": "incoming",
+      "sample_frame": 35.4990234375
+    },
+    {
+      "id": 334,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 71,
+      "authored_row": 168,
+      "key_frame": 35.5,
+      "side": "outgoing",
+      "sample_frame": 35.5009765625
+    },
+    {
+      "id": 335,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 72,
+      "authored_row": 169,
+      "key_frame": 36,
+      "side": "incoming",
+      "sample_frame": 35.9990234375
+    },
+    {
+      "id": 336,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 72,
+      "authored_row": 169,
+      "key_frame": 36,
+      "side": "outgoing",
+      "sample_frame": 36.0009765625
+    },
+    {
+      "id": 337,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 73,
+      "authored_row": 170,
+      "key_frame": 36.5,
+      "side": "incoming",
+      "sample_frame": 36.4990234375
+    },
+    {
+      "id": 338,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 73,
+      "authored_row": 170,
+      "key_frame": 36.5,
+      "side": "outgoing",
+      "sample_frame": 36.5009765625
+    },
+    {
+      "id": 339,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 74,
+      "authored_row": 171,
+      "key_frame": 37,
+      "side": "incoming",
+      "sample_frame": 36.9990234375
+    },
+    {
+      "id": 340,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 74,
+      "authored_row": 171,
+      "key_frame": 37,
+      "side": "outgoing",
+      "sample_frame": 37.0009765625
+    },
+    {
+      "id": 341,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 75,
+      "authored_row": 172,
+      "key_frame": 37.5,
+      "side": "incoming",
+      "sample_frame": 37.4990234375
+    },
+    {
+      "id": 342,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 75,
+      "authored_row": 172,
+      "key_frame": 37.5,
+      "side": "outgoing",
+      "sample_frame": 37.5009765625
+    },
+    {
+      "id": 343,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 76,
+      "authored_row": 173,
+      "key_frame": 38,
+      "side": "incoming",
+      "sample_frame": 37.9990234375
+    },
+    {
+      "id": 344,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 76,
+      "authored_row": 173,
+      "key_frame": 38,
+      "side": "outgoing",
+      "sample_frame": 38.0009765625
+    },
+    {
+      "id": 345,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 77,
+      "authored_row": 174,
+      "key_frame": 38.5,
+      "side": "incoming",
+      "sample_frame": 38.4990234375
+    },
+    {
+      "id": 346,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 77,
+      "authored_row": 174,
+      "key_frame": 38.5,
+      "side": "outgoing",
+      "sample_frame": 38.5009765625
+    },
+    {
+      "id": 347,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 78,
+      "authored_row": 175,
+      "key_frame": 39,
+      "side": "incoming",
+      "sample_frame": 38.9990234375
+    },
+    {
+      "id": 348,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 78,
+      "authored_row": 175,
+      "key_frame": 39,
+      "side": "outgoing",
+      "sample_frame": 39.0009765625
+    },
+    {
+      "id": 349,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 79,
+      "authored_row": 176,
+      "key_frame": 39.5,
+      "side": "incoming",
+      "sample_frame": 39.4990234375
+    },
+    {
+      "id": 350,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 79,
+      "authored_row": 176,
+      "key_frame": 39.5,
+      "side": "outgoing",
+      "sample_frame": 39.5009765625
+    },
+    {
+      "id": 351,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 80,
+      "authored_row": 177,
+      "key_frame": 40,
+      "side": "incoming",
+      "sample_frame": 39.9990234375
+    },
+    {
+      "id": 352,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 80,
+      "authored_row": 177,
+      "key_frame": 40,
+      "side": "outgoing",
+      "sample_frame": 40.0009765625
+    },
+    {
+      "id": 353,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 81,
+      "authored_row": 178,
+      "key_frame": 40.5,
+      "side": "incoming",
+      "sample_frame": 40.4990234375
+    },
+    {
+      "id": 354,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 81,
+      "authored_row": 178,
+      "key_frame": 40.5,
+      "side": "outgoing",
+      "sample_frame": 40.5009765625
+    },
+    {
+      "id": 355,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 82,
+      "authored_row": 179,
+      "key_frame": 41,
+      "side": "incoming",
+      "sample_frame": 40.9990234375
+    },
+    {
+      "id": 356,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 82,
+      "authored_row": 179,
+      "key_frame": 41,
+      "side": "outgoing",
+      "sample_frame": 41.0009765625
+    },
+    {
+      "id": 357,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 83,
+      "authored_row": 180,
+      "key_frame": 41.5,
+      "side": "incoming",
+      "sample_frame": 41.4990234375
+    },
+    {
+      "id": 358,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 83,
+      "authored_row": 180,
+      "key_frame": 41.5,
+      "side": "outgoing",
+      "sample_frame": 41.5009765625
+    },
+    {
+      "id": 359,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 84,
+      "authored_row": 181,
+      "key_frame": 42,
+      "side": "incoming",
+      "sample_frame": 41.9990234375
+    },
+    {
+      "id": 360,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 84,
+      "authored_row": 181,
+      "key_frame": 42,
+      "side": "outgoing",
+      "sample_frame": 42.0009765625
+    },
+    {
+      "id": 361,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 85,
+      "authored_row": 182,
+      "key_frame": 42.5,
+      "side": "incoming",
+      "sample_frame": 42.4990234375
+    },
+    {
+      "id": 362,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 85,
+      "authored_row": 182,
+      "key_frame": 42.5,
+      "side": "outgoing",
+      "sample_frame": 42.5009765625
+    },
+    {
+      "id": 363,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 86,
+      "authored_row": 183,
+      "key_frame": 43,
+      "side": "incoming",
+      "sample_frame": 42.9990234375
+    },
+    {
+      "id": 364,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 86,
+      "authored_row": 183,
+      "key_frame": 43,
+      "side": "outgoing",
+      "sample_frame": 43.0009765625
+    },
+    {
+      "id": 365,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 87,
+      "authored_row": 184,
+      "key_frame": 43.5,
+      "side": "incoming",
+      "sample_frame": 43.4990234375
+    },
+    {
+      "id": 366,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 87,
+      "authored_row": 184,
+      "key_frame": 43.5,
+      "side": "outgoing",
+      "sample_frame": 43.5009765625
+    },
+    {
+      "id": 367,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 88,
+      "authored_row": 185,
+      "key_frame": 44,
+      "side": "incoming",
+      "sample_frame": 43.9990234375
+    },
+    {
+      "id": 368,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 88,
+      "authored_row": 185,
+      "key_frame": 44,
+      "side": "outgoing",
+      "sample_frame": 44.0009765625
+    },
+    {
+      "id": 369,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 89,
+      "authored_row": 186,
+      "key_frame": 44.5,
+      "side": "incoming",
+      "sample_frame": 44.4990234375
+    },
+    {
+      "id": 370,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 89,
+      "authored_row": 186,
+      "key_frame": 44.5,
+      "side": "outgoing",
+      "sample_frame": 44.5009765625
+    },
+    {
+      "id": 371,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 90,
+      "authored_row": 187,
+      "key_frame": 45,
+      "side": "incoming",
+      "sample_frame": 44.9990234375
+    },
+    {
+      "id": 372,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 90,
+      "authored_row": 187,
+      "key_frame": 45,
+      "side": "outgoing",
+      "sample_frame": 45.0009765625
+    },
+    {
+      "id": 373,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 91,
+      "authored_row": 188,
+      "key_frame": 45.5,
+      "side": "incoming",
+      "sample_frame": 45.4990234375
+    },
+    {
+      "id": 374,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 91,
+      "authored_row": 188,
+      "key_frame": 45.5,
+      "side": "outgoing",
+      "sample_frame": 45.5009765625
+    },
+    {
+      "id": 375,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 92,
+      "authored_row": 189,
+      "key_frame": 46,
+      "side": "incoming",
+      "sample_frame": 45.9990234375
+    },
+    {
+      "id": 376,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 92,
+      "authored_row": 189,
+      "key_frame": 46,
+      "side": "outgoing",
+      "sample_frame": 46.0009765625
+    },
+    {
+      "id": 377,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 93,
+      "authored_row": 190,
+      "key_frame": 46.5,
+      "side": "incoming",
+      "sample_frame": 46.4990234375
+    },
+    {
+      "id": 378,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 93,
+      "authored_row": 190,
+      "key_frame": 46.5,
+      "side": "outgoing",
+      "sample_frame": 46.5009765625
+    },
+    {
+      "id": 379,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 94,
+      "authored_row": 191,
+      "key_frame": 47,
+      "side": "incoming",
+      "sample_frame": 46.9990234375
+    },
+    {
+      "id": 380,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 94,
+      "authored_row": 191,
+      "key_frame": 47,
+      "side": "outgoing",
+      "sample_frame": 47.0009765625
+    },
+    {
+      "id": 381,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 95,
+      "authored_row": 192,
+      "key_frame": 47.5,
+      "side": "incoming",
+      "sample_frame": 47.4990234375
+    },
+    {
+      "id": 382,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 95,
+      "authored_row": 192,
+      "key_frame": 47.5,
+      "side": "outgoing",
+      "sample_frame": 47.5009765625
+    },
+    {
+      "id": 383,
+      "packet": 1,
+      "clip": "wave",
+      "key_index": 96,
+      "authored_row": 193,
+      "key_frame": 48,
+      "side": "incoming",
+      "sample_frame": 47.9990234375
+    },
+    {
+      "id": 384,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 0,
+      "authored_row": 194,
+      "key_frame": 0,
+      "side": "outgoing",
+      "sample_frame": 0.0009765625
+    },
+    {
+      "id": 385,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 1,
+      "authored_row": 195,
+      "key_frame": 0.5,
+      "side": "incoming",
+      "sample_frame": 0.4990234375
+    },
+    {
+      "id": 386,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 1,
+      "authored_row": 195,
+      "key_frame": 0.5,
+      "side": "outgoing",
+      "sample_frame": 0.5009765625
+    },
+    {
+      "id": 387,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 2,
+      "authored_row": 196,
+      "key_frame": 1,
+      "side": "incoming",
+      "sample_frame": 0.9990234375
+    },
+    {
+      "id": 388,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 2,
+      "authored_row": 196,
+      "key_frame": 1,
+      "side": "outgoing",
+      "sample_frame": 1.0009765625
+    },
+    {
+      "id": 389,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 3,
+      "authored_row": 197,
+      "key_frame": 1.5,
+      "side": "incoming",
+      "sample_frame": 1.4990234375
+    },
+    {
+      "id": 390,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 3,
+      "authored_row": 197,
+      "key_frame": 1.5,
+      "side": "outgoing",
+      "sample_frame": 1.5009765625
+    },
+    {
+      "id": 391,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 4,
+      "authored_row": 198,
+      "key_frame": 2,
+      "side": "incoming",
+      "sample_frame": 1.9990234375
+    },
+    {
+      "id": 392,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 4,
+      "authored_row": 198,
+      "key_frame": 2,
+      "side": "outgoing",
+      "sample_frame": 2.0009765625
+    },
+    {
+      "id": 393,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 5,
+      "authored_row": 199,
+      "key_frame": 2.5,
+      "side": "incoming",
+      "sample_frame": 2.4990234375
+    },
+    {
+      "id": 394,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 5,
+      "authored_row": 199,
+      "key_frame": 2.5,
+      "side": "outgoing",
+      "sample_frame": 2.5009765625
+    },
+    {
+      "id": 395,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 6,
+      "authored_row": 200,
+      "key_frame": 3,
+      "side": "incoming",
+      "sample_frame": 2.9990234375
+    },
+    {
+      "id": 396,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 6,
+      "authored_row": 200,
+      "key_frame": 3,
+      "side": "outgoing",
+      "sample_frame": 3.0009765625
+    },
+    {
+      "id": 397,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 7,
+      "authored_row": 201,
+      "key_frame": 3.5,
+      "side": "incoming",
+      "sample_frame": 3.4990234375
+    },
+    {
+      "id": 398,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 7,
+      "authored_row": 201,
+      "key_frame": 3.5,
+      "side": "outgoing",
+      "sample_frame": 3.5009765625
+    },
+    {
+      "id": 399,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 8,
+      "authored_row": 202,
+      "key_frame": 4,
+      "side": "incoming",
+      "sample_frame": 3.9990234375
+    },
+    {
+      "id": 400,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 8,
+      "authored_row": 202,
+      "key_frame": 4,
+      "side": "outgoing",
+      "sample_frame": 4.0009765625
+    },
+    {
+      "id": 401,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 9,
+      "authored_row": 203,
+      "key_frame": 4.5,
+      "side": "incoming",
+      "sample_frame": 4.4990234375
+    },
+    {
+      "id": 402,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 9,
+      "authored_row": 203,
+      "key_frame": 4.5,
+      "side": "outgoing",
+      "sample_frame": 4.5009765625
+    },
+    {
+      "id": 403,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 10,
+      "authored_row": 204,
+      "key_frame": 5,
+      "side": "incoming",
+      "sample_frame": 4.9990234375
+    },
+    {
+      "id": 404,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 10,
+      "authored_row": 204,
+      "key_frame": 5,
+      "side": "outgoing",
+      "sample_frame": 5.0009765625
+    },
+    {
+      "id": 405,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 11,
+      "authored_row": 205,
+      "key_frame": 5.5,
+      "side": "incoming",
+      "sample_frame": 5.4990234375
+    },
+    {
+      "id": 406,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 11,
+      "authored_row": 205,
+      "key_frame": 5.5,
+      "side": "outgoing",
+      "sample_frame": 5.5009765625
+    },
+    {
+      "id": 407,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 12,
+      "authored_row": 206,
+      "key_frame": 6,
+      "side": "incoming",
+      "sample_frame": 5.9990234375
+    },
+    {
+      "id": 408,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 12,
+      "authored_row": 206,
+      "key_frame": 6,
+      "side": "outgoing",
+      "sample_frame": 6.0009765625
+    },
+    {
+      "id": 409,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 13,
+      "authored_row": 207,
+      "key_frame": 6.5,
+      "side": "incoming",
+      "sample_frame": 6.4990234375
+    },
+    {
+      "id": 410,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 13,
+      "authored_row": 207,
+      "key_frame": 6.5,
+      "side": "outgoing",
+      "sample_frame": 6.5009765625
+    },
+    {
+      "id": 411,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 14,
+      "authored_row": 208,
+      "key_frame": 7,
+      "side": "incoming",
+      "sample_frame": 6.9990234375
+    },
+    {
+      "id": 412,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 14,
+      "authored_row": 208,
+      "key_frame": 7,
+      "side": "outgoing",
+      "sample_frame": 7.0009765625
+    },
+    {
+      "id": 413,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 15,
+      "authored_row": 209,
+      "key_frame": 7.5,
+      "side": "incoming",
+      "sample_frame": 7.4990234375
+    },
+    {
+      "id": 414,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 15,
+      "authored_row": 209,
+      "key_frame": 7.5,
+      "side": "outgoing",
+      "sample_frame": 7.5009765625
+    },
+    {
+      "id": 415,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 16,
+      "authored_row": 210,
+      "key_frame": 8,
+      "side": "incoming",
+      "sample_frame": 7.9990234375
+    },
+    {
+      "id": 416,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 16,
+      "authored_row": 210,
+      "key_frame": 8,
+      "side": "outgoing",
+      "sample_frame": 8.0009765625
+    },
+    {
+      "id": 417,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 17,
+      "authored_row": 211,
+      "key_frame": 8.5,
+      "side": "incoming",
+      "sample_frame": 8.4990234375
+    },
+    {
+      "id": 418,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 17,
+      "authored_row": 211,
+      "key_frame": 8.5,
+      "side": "outgoing",
+      "sample_frame": 8.5009765625
+    },
+    {
+      "id": 419,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 18,
+      "authored_row": 212,
+      "key_frame": 9,
+      "side": "incoming",
+      "sample_frame": 8.9990234375
+    },
+    {
+      "id": 420,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 18,
+      "authored_row": 212,
+      "key_frame": 9,
+      "side": "outgoing",
+      "sample_frame": 9.0009765625
+    },
+    {
+      "id": 421,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 19,
+      "authored_row": 213,
+      "key_frame": 9.5,
+      "side": "incoming",
+      "sample_frame": 9.4990234375
+    },
+    {
+      "id": 422,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 19,
+      "authored_row": 213,
+      "key_frame": 9.5,
+      "side": "outgoing",
+      "sample_frame": 9.5009765625
+    },
+    {
+      "id": 423,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 20,
+      "authored_row": 214,
+      "key_frame": 10,
+      "side": "incoming",
+      "sample_frame": 9.9990234375
+    },
+    {
+      "id": 424,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 20,
+      "authored_row": 214,
+      "key_frame": 10,
+      "side": "outgoing",
+      "sample_frame": 10.0009765625
+    },
+    {
+      "id": 425,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 21,
+      "authored_row": 215,
+      "key_frame": 10.5,
+      "side": "incoming",
+      "sample_frame": 10.4990234375
+    },
+    {
+      "id": 426,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 21,
+      "authored_row": 215,
+      "key_frame": 10.5,
+      "side": "outgoing",
+      "sample_frame": 10.5009765625
+    },
+    {
+      "id": 427,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 22,
+      "authored_row": 216,
+      "key_frame": 11,
+      "side": "incoming",
+      "sample_frame": 10.9990234375
+    },
+    {
+      "id": 428,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 22,
+      "authored_row": 216,
+      "key_frame": 11,
+      "side": "outgoing",
+      "sample_frame": 11.0009765625
+    },
+    {
+      "id": 429,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 23,
+      "authored_row": 217,
+      "key_frame": 11.5,
+      "side": "incoming",
+      "sample_frame": 11.4990234375
+    },
+    {
+      "id": 430,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 23,
+      "authored_row": 217,
+      "key_frame": 11.5,
+      "side": "outgoing",
+      "sample_frame": 11.5009765625
+    },
+    {
+      "id": 431,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 24,
+      "authored_row": 218,
+      "key_frame": 12,
+      "side": "incoming",
+      "sample_frame": 11.9990234375
+    },
+    {
+      "id": 432,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 24,
+      "authored_row": 218,
+      "key_frame": 12,
+      "side": "outgoing",
+      "sample_frame": 12.0009765625
+    },
+    {
+      "id": 433,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 25,
+      "authored_row": 219,
+      "key_frame": 12.5,
+      "side": "incoming",
+      "sample_frame": 12.4990234375
+    },
+    {
+      "id": 434,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 25,
+      "authored_row": 219,
+      "key_frame": 12.5,
+      "side": "outgoing",
+      "sample_frame": 12.5009765625
+    },
+    {
+      "id": 435,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 26,
+      "authored_row": 220,
+      "key_frame": 13,
+      "side": "incoming",
+      "sample_frame": 12.9990234375
+    },
+    {
+      "id": 436,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 26,
+      "authored_row": 220,
+      "key_frame": 13,
+      "side": "outgoing",
+      "sample_frame": 13.0009765625
+    },
+    {
+      "id": 437,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 27,
+      "authored_row": 221,
+      "key_frame": 13.5,
+      "side": "incoming",
+      "sample_frame": 13.4990234375
+    },
+    {
+      "id": 438,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 27,
+      "authored_row": 221,
+      "key_frame": 13.5,
+      "side": "outgoing",
+      "sample_frame": 13.5009765625
+    },
+    {
+      "id": 439,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 28,
+      "authored_row": 222,
+      "key_frame": 14,
+      "side": "incoming",
+      "sample_frame": 13.9990234375
+    },
+    {
+      "id": 440,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 28,
+      "authored_row": 222,
+      "key_frame": 14,
+      "side": "outgoing",
+      "sample_frame": 14.0009765625
+    },
+    {
+      "id": 441,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 29,
+      "authored_row": 223,
+      "key_frame": 14.5,
+      "side": "incoming",
+      "sample_frame": 14.4990234375
+    },
+    {
+      "id": 442,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 29,
+      "authored_row": 223,
+      "key_frame": 14.5,
+      "side": "outgoing",
+      "sample_frame": 14.5009765625
+    },
+    {
+      "id": 443,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 30,
+      "authored_row": 224,
+      "key_frame": 15,
+      "side": "incoming",
+      "sample_frame": 14.9990234375
+    },
+    {
+      "id": 444,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 30,
+      "authored_row": 224,
+      "key_frame": 15,
+      "side": "outgoing",
+      "sample_frame": 15.0009765625
+    },
+    {
+      "id": 445,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 31,
+      "authored_row": 225,
+      "key_frame": 15.5,
+      "side": "incoming",
+      "sample_frame": 15.4990234375
+    },
+    {
+      "id": 446,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 31,
+      "authored_row": 225,
+      "key_frame": 15.5,
+      "side": "outgoing",
+      "sample_frame": 15.5009765625
+    },
+    {
+      "id": 447,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 32,
+      "authored_row": 226,
+      "key_frame": 16,
+      "side": "incoming",
+      "sample_frame": 15.9990234375
+    },
+    {
+      "id": 448,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 32,
+      "authored_row": 226,
+      "key_frame": 16,
+      "side": "outgoing",
+      "sample_frame": 16.0009765625
+    },
+    {
+      "id": 449,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 33,
+      "authored_row": 227,
+      "key_frame": 16.5,
+      "side": "incoming",
+      "sample_frame": 16.4990234375
+    },
+    {
+      "id": 450,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 33,
+      "authored_row": 227,
+      "key_frame": 16.5,
+      "side": "outgoing",
+      "sample_frame": 16.5009765625
+    },
+    {
+      "id": 451,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 34,
+      "authored_row": 228,
+      "key_frame": 17,
+      "side": "incoming",
+      "sample_frame": 16.9990234375
+    },
+    {
+      "id": 452,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 34,
+      "authored_row": 228,
+      "key_frame": 17,
+      "side": "outgoing",
+      "sample_frame": 17.0009765625
+    },
+    {
+      "id": 453,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 35,
+      "authored_row": 229,
+      "key_frame": 17.5,
+      "side": "incoming",
+      "sample_frame": 17.4990234375
+    },
+    {
+      "id": 454,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 35,
+      "authored_row": 229,
+      "key_frame": 17.5,
+      "side": "outgoing",
+      "sample_frame": 17.5009765625
+    },
+    {
+      "id": 455,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 36,
+      "authored_row": 230,
+      "key_frame": 18,
+      "side": "incoming",
+      "sample_frame": 17.9990234375
+    },
+    {
+      "id": 456,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 36,
+      "authored_row": 230,
+      "key_frame": 18,
+      "side": "outgoing",
+      "sample_frame": 18.0009765625
+    },
+    {
+      "id": 457,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 37,
+      "authored_row": 231,
+      "key_frame": 18.5,
+      "side": "incoming",
+      "sample_frame": 18.4990234375
+    },
+    {
+      "id": 458,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 37,
+      "authored_row": 231,
+      "key_frame": 18.5,
+      "side": "outgoing",
+      "sample_frame": 18.5009765625
+    },
+    {
+      "id": 459,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 38,
+      "authored_row": 232,
+      "key_frame": 19,
+      "side": "incoming",
+      "sample_frame": 18.9990234375
+    },
+    {
+      "id": 460,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 38,
+      "authored_row": 232,
+      "key_frame": 19,
+      "side": "outgoing",
+      "sample_frame": 19.0009765625
+    },
+    {
+      "id": 461,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 39,
+      "authored_row": 233,
+      "key_frame": 19.5,
+      "side": "incoming",
+      "sample_frame": 19.4990234375
+    },
+    {
+      "id": 462,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 39,
+      "authored_row": 233,
+      "key_frame": 19.5,
+      "side": "outgoing",
+      "sample_frame": 19.5009765625
+    },
+    {
+      "id": 463,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 40,
+      "authored_row": 234,
+      "key_frame": 20,
+      "side": "incoming",
+      "sample_frame": 19.9990234375
+    },
+    {
+      "id": 464,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 40,
+      "authored_row": 234,
+      "key_frame": 20,
+      "side": "outgoing",
+      "sample_frame": 20.0009765625
+    },
+    {
+      "id": 465,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 41,
+      "authored_row": 235,
+      "key_frame": 20.5,
+      "side": "incoming",
+      "sample_frame": 20.4990234375
+    },
+    {
+      "id": 466,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 41,
+      "authored_row": 235,
+      "key_frame": 20.5,
+      "side": "outgoing",
+      "sample_frame": 20.5009765625
+    },
+    {
+      "id": 467,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 42,
+      "authored_row": 236,
+      "key_frame": 21,
+      "side": "incoming",
+      "sample_frame": 20.9990234375
+    },
+    {
+      "id": 468,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 42,
+      "authored_row": 236,
+      "key_frame": 21,
+      "side": "outgoing",
+      "sample_frame": 21.0009765625
+    },
+    {
+      "id": 469,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 43,
+      "authored_row": 237,
+      "key_frame": 21.5,
+      "side": "incoming",
+      "sample_frame": 21.4990234375
+    },
+    {
+      "id": 470,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 43,
+      "authored_row": 237,
+      "key_frame": 21.5,
+      "side": "outgoing",
+      "sample_frame": 21.5009765625
+    },
+    {
+      "id": 471,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 44,
+      "authored_row": 238,
+      "key_frame": 22,
+      "side": "incoming",
+      "sample_frame": 21.9990234375
+    },
+    {
+      "id": 472,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 44,
+      "authored_row": 238,
+      "key_frame": 22,
+      "side": "outgoing",
+      "sample_frame": 22.0009765625
+    },
+    {
+      "id": 473,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 45,
+      "authored_row": 239,
+      "key_frame": 22.5,
+      "side": "incoming",
+      "sample_frame": 22.4990234375
+    },
+    {
+      "id": 474,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 45,
+      "authored_row": 239,
+      "key_frame": 22.5,
+      "side": "outgoing",
+      "sample_frame": 22.5009765625
+    },
+    {
+      "id": 475,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 46,
+      "authored_row": 240,
+      "key_frame": 23,
+      "side": "incoming",
+      "sample_frame": 22.9990234375
+    },
+    {
+      "id": 476,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 46,
+      "authored_row": 240,
+      "key_frame": 23,
+      "side": "outgoing",
+      "sample_frame": 23.0009765625
+    },
+    {
+      "id": 477,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 47,
+      "authored_row": 241,
+      "key_frame": 23.5,
+      "side": "incoming",
+      "sample_frame": 23.4990234375
+    },
+    {
+      "id": 478,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 47,
+      "authored_row": 241,
+      "key_frame": 23.5,
+      "side": "outgoing",
+      "sample_frame": 23.5009765625
+    },
+    {
+      "id": 479,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 48,
+      "authored_row": 242,
+      "key_frame": 24,
+      "side": "incoming",
+      "sample_frame": 23.9990234375
+    },
+    {
+      "id": 480,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 48,
+      "authored_row": 242,
+      "key_frame": 24,
+      "side": "outgoing",
+      "sample_frame": 24.0009765625
+    },
+    {
+      "id": 481,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 49,
+      "authored_row": 243,
+      "key_frame": 24.5,
+      "side": "incoming",
+      "sample_frame": 24.4990234375
+    },
+    {
+      "id": 482,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 49,
+      "authored_row": 243,
+      "key_frame": 24.5,
+      "side": "outgoing",
+      "sample_frame": 24.5009765625
+    },
+    {
+      "id": 483,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 50,
+      "authored_row": 244,
+      "key_frame": 25,
+      "side": "incoming",
+      "sample_frame": 24.9990234375
+    },
+    {
+      "id": 484,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 50,
+      "authored_row": 244,
+      "key_frame": 25,
+      "side": "outgoing",
+      "sample_frame": 25.0009765625
+    },
+    {
+      "id": 485,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 51,
+      "authored_row": 245,
+      "key_frame": 25.5,
+      "side": "incoming",
+      "sample_frame": 25.4990234375
+    },
+    {
+      "id": 486,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 51,
+      "authored_row": 245,
+      "key_frame": 25.5,
+      "side": "outgoing",
+      "sample_frame": 25.5009765625
+    },
+    {
+      "id": 487,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 52,
+      "authored_row": 246,
+      "key_frame": 26,
+      "side": "incoming",
+      "sample_frame": 25.9990234375
+    },
+    {
+      "id": 488,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 52,
+      "authored_row": 246,
+      "key_frame": 26,
+      "side": "outgoing",
+      "sample_frame": 26.0009765625
+    },
+    {
+      "id": 489,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 53,
+      "authored_row": 247,
+      "key_frame": 26.5,
+      "side": "incoming",
+      "sample_frame": 26.4990234375
+    },
+    {
+      "id": 490,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 53,
+      "authored_row": 247,
+      "key_frame": 26.5,
+      "side": "outgoing",
+      "sample_frame": 26.5009765625
+    },
+    {
+      "id": 491,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 54,
+      "authored_row": 248,
+      "key_frame": 27,
+      "side": "incoming",
+      "sample_frame": 26.9990234375
+    },
+    {
+      "id": 492,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 54,
+      "authored_row": 248,
+      "key_frame": 27,
+      "side": "outgoing",
+      "sample_frame": 27.0009765625
+    },
+    {
+      "id": 493,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 55,
+      "authored_row": 249,
+      "key_frame": 27.5,
+      "side": "incoming",
+      "sample_frame": 27.4990234375
+    },
+    {
+      "id": 494,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 55,
+      "authored_row": 249,
+      "key_frame": 27.5,
+      "side": "outgoing",
+      "sample_frame": 27.5009765625
+    },
+    {
+      "id": 495,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 56,
+      "authored_row": 250,
+      "key_frame": 28,
+      "side": "incoming",
+      "sample_frame": 27.9990234375
+    },
+    {
+      "id": 496,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 56,
+      "authored_row": 250,
+      "key_frame": 28,
+      "side": "outgoing",
+      "sample_frame": 28.0009765625
+    },
+    {
+      "id": 497,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 57,
+      "authored_row": 251,
+      "key_frame": 28.5,
+      "side": "incoming",
+      "sample_frame": 28.4990234375
+    },
+    {
+      "id": 498,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 57,
+      "authored_row": 251,
+      "key_frame": 28.5,
+      "side": "outgoing",
+      "sample_frame": 28.5009765625
+    },
+    {
+      "id": 499,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 58,
+      "authored_row": 252,
+      "key_frame": 29,
+      "side": "incoming",
+      "sample_frame": 28.9990234375
+    },
+    {
+      "id": 500,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 58,
+      "authored_row": 252,
+      "key_frame": 29,
+      "side": "outgoing",
+      "sample_frame": 29.0009765625
+    },
+    {
+      "id": 501,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 59,
+      "authored_row": 253,
+      "key_frame": 29.5,
+      "side": "incoming",
+      "sample_frame": 29.4990234375
+    },
+    {
+      "id": 502,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 59,
+      "authored_row": 253,
+      "key_frame": 29.5,
+      "side": "outgoing",
+      "sample_frame": 29.5009765625
+    },
+    {
+      "id": 503,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 60,
+      "authored_row": 254,
+      "key_frame": 30,
+      "side": "incoming",
+      "sample_frame": 29.9990234375
+    },
+    {
+      "id": 504,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 60,
+      "authored_row": 254,
+      "key_frame": 30,
+      "side": "outgoing",
+      "sample_frame": 30.0009765625
+    },
+    {
+      "id": 505,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 61,
+      "authored_row": 255,
+      "key_frame": 30.5,
+      "side": "incoming",
+      "sample_frame": 30.4990234375
+    },
+    {
+      "id": 506,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 61,
+      "authored_row": 255,
+      "key_frame": 30.5,
+      "side": "outgoing",
+      "sample_frame": 30.5009765625
+    },
+    {
+      "id": 507,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 62,
+      "authored_row": 256,
+      "key_frame": 31,
+      "side": "incoming",
+      "sample_frame": 30.9990234375
+    },
+    {
+      "id": 508,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 62,
+      "authored_row": 256,
+      "key_frame": 31,
+      "side": "outgoing",
+      "sample_frame": 31.0009765625
+    },
+    {
+      "id": 509,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 63,
+      "authored_row": 257,
+      "key_frame": 31.5,
+      "side": "incoming",
+      "sample_frame": 31.4990234375
+    },
+    {
+      "id": 510,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 63,
+      "authored_row": 257,
+      "key_frame": 31.5,
+      "side": "outgoing",
+      "sample_frame": 31.5009765625
+    },
+    {
+      "id": 511,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 64,
+      "authored_row": 258,
+      "key_frame": 32,
+      "side": "incoming",
+      "sample_frame": 31.9990234375
+    },
+    {
+      "id": 512,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 64,
+      "authored_row": 258,
+      "key_frame": 32,
+      "side": "outgoing",
+      "sample_frame": 32.0009765625
+    },
+    {
+      "id": 513,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 65,
+      "authored_row": 259,
+      "key_frame": 32.5,
+      "side": "incoming",
+      "sample_frame": 32.4990234375
+    },
+    {
+      "id": 514,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 65,
+      "authored_row": 259,
+      "key_frame": 32.5,
+      "side": "outgoing",
+      "sample_frame": 32.5009765625
+    },
+    {
+      "id": 515,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 66,
+      "authored_row": 260,
+      "key_frame": 33,
+      "side": "incoming",
+      "sample_frame": 32.9990234375
+    },
+    {
+      "id": 516,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 66,
+      "authored_row": 260,
+      "key_frame": 33,
+      "side": "outgoing",
+      "sample_frame": 33.0009765625
+    },
+    {
+      "id": 517,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 67,
+      "authored_row": 261,
+      "key_frame": 33.5,
+      "side": "incoming",
+      "sample_frame": 33.4990234375
+    },
+    {
+      "id": 518,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 67,
+      "authored_row": 261,
+      "key_frame": 33.5,
+      "side": "outgoing",
+      "sample_frame": 33.5009765625
+    },
+    {
+      "id": 519,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 68,
+      "authored_row": 262,
+      "key_frame": 34,
+      "side": "incoming",
+      "sample_frame": 33.9990234375
+    },
+    {
+      "id": 520,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 68,
+      "authored_row": 262,
+      "key_frame": 34,
+      "side": "outgoing",
+      "sample_frame": 34.0009765625
+    },
+    {
+      "id": 521,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 69,
+      "authored_row": 263,
+      "key_frame": 34.5,
+      "side": "incoming",
+      "sample_frame": 34.4990234375
+    },
+    {
+      "id": 522,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 69,
+      "authored_row": 263,
+      "key_frame": 34.5,
+      "side": "outgoing",
+      "sample_frame": 34.5009765625
+    },
+    {
+      "id": 523,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 70,
+      "authored_row": 264,
+      "key_frame": 35,
+      "side": "incoming",
+      "sample_frame": 34.9990234375
+    },
+    {
+      "id": 524,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 70,
+      "authored_row": 264,
+      "key_frame": 35,
+      "side": "outgoing",
+      "sample_frame": 35.0009765625
+    },
+    {
+      "id": 525,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 71,
+      "authored_row": 265,
+      "key_frame": 35.5,
+      "side": "incoming",
+      "sample_frame": 35.4990234375
+    },
+    {
+      "id": 526,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 71,
+      "authored_row": 265,
+      "key_frame": 35.5,
+      "side": "outgoing",
+      "sample_frame": 35.5009765625
+    },
+    {
+      "id": 527,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 72,
+      "authored_row": 266,
+      "key_frame": 36,
+      "side": "incoming",
+      "sample_frame": 35.9990234375
+    },
+    {
+      "id": 528,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 72,
+      "authored_row": 266,
+      "key_frame": 36,
+      "side": "outgoing",
+      "sample_frame": 36.0009765625
+    },
+    {
+      "id": 529,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 73,
+      "authored_row": 267,
+      "key_frame": 36.5,
+      "side": "incoming",
+      "sample_frame": 36.4990234375
+    },
+    {
+      "id": 530,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 73,
+      "authored_row": 267,
+      "key_frame": 36.5,
+      "side": "outgoing",
+      "sample_frame": 36.5009765625
+    },
+    {
+      "id": 531,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 74,
+      "authored_row": 268,
+      "key_frame": 37,
+      "side": "incoming",
+      "sample_frame": 36.9990234375
+    },
+    {
+      "id": 532,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 74,
+      "authored_row": 268,
+      "key_frame": 37,
+      "side": "outgoing",
+      "sample_frame": 37.0009765625
+    },
+    {
+      "id": 533,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 75,
+      "authored_row": 269,
+      "key_frame": 37.5,
+      "side": "incoming",
+      "sample_frame": 37.4990234375
+    },
+    {
+      "id": 534,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 75,
+      "authored_row": 269,
+      "key_frame": 37.5,
+      "side": "outgoing",
+      "sample_frame": 37.5009765625
+    },
+    {
+      "id": 535,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 76,
+      "authored_row": 270,
+      "key_frame": 38,
+      "side": "incoming",
+      "sample_frame": 37.9990234375
+    },
+    {
+      "id": 536,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 76,
+      "authored_row": 270,
+      "key_frame": 38,
+      "side": "outgoing",
+      "sample_frame": 38.0009765625
+    },
+    {
+      "id": 537,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 77,
+      "authored_row": 271,
+      "key_frame": 38.5,
+      "side": "incoming",
+      "sample_frame": 38.4990234375
+    },
+    {
+      "id": 538,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 77,
+      "authored_row": 271,
+      "key_frame": 38.5,
+      "side": "outgoing",
+      "sample_frame": 38.5009765625
+    },
+    {
+      "id": 539,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 78,
+      "authored_row": 272,
+      "key_frame": 39,
+      "side": "incoming",
+      "sample_frame": 38.9990234375
+    },
+    {
+      "id": 540,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 78,
+      "authored_row": 272,
+      "key_frame": 39,
+      "side": "outgoing",
+      "sample_frame": 39.0009765625
+    },
+    {
+      "id": 541,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 79,
+      "authored_row": 273,
+      "key_frame": 39.5,
+      "side": "incoming",
+      "sample_frame": 39.4990234375
+    },
+    {
+      "id": 542,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 79,
+      "authored_row": 273,
+      "key_frame": 39.5,
+      "side": "outgoing",
+      "sample_frame": 39.5009765625
+    },
+    {
+      "id": 543,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 80,
+      "authored_row": 274,
+      "key_frame": 40,
+      "side": "incoming",
+      "sample_frame": 39.9990234375
+    },
+    {
+      "id": 544,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 80,
+      "authored_row": 274,
+      "key_frame": 40,
+      "side": "outgoing",
+      "sample_frame": 40.0009765625
+    },
+    {
+      "id": 545,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 81,
+      "authored_row": 275,
+      "key_frame": 40.5,
+      "side": "incoming",
+      "sample_frame": 40.4990234375
+    },
+    {
+      "id": 546,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 81,
+      "authored_row": 275,
+      "key_frame": 40.5,
+      "side": "outgoing",
+      "sample_frame": 40.5009765625
+    },
+    {
+      "id": 547,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 82,
+      "authored_row": 276,
+      "key_frame": 41,
+      "side": "incoming",
+      "sample_frame": 40.9990234375
+    },
+    {
+      "id": 548,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 82,
+      "authored_row": 276,
+      "key_frame": 41,
+      "side": "outgoing",
+      "sample_frame": 41.0009765625
+    },
+    {
+      "id": 549,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 83,
+      "authored_row": 277,
+      "key_frame": 41.5,
+      "side": "incoming",
+      "sample_frame": 41.4990234375
+    },
+    {
+      "id": 550,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 83,
+      "authored_row": 277,
+      "key_frame": 41.5,
+      "side": "outgoing",
+      "sample_frame": 41.5009765625
+    },
+    {
+      "id": 551,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 84,
+      "authored_row": 278,
+      "key_frame": 42,
+      "side": "incoming",
+      "sample_frame": 41.9990234375
+    },
+    {
+      "id": 552,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 84,
+      "authored_row": 278,
+      "key_frame": 42,
+      "side": "outgoing",
+      "sample_frame": 42.0009765625
+    },
+    {
+      "id": 553,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 85,
+      "authored_row": 279,
+      "key_frame": 42.5,
+      "side": "incoming",
+      "sample_frame": 42.4990234375
+    },
+    {
+      "id": 554,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 85,
+      "authored_row": 279,
+      "key_frame": 42.5,
+      "side": "outgoing",
+      "sample_frame": 42.5009765625
+    },
+    {
+      "id": 555,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 86,
+      "authored_row": 280,
+      "key_frame": 43,
+      "side": "incoming",
+      "sample_frame": 42.9990234375
+    },
+    {
+      "id": 556,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 86,
+      "authored_row": 280,
+      "key_frame": 43,
+      "side": "outgoing",
+      "sample_frame": 43.0009765625
+    },
+    {
+      "id": 557,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 87,
+      "authored_row": 281,
+      "key_frame": 43.5,
+      "side": "incoming",
+      "sample_frame": 43.4990234375
+    },
+    {
+      "id": 558,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 87,
+      "authored_row": 281,
+      "key_frame": 43.5,
+      "side": "outgoing",
+      "sample_frame": 43.5009765625
+    },
+    {
+      "id": 559,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 88,
+      "authored_row": 282,
+      "key_frame": 44,
+      "side": "incoming",
+      "sample_frame": 43.9990234375
+    },
+    {
+      "id": 560,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 88,
+      "authored_row": 282,
+      "key_frame": 44,
+      "side": "outgoing",
+      "sample_frame": 44.0009765625
+    },
+    {
+      "id": 561,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 89,
+      "authored_row": 283,
+      "key_frame": 44.5,
+      "side": "incoming",
+      "sample_frame": 44.4990234375
+    },
+    {
+      "id": 562,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 89,
+      "authored_row": 283,
+      "key_frame": 44.5,
+      "side": "outgoing",
+      "sample_frame": 44.5009765625
+    },
+    {
+      "id": 563,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 90,
+      "authored_row": 284,
+      "key_frame": 45,
+      "side": "incoming",
+      "sample_frame": 44.9990234375
+    },
+    {
+      "id": 564,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 90,
+      "authored_row": 284,
+      "key_frame": 45,
+      "side": "outgoing",
+      "sample_frame": 45.0009765625
+    },
+    {
+      "id": 565,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 91,
+      "authored_row": 285,
+      "key_frame": 45.5,
+      "side": "incoming",
+      "sample_frame": 45.4990234375
+    },
+    {
+      "id": 566,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 91,
+      "authored_row": 285,
+      "key_frame": 45.5,
+      "side": "outgoing",
+      "sample_frame": 45.5009765625
+    },
+    {
+      "id": 567,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 92,
+      "authored_row": 286,
+      "key_frame": 46,
+      "side": "incoming",
+      "sample_frame": 45.9990234375
+    },
+    {
+      "id": 568,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 92,
+      "authored_row": 286,
+      "key_frame": 46,
+      "side": "outgoing",
+      "sample_frame": 46.0009765625
+    },
+    {
+      "id": 569,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 93,
+      "authored_row": 287,
+      "key_frame": 46.5,
+      "side": "incoming",
+      "sample_frame": 46.4990234375
+    },
+    {
+      "id": 570,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 93,
+      "authored_row": 287,
+      "key_frame": 46.5,
+      "side": "outgoing",
+      "sample_frame": 46.5009765625
+    },
+    {
+      "id": 571,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 94,
+      "authored_row": 288,
+      "key_frame": 47,
+      "side": "incoming",
+      "sample_frame": 46.9990234375
+    },
+    {
+      "id": 572,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 94,
+      "authored_row": 288,
+      "key_frame": 47,
+      "side": "outgoing",
+      "sample_frame": 47.0009765625
+    },
+    {
+      "id": 573,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 95,
+      "authored_row": 289,
+      "key_frame": 47.5,
+      "side": "incoming",
+      "sample_frame": 47.4990234375
+    },
+    {
+      "id": 574,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 95,
+      "authored_row": 289,
+      "key_frame": 47.5,
+      "side": "outgoing",
+      "sample_frame": 47.5009765625
+    },
+    {
+      "id": 575,
+      "packet": 1,
+      "clip": "celebrate",
+      "key_index": 96,
+      "authored_row": 290,
+      "key_frame": 48,
+      "side": "incoming",
+      "sample_frame": 47.9990234375
+    }
+  ],
+  "fresh_validation_samples": [
+    {
+      "id": 0,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 0.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 1,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 0.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 2,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 12.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 3,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 12.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 4,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 24.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 5,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 24.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 6,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 36.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 7,
+      "packet": 0,
+      "clip": "idle",
+      "sample_frame": 36.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 8,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 0.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 9,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 0.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 10,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 12.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 11,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 12.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 12,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 24.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 13,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 24.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 14,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 36.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 15,
+      "packet": 0,
+      "clip": "wave",
+      "sample_frame": 36.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 16,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 0.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 17,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 0.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 18,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 12.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 19,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 12.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 20,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 24.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 21,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 24.375,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 22,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 36.125,
+      "role": "fresh_geometry_and_joint_validation"
+    },
+    {
+      "id": 23,
+      "packet": 0,
+      "clip": "celebrate",
+      "sample_frame": 36.375,
+      "role": "fresh_geometry_and_joint_validation"
+    }
+  ],
+  "known_regression_samples_are_not_blind": true,
+  "epsilon_samples_must_not_use_validation_positions": true,
+  "phase_b_requires_both_complete_packets": true,
+  "clip_order": [
+    "idle",
+    "wave",
+    "celebrate"
+  ],
+  "side_order": [
+    "incoming",
+    "outgoing"
+  ],
+  "contains_captured_pose_data": false,
+  "reference_npz_sha256": "6dca400a201b003e7ed81c8556d06cfa5afde07edad30705e2bf22ee487d9f94",
+  "reference_metadata_sha256": "83471e5eb420f716ef024b04e660ba29ba975f6e13a52835f65498c964fecb9d",
+  "packet_envelope_must_bind": [
+    "sampling_plan_sha256",
+    "capture_wrapper_git_blob_sha",
+    "imported_helper_git_blob_pins",
+    "source_native_blend_sha256",
+    "source_native_producer_audit_sha256",
+    "original_snow_sha256",
+    "reference_npz_sha256",
+    "reference_metadata_sha256",
+    "source_glb_sha256",
+    "bpy_version_and_wheel_sha256",
+    "render_config_sha256"
+  ],
+  "epsilon_rational_source_frames": [
+    1,
+    1024
+  ],
+  "difference_rational_seconds": [
+    1,
+    24576
+  ]
+}
