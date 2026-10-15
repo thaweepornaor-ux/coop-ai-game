@@ -168,6 +168,20 @@ def failure_record(error, stage):
     return {"stage": stage, "error_type": type(error).__name__, "error_code": code, "frames": frames}
 
 
+def observe_driver_aggregate(bpy,soft,helper):
+    # Read-only observation; an inspection failure must not replace the strict checks.
+    try:
+        summary=soft.driver_summary(helper,bpy)
+        records=helper.driver_evaluation_status(bpy)
+        return {"native_driver_status":summary,
+                "autoexec_enabled":bool(bpy.context.preferences.filepaths.use_scripts_auto_execute),
+                "native_unmuted":sum(r["native_without_python"] and not r["muted"] for r in records),
+                "non_native_unmuted":sum(not r["native_without_python"] and not r["muted"] for r in records),
+                "record_count":len(records)}
+    except Exception as error:
+        return {"inspection_error":{"error_type":type(error).__name__[:64]}}
+
+
 def main():
     parser = argparse.ArgumentParser()
     for name in ("blend", "expected", "expected-sha", "out"):
@@ -227,6 +241,7 @@ def main():
                 and bpy.context.preferences.filepaths.use_scripts_auto_execute is False,
                 "open_or_autoexec_policy")
         wrapper.validate_runtime(bpy)
+        result["native_driver_after_open"] = observe_driver_aggregate(bpy, soft, helper)
         rig = bpy.data.objects.get("RIG-Snow")
         require(rig is not None and rig.type == "ARMATURE" and rig.data.pose_position == "POSE"
                 and rig.name in bpy.context.scene.objects, "saved_native_rig")
@@ -240,8 +255,11 @@ def main():
         require(bound == expected["reference_binding"]
                 and wrapper.binding_state(bpy, rig) == expected["reference_binding"],
                 "reference_binding_changed")
+        result["native_driver_after_reference"] = observe_driver_aggregate(bpy, soft, helper)
         stage = "snapshot_before_decode"
-        first = wrapper.capture_state(bpy, modules, rig, expected["action_names"])
+        result["native_guard_context"] = {}
+        first = wrapper.capture_state(bpy, modules, rig, expected["action_names"],
+                                      diagnostics=result["native_guard_context"])
         first_hash = hashlib.sha256(encoded(first)).hexdigest()
         require(first == expected["snapshot"] and first_hash == expected["snapshot_sha256"],
                 "saved_snapshot_changed")
@@ -317,7 +335,10 @@ def main():
         result["reference_values_passed_before_and_after_decode"] = True
     # Fixed flags do not conflate packed transport/decode with scene/PBR/render acceptance.
     payload = encoded(result)
-    summary = {key: value for key, value in result.items() if key != "packed_verification"}
+    summary = {key: value for key, value in result.items()
+               if key not in ("packed_verification", "native_guard_context")}
+    if "native_guard_context" in result:
+        summary["native_guard_context_in_report"] = True
     if "packed_verification" in result:
         summary["packed_verification"] = {k: v for k, v in result["packed_verification"].items() if k != "records"}
     small = encoded(summary)

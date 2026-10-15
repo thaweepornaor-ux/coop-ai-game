@@ -259,7 +259,96 @@ def material_graph_without_image_paths(bpy,pair):
 
 
 
-def capture_state(bpy,modules,rig,action_names):
+def _diagnostic_text(value,limit):
+    return "".join(char if char.isprintable() else " " for char in str(value))[:limit]
+
+def _diagnostic_driver_rows(bpy):
+    visited=set()
+    def inspect(block,category):
+        if block is None or int(block.as_pointer()) in visited:
+            return
+        visited.add(int(block.as_pointer()))
+        animation=getattr(block,"animation_data",None)
+        if animation:
+            for curve in animation.drivers:
+                yield category,block,curve
+        yield from inspect(getattr(block,"node_tree",None),category+".node_tree")
+    for category in ("objects","meshes","armatures","shape_keys","materials","node_groups","scenes","worlds","curves"):
+        for block in getattr(bpy.data,category):
+            yield from inspect(block,category)
+
+def record_native_guard_context(bpy,summary,policy,sink):
+    # Observations only. Never replace the existing guard error with an inspection error.
+    try:
+        cap=12*1024
+        context=sink
+        context.update({"native_driver_status":dict(summary),"native_policy":dict(policy),
+            "predicates":{"count_is_1291":summary["count"]==1291,
+                "muted_is_zero":summary["muted"]==0,
+                "active_invalid_is_zero":summary["active_invalid"]==0,
+                "policy_count_is_1291":policy["driver_count"]==1291},
+            "scene_id_counts":{"scene_objects":len(bpy.context.scene.objects),
+                **{kind:len(getattr(bpy.data,kind)) for kind in ("objects","meshes","shape_keys","actions")}},
+            "offender_count":0,"offenders":[],"offender_limit":20,"target_limit_per_offender":2,
+            "diagnostic_byte_budget":cap})
+        for category,owner,curve in _diagnostic_driver_rows(bpy):
+            driver=curve.driver
+            native=bool(driver.type!="SCRIPTED" or driver.is_simple_expression)
+            valid,muted=bool(driver.is_valid),bool(curve.mute)
+            if valid and not muted and native:
+                continue
+            context["offender_count"]+=1
+            if len(context["offenders"])>=20:
+                continue
+            target_count=sum(len(variable.targets) for variable in driver.variables)
+            targets=[]
+            for variable in driver.variables:
+                for target in variable.targets:
+                    if len(targets)>=2:
+                        break
+                    pointer=getattr(target,"id",None)
+                    known_id=isinstance(pointer,bpy.types.ID)
+                    known_object=isinstance(pointer,bpy.types.Object)
+                    bone=str(getattr(target,"bone_target",""))
+                    scene_member=None
+                    bone_exists=None
+                    if known_object:
+                        found=bpy.context.scene.objects.get(pointer.name)
+                        scene_member=bool(found is not None and found==pointer)
+                        if pointer.type=="ARMATURE" and bone:
+                            bone_exists=bool(pointer.data.bones.get(bone) is not None)
+                    targets.append({"variable":_diagnostic_text(variable.name,64),
+                        "variable_type":_diagnostic_text(variable.type,32),
+                        "id_type":_diagnostic_text(pointer.bl_rna.identifier,64) if known_id else None,
+                        "id_name":_diagnostic_text(pointer.name,96) if known_id else None,
+                        "id_exists":bool(known_id) if pointer is None or known_id else None,
+                        "scene_object_exists":scene_member,"bone_exists":bone_exists,
+                        "data_path":_diagnostic_text(getattr(target,"data_path",""),128),
+                        "bone_target":_diagnostic_text(bone,96)})
+                if len(targets)>=2:
+                    break
+            record={"owner_type":_diagnostic_text(category,64),
+                "owner_name":_diagnostic_text(owner.name,96),
+                "data_path":_diagnostic_text(curve.data_path,160),"array_index":int(curve.array_index),
+                "driver_type":_diagnostic_text(driver.type,32),"native_without_python":native,
+                "muted":muted,"is_valid":valid,"target_count":target_count,
+                "targets_truncated":target_count>len(targets),"targets":targets}
+            context["offenders"].append(record)
+            if len(encoded(context))>cap-256:
+                context["offenders"].pop()
+        context["offenders_omitted"]=context["offender_count"]-len(context["offenders"])
+        context["offenders_truncated"]=context["offenders_omitted"]>0
+        while context["offenders"] and len(encoded(context))>cap:
+            context["offenders"].pop()
+            context["offenders_omitted"]=context["offender_count"]-len(context["offenders"])
+            context["offenders_truncated"]=True
+    except Exception as error:
+        if "offender_count" in sink:
+            sink["offenders_omitted"]=sink["offender_count"]-len(sink["offenders"])
+            sink["offenders_truncated"]=sink["offenders_omitted"]>0
+        sink["inspection_error"]={"error_type":_diagnostic_text(type(error).__name__,64)}
+
+def capture_state(bpy,modules,rig,action_names,diagnostics=None):
     base,native,natural,face,proof,soft,pair,helper=modules
     current_names=sorted(a.name for a in bpy.data.actions)
     require(current_names==sorted(action_names),"action_inventory")
@@ -269,6 +358,8 @@ def capture_state(bpy,modules,rig,action_names):
     invariants["materials"]=material_graph_without_image_paths(bpy,pair)
     policy=saved_native_policy(bpy)
     summary=soft.driver_summary(helper,bpy)
+    if diagnostics is not None:
+        record_native_guard_context(bpy,summary,policy,diagnostics)
     require(summary["active_invalid"]==0 and summary["muted"]==0 and summary["count"]==1291
         and policy["driver_count"]==1291,"native_driver_status")
     defs=driver_records(bpy)
