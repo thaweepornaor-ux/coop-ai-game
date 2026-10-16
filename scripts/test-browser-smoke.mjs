@@ -371,6 +371,8 @@ async function wardrobe(page) {
  assert.deepEqual(handCounts,{open:2,relaxed:0,think:0,cuff:2},'Celebrate pose uses two contiguous hands and two garment cuffs');
  await poseButtons.nth(0).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="relaxed-hand"]').count(),2,'Stand pose displays two finished resting hands');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="palm-volume"]').count(),2,'Both resting palms have volume highlights in the browser');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="thumb-fold"]').count(),2,'Both thumbs retain their folds in the browser');
  await poseButtons.nth(2).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-hand"]').count(),1,'Thinking pose displays one joined palm and fingers');
  await poseButtons.nth(3).click();
