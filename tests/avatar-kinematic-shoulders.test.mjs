@@ -62,3 +62,19 @@ test('raised open hands have articulated finger details for both sides without l
   assert.doesNotMatch(cheer,/NaN|undefined/);
  }
 });
+
+test('confident fists paint in front of torso while their forearms stay behind',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  const torso=svg.indexOf('data-avatar-part="shirt-torso"');
+  const firstForearm=svg.indexOf('data-avatar-part="left-forearm"');
+  const secondForearm=svg.indexOf('data-avatar-part="right-forearm"');
+  const leftFist=svg.indexOf('data-avatar-part="left-confident-hand"');
+  const rightFist=svg.indexOf('data-avatar-part="right-confident-hand"');
+  const shoulder=svg.indexOf('data-avatar-part="left-shoulder-cap"');
+  assert.ok(firstForearm<torso&&secondForearm<torso,'both forearms remain behind shirt');
+  assert.ok(leftFist>torso&&rightFist>torso,'both clenched hands sit on top of shirt waist');
+  assert.ok(leftFist<shoulder&&rightFist<shoulder,'hands remain below sleeve overlays');
+  assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
+ }
+});
