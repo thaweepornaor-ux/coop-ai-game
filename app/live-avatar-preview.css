@@ -251,3 +251,39 @@
  border-radius:14px;outline:2px solid rgba(96,236,214,.35);
  outline-offset:5px;
 }
+
+/* Grid follows the reference: five portraits across only when enough space;
+   compact screens never squash the face or hide the name strip. */
+.game-shell[data-role="player"] .quick-wardrobe .quick-characters{
+ display:grid!important;
+ grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ gap:clamp(8px,1vw,14px)!important;
+ min-width:0;
+}
+@media(max-width:1199px){
+ .game-shell[data-role="player"] .quick-wardrobe .quick-characters{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:700px){
+ .game-shell[data-role="player"] .quick-wardrobe .quick-characters{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character{
+ min-width:0!important;
+ min-height:0!important;
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character-portrait{
+ width:100%!important;
+ height:clamp(146px,15vw,184px)!important;
+}
+@media(max-width:700px){
+ .game-shell[data-role="player"] .quick-wardrobe .quick-character-portrait{
+  height:clamp(148px,41vw,186px)!important;
+ }
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character>strong{
+ white-space:normal;
+ min-height:40px!important;
+}
