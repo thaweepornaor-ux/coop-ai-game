@@ -345,6 +345,14 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),1,'Celebration face visibly closes both eyes');
  await poseButtons.nth(0).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),0,'Neutral pose restores open eyes');
+ for(let poseIndex=0;poseIndex<5;poseIndex++){
+  await poseButtons.nth(poseIndex).click();
+  for(const side of ['left','right']){
+   assert.equal(await previewArtwork.locator('[data-avatar-part="'+side+'-forearm"]').count(),1,'Every pose should connect '+side+' forearm to the sleeve');
+  }
+  assert.equal(await previewArtwork.locator('[data-avatar-part="sleeve-cuff"]').count(),2,'Each pose has two fabric cuffs');
+ }
+
 
 
  await poseButtons.first().click();
