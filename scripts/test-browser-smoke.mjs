@@ -86,7 +86,7 @@ async function boundedCase(browser, label, budgetMs, body) {
   const started = Date.now();
   const row = { label, status: 'running', stage: 'context-setup', budgetMs, checks: [] };
   report.cases.push(row); emitCase(row); await saveReport();
-  const contexts = new Set(), pages = [], errors = [];
+  const contexts = new Set(), pages = [], errors = [], failedRequests = [];
   let active = true, timedOut = false, timer, previewImage;
   const stage = async name => {
     if (!active || timedOut) throw new Error('Case was aborted');
@@ -107,7 +107,13 @@ async function boundedCase(browser, label, budgetMs, body) {
     if (!active || timedOut) throw new Error('Case was aborted');
     page.setDefaultTimeout(15_000); page.setDefaultNavigationTimeout(10_000);
     pages.push(page);
-    page.on('pageerror', error => errors.push(safeCaseText(error.message)));
+    page.on('pageerror', error => errors.push(safeCaseText(`${page.url()} :: ${error.message}`)));
+    page.on('requestfailed', request => {
+      if (failedRequests.length >= 12) return;
+      let pathname = 'unknown';
+      try { pathname = new URL(request.url()).pathname; } catch {}
+      failedRequests.push({page: safeCaseText(new URL(page.url()).pathname), method: request.method(), pathname, reason: safeCaseText(request.failure()?.errorText || 'unknown')});
+    });
     return page;
   };
   const timeout = new Promise((_, reject) => {
@@ -127,6 +133,7 @@ async function boundedCase(browser, label, budgetMs, body) {
   } catch (error) {
     row.status = 'failed'; row.error = safeCaseText(error.message);
     row.runtimeErrors = errors.slice(0, 4);
+    row.failedRequests = failedRequests.slice(0, 12);
     // A timed out context is already being closed. Other failures retain a
     // bounded actual screenshot before cleanup; no synthetic evidence is used.
     if (!timedOut) await Promise.allSettled(pages.slice(0, 2).map((page, index) =>
@@ -369,6 +376,10 @@ async function wardrobe(page) {
   cuff:svg.querySelectorAll('[data-avatar-part="sleeve-cuff"]').length
  }));
  assert.deepEqual(handCounts,{open:2,relaxed:0,think:0,cuff:2},'Celebrate pose uses two contiguous hands and two garment cuffs');
+ const celebratedPalms=await previewArtwork.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[data-avatar-part="open-hand"]')].map(el=>el.getAttribute('d')));
+ assert.equal(celebratedPalms.length,2,'Browser has both cheering palms');
+ assert.equal(celebratedPalms[0],celebratedPalms[1],'Live cheering palms mirror identical finger anatomy');
+
  await poseButtons.nth(0).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="relaxed-hand"]').count(),2,'Stand pose displays two finished resting hands');
  assert.equal(await previewArtwork.locator('[data-avatar-part="palm-volume"]').count(),2,'Both resting palms have volume highlights in the browser');
@@ -379,6 +390,11 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-palm-volume"]').count(),1,'Thinking palm retains subtle depth in real browser');
  await poseButtons.nth(3).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="closed-hand"]').count(),2,'Confident pose displays both enclosed fist contours');
+ const confidentFingerContours=await previewArtwork.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[data-avatar-part="closed-hand"]')].map(el=>el.getAttribute('d')));
+ assert.deepEqual(confidentFingerContours,[confidentFingerContours[0],confidentFingerContours[0]],'Live confident fists share one mirrored anatomical contour');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="fist-knuckles"]').count(),2,'Both confident hands render articulated knuckles');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="fist-volume"]').count(),2,'Both confident hands render palm volume');
+
  const confidentPaintOrder=await previewArtwork.locator('svg').evaluate(svg=>{
   const nodes=[...svg.querySelectorAll('*')];
   const index=selector=>nodes.indexOf(svg.querySelector(selector));
