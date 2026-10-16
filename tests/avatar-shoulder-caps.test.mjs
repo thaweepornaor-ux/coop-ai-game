@@ -17,3 +17,11 @@ test('twenty characters in five poses have actual shoulder cap, sleeve and attac
   assert.doesNotMatch(svg,/NaN|undefined/);
  }
 });
+
+test('shoulder joins render above pose sleeves rather than disappearing behind them',()=>{
+ const svg=renderAvatar({pose:'wave',shirtColor:'white'});
+ const sleevesAt=svg.indexOf('data-avatar-part="pose-sleeves"');
+ const capsAt=svg.indexOf('data-avatar-part="shoulder-caps"');
+ const leftJoinAt=svg.indexOf('data-avatar-part="shoulder-join-left"');
+ assert.ok(sleevesAt>=0&&capsAt>sleevesAt&&leftJoinAt>capsAt,'cloth must cap the live shoulder cutout visibly');
+});
