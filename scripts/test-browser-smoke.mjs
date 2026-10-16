@@ -341,6 +341,11 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-hand"]').count(),1,'Thinking pose displays one joined palm and fingers');
  await poseButtons.nth(3).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="closed-hand"]').count(),2,'Confident pose displays both enclosed fist contours');
+ await poseButtons.nth(4).click();
+ assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),1,'Celebration face visibly closes both eyes');
+ await poseButtons.nth(0).click();
+ assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),0,'Neutral pose restores open eyes');
+
 
  await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
