@@ -188,24 +188,24 @@ export function renderAvatar(options = {}) {
   // cuff ends terminate at the actual forearm direction of that pose.
   const sleevesByPose = {
     stand: [
-      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
-      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+      'M53 99Q47 99 43 106Q40 112 39 118Q43 122 49 124Q53 114 58 108Q57 102 53 99Z',
+      'M107 99Q113 99 117 106Q120 112 121 118Q117 122 111 124Q107 114 102 108Q103 102 107 99Z',
     ],
     wave: [
-      'M54 98Q48 96 44 92L37 86Q33 87 30 93L39 104Q47 114 55 114L59 108Z',
-      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+      'M54 99Q47 98 41 92L37 86Q33 87 30 93L39 104Q45 113 55 114L59 108Q58 102 54 99Z',
+      'M107 99Q113 99 117 106Q120 112 121 118Q117 122 111 124Q107 114 102 108Q103 102 107 99Z',
     ],
     celebrate: [
-      'M54 99Q49 96 46 88L41 82Q35 83 32 88L38 102Q44 114 55 114L59 107Z',
-      'M106 99Q111 96 114 88L119 82Q125 83 128 88L122 102Q116 114 105 114L101 107Z',
+      'M54 99Q49 95 45 88L41 82Q35 83 32 88L38 102Q44 113 55 114L59 107Q58 102 54 99Z',
+      'M106 99Q111 95 115 88L119 82Q125 83 128 88L122 102Q116 113 105 114L101 107Q102 102 106 99Z',
     ],
     think: [
-      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
-      'M109 99Q115 101 118 109L120 118Q117 123 109 124L102 110Q100 104 109 99Z',
+      'M53 99Q47 99 43 106Q40 112 39 118Q43 122 49 124Q53 114 58 108Q57 102 53 99Z',
+      'M107 99Q114 99 117 107Q120 113 120 118Q116 122 109 124L102 110Q103 103 107 99Z',
     ],
     confident: [
-      'M51 99Q46 101 43 109L40 118Q42 123 50 124L57 110Q60 104 51 99Z',
-      'M109 99Q114 101 117 109L120 118Q118 123 110 124L103 110Q100 104 109 99Z',
+      'M53 99Q46 100 43 107Q40 113 40 118Q44 123 50 124L57 110Q58 103 53 99Z',
+      'M107 99Q114 100 117 107Q120 113 120 118Q116 123 110 124L103 110Q102 103 107 99Z',
     ],
   };
   const sleeves = sleevesByPose[pose];
@@ -221,11 +221,11 @@ export function renderAvatar(options = {}) {
   // Highlight only the raised fabric fold; skin remains visible underneath
   // and the cuff follows the actual exposed forearm for every pose.
   const foldsByPose = {
-    stand:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
-    wave:['M50 100Q44 98 39 94','M112 102Q115 108 117 113'],
-    celebrate:['M50 100Q44 94 40 88','M110 100Q116 94 120 88'],
-    think:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
-    confident:['M48 102Q45 108 43 113','M112 102Q115 108 117 113']
+    stand:['M48 105Q45 110 44 114','M112 105Q115 110 116 114'],
+    wave:['M50 102Q45 99 41 96','M112 105Q115 110 116 114'],
+    celebrate:['M51 103Q46 98 43 93','M109 103Q114 98 117 93'],
+    think:['M48 105Q45 110 44 114','M112 105Q115 110 116 114'],
+    confident:['M48 105Q45 110 44 114','M112 105Q115 110 116 114']
   };
   const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
     `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".48" stroke-width="1.35" stroke-linecap="round"/>`
