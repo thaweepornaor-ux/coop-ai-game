@@ -229,10 +229,40 @@ export function renderAvatar(options = {}) {
   };
   // Shoulder caps share the torso cloth material. The soft join is laid behind
   // each sleeve, while the cuff contour is drawn over exposed skin.
-  const shoulderCaps = '<g data-avatar-part="shoulder-caps">' + [
-    '<path data-avatar-part="left-shoulder-cap" d="M49 101Q53 97 57 99Q61 101 61 107L57 113Q52 110 49 105Z"/>',
-    '<path data-avatar-part="right-shoulder-cap" d="M111 101Q107 97 103 99Q99 101 99 107L103 113Q108 110 111 105Z"/>'
-  ].join('') + '</g>';
+  // Shoulder cloth follows the same movement as the actual pose sleeves.
+  // Fixed shoulder patches created visible bulges when one or both arms were raised.
+  const shoulderProfiles = {
+    stand: [
+      'M49 101Q53 97 57 99Q61 101 61 107L57 113Q52 110 49 105Z',
+      'M111 101Q107 97 103 99Q99 101 99 107L103 113Q108 110 111 105Z'
+    ],
+    wave: [
+      'M49 96Q52 96 55 99Q59 102 60 106L56 111Q49 107 45 101Z',
+      'M111 101Q107 97 103 99Q99 101 99 107L103 113Q108 110 111 105Z'
+    ],
+    celebrate: [
+      'M48 94Q52 95 55 99Q59 102 60 107L56 111Q49 105 45 99Z',
+      'M112 94Q108 95 105 99Q101 102 100 107L104 111Q111 105 115 99Z'
+    ],
+    think: [
+      'M49 101Q53 97 57 99Q61 101 61 107L57 113Q52 110 49 105Z',
+      'M111 99Q107 97 104 99Q100 101 99 108L104 112Q109 109 113 104Z'
+    ],
+    confident: [
+      'M49 101Q53 98 57 99Q61 102 60 108L56 113Q51 110 49 105Z',
+      'M111 101Q107 98 103 99Q99 102 100 108L104 113Q109 110 111 105Z'
+    ]
+  };
+  const shoulderCaps = '<g data-avatar-part="shoulder-caps">' +
+    shoulderProfiles[pose].map((d,side)=>`<path data-avatar-part="${side===0?'left':'right'}-shoulder-cap" d="${d}"/>`).join('') + '</g>';
+  const shoulderJoin = (side) => {
+    const raised = pose==='celebrate'||(pose==='wave'&&side===0);
+    const bent = pose==='think'&&side===1;
+    const d = side===0
+      ? raised ? 'M52 98Q56 99 59 105' : 'M54 99Q58 100 60 105'
+      : raised ? 'M108 98Q104 99 101 105' : bent ? 'M107 99Q103 100 101 106' : 'M106 99Q102 100 100 105';
+    return `<path data-avatar-part="shoulder-join-${side===0?'left':'right'}" d="${d}" fill="none" stroke="${shirtColor}" stroke-width="2.4" stroke-linecap="round"/>`;
+  };
   // Fabric geometry is shared; outfit style changes only its finishing treatment.
   const sleeveFinish = selected.shirtStyle.value === 'jacket'
     ? {edgeWidth:2.4,edgeOpacity:.65,foldOpacity:.13}
@@ -253,5 +283,5 @@ export function renderAvatar(options = {}) {
     <linearGradient id="${materialPrefix}-pants-lit" x1="0%" x2="100%" y1="0%" y2="30%"><stop offset="0%" stop-color="${shade(bottomColor)}"/><stop offset="33%" stop-color="${bottomColor}"/><stop offset="67%" stop-color="${bottomColor}"/><stop offset="100%" stop-color="${shade(bottomColor)}"/></linearGradient>
     <radialGradient id="${materialPrefix}-face-lit" cx="29%" cy="24%" r="85%"><stop offset="0%" stop-color="${skin}"/><stop offset="40%" stop-color="${skin}"/><stop offset="100%" stop-color="${skinShade}"/></radialGradient>
   </defs>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:visible"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".16"/>${materialDefs}${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="url(#${materialPrefix}-skin-lit)">${armShape}</g><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path data-avatar-part="shirt-torso" d="${shirtPath}" fill="url(#${materialPrefix}-shirt-lit)"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/><path data-avatar-part="shirt-volume" d="M62 115Q69 121 71 133M97 116Q91 124 91 136" fill="none" stroke="#fff" stroke-width="1.4" opacity=".22"/><path data-avatar-part="shirt-side-shading" d="M59 117Q62 130 60 142Q66 145 72 145M102 116Q98 130 101 142Q96 145 91 146" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".22" stroke-width="2.1" stroke-linecap="round"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}${sleeveOverlay}<g fill="url(#${materialPrefix}-shirt-lit)">${shoulderCaps}</g><path data-avatar-part="shoulder-join-left" d="M54 99Q58 100 60 105" fill="none" stroke="${shirtColor}" stroke-width="3.5" stroke-linecap="round"/><path data-avatar-part="shoulder-join-right" d="M106 99Q102 100 100 105" fill="none" stroke="${shirtColor}" stroke-width="3.5" stroke-linecap="round"/><g fill="url(#${materialPrefix}-face-lit)"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path data-avatar-part="brows" d="M65 ${56+browLift}Q69 ${54+browLift} 73 ${56+browLift}M87 ${56+browLift}Q91 ${54+browLift} 95 ${56+browLift}" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/>${poseEyes}<g data-avatar-part="face-cheeks" fill="#D57468" opacity=".22"><ellipse cx="64" cy="72" rx="${cheekWidth}" ry="2.7"/><ellipse cx="96" cy="72" rx="${cheekWidth}" ry="2.7"/></g><path data-avatar-part="face-chin-light" d="M70 83Q80 89 90 83" fill="none" stroke="#fff" stroke-width="1.3" stroke-opacity=".16" stroke-linecap="round"/><path d="M73 78Q80 ${78+expressionSmile} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" data-avatar-pose="${pose}" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:visible"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".16"/>${materialDefs}${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="url(#${materialPrefix}-skin-lit)">${armShape}</g><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path data-avatar-part="shirt-torso" d="${shirtPath}" fill="url(#${materialPrefix}-shirt-lit)"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/><path data-avatar-part="shirt-volume" d="M62 115Q69 121 71 133M97 116Q91 124 91 136" fill="none" stroke="#fff" stroke-width="1.4" opacity=".22"/><path data-avatar-part="shirt-side-shading" d="M59 117Q62 130 60 142Q66 145 72 145M102 116Q98 130 101 142Q96 145 91 146" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".22" stroke-width="2.1" stroke-linecap="round"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}${sleeveOverlay}<g fill="url(#${materialPrefix}-shirt-lit)">${shoulderCaps}</g>${shoulderJoin(0)}${shoulderJoin(1)}<g fill="url(#${materialPrefix}-face-lit)"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path data-avatar-part="brows" d="M65 ${56+browLift}Q69 ${54+browLift} 73 ${56+browLift}M87 ${56+browLift}Q91 ${54+browLift} 95 ${56+browLift}" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/>${poseEyes}<g data-avatar-part="face-cheeks" fill="#D57468" opacity=".22"><ellipse cx="64" cy="72" rx="${cheekWidth}" ry="2.7"/><ellipse cx="96" cy="72" rx="${cheekWidth}" ry="2.7"/></g><path data-avatar-part="face-chin-light" d="M70 83Q80 89 90 83" fill="none" stroke="#fff" stroke-width="1.3" stroke-opacity=".16" stroke-linecap="round"/><path d="M73 78Q80 ${78+expressionSmile} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
 }
