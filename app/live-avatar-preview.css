@@ -1,14 +1,14 @@
 /* Keep the selected character visible while learners scroll clothing and hair choices. */
 .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{
  position:sticky;top:0;z-index:12;
- display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;
+ display:grid;grid-template-columns:minmax(124px,168px) minmax(0,1fr);align-items:center;
  gap:12px;width:100%;min-width:0;margin:0 0 16px;padding:9px 12px;
  background:linear-gradient(120deg,rgba(21,62,110,.98),rgba(42,64,153,.98));
  border:1px solid rgba(108,248,222,.75);border-radius:16px;
  box-shadow:0 10px 28px rgba(5,16,49,.42);
 }
 .game-shell[data-role="player"] .wardrobe-live-avatar{
- width:88px;height:110px;display:flex;align-items:center;justify-content:center;
+ width:100%;height:190px;display:flex;align-items:center;justify-content:center;
  border-radius:12px;background:radial-gradient(circle at 50% 40%,#3f8bc2,#194779);
  overflow:hidden;
 }
@@ -28,13 +28,13 @@
 @media(max-width:520px){
  .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{
   top:0;
-  grid-template-columns:78px minmax(0,1fr);gap:9px;padding:8px;
+  grid-template-columns:minmax(108px,38%) minmax(0,1fr);gap:10px;padding:10px;
  }
- .game-shell[data-role="player"] .wardrobe-live-avatar{width:76px;height:94px}
+ .game-shell[data-role="player"] .wardrobe-live-avatar{width:100%;height:165px}
 }
 @media(max-height:620px){
- .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{top:0;grid-template-columns:66px minmax(0,1fr);padding:5px}
- .game-shell[data-role="player"] .wardrobe-live-avatar{width:62px;height:73px}
+ .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{top:0;grid-template-columns:96px minmax(0,1fr);padding:8px}
+ .game-shell[data-role="player"] .wardrobe-live-avatar{width:100%;height:122px}
 }
 
 
@@ -50,8 +50,8 @@
    padding:10px 7px!important;
  }
  .game-shell[data-role="player"] .quick-player .quick-character-portrait{
-   height:138px!important;
-   overflow:visible!important;
+   height:160px!important;
+   overflow:hidden!important;
  }
  .game-shell[data-role="player"] .quick-player .quick-character strong{
    font-size:clamp(.85rem,3.4vw,1rem);
@@ -149,4 +149,105 @@
  .game-shell[data-role="player"] .quick-wardrobe .quick-character-portrait{
    height:clamp(140px,41vw,176px)!important;
  }
+}
+
+/* The pose picker is part of the visible live preview, never an accordion. */
+.game-shell[data-role="player"] .wardrobe-pose-choices{
+ grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:6px;width:100%;min-width:0;
+}
+.game-shell[data-role="player"] .wardrobe-pose-choices button{
+ min-width:0;min-height:36px;padding:6px 3px;border-radius:9px;
+ border:1px solid rgba(208,229,255,.5);background:rgba(17,38,81,.7);
+ color:#f4f8ff;font-size:clamp(.7rem,2.8vw,.84rem);line-height:1.2;
+ cursor:pointer;white-space:normal;
+}
+.game-shell[data-role="player"] .wardrobe-pose-choices button[aria-pressed="true"]{
+ border-color:#78ffe0;background:rgba(50,137,164,.85);
+ box-shadow:inset 0 0 0 1px rgba(120,255,224,.28);
+}
+.game-shell[data-role="player"] .wardrobe-pose-choices button:focus-visible{
+ outline:3px solid #fff;outline-offset:2px;
+}
+@media(max-width:370px){
+ .game-shell[data-role="player"] .wardrobe-pose-choices{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+}
+
+/* Final art-review layout: large full-figure preview and independent label region.
+   Preview remains visible, never occludes wardrobe options or preset captions. */
+.game-shell[data-role="player"] .wardrobe-live-avatar{
+ min-width:0;align-self:stretch;position:relative;
+}
+.game-shell[data-role="player"] .wardrobe-live-avatar [role="img"]{
+ max-width:100%;min-width:0;overflow:hidden;
+}
+.game-shell[data-role="player"] .wardrobe-live-avatar svg{
+ width:100%!important;height:100%!important;overflow:hidden!important;
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character>strong{
+ overflow:hidden;text-overflow:ellipsis;
+}
+@media(max-width:390px){
+ .game-shell[data-role="player"] .quick-options .wardrobe-live-preview{
+  grid-template-columns:minmax(104px,38%) minmax(0,1fr);
+ }
+ .game-shell[data-role="player"] .wardrobe-live-avatar{height:150px}
+ .game-shell[data-role="player"] .wardrobe-live-caption span{
+  font-size:.77rem;line-height:1.4;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .game-shell[data-role="player"] .wardrobe-pose-choices button{transition:none!important}
+}
+
+/* Screenshot-led UI refinement for the actual playable character picker.
+   Keep the existing DOM and interaction contracts intact. */
+.game-shell[data-role="player"] .quick-wardrobe .quick-character{
+ background:linear-gradient(160deg,rgba(49,126,191,.6),rgba(63,75,173,.72));
+ border:1px solid rgba(145,207,255,.7)!important;
+ border-radius:14px!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+ transition:border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character[aria-pressed="true"]{
+ border:2px solid #55ffd8!important;
+ background:linear-gradient(160deg,rgba(25,160,171,.44),rgba(37,104,174,.78));
+ box-shadow:0 0 0 2px rgba(50,230,195,.18),0 0 22px rgba(43,246,214,.26);
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character:focus-visible{
+ outline:3px solid #fff;outline-offset:2px;
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character-portrait{
+ border-radius:9px;
+ background:radial-gradient(ellipse at 50% 38%,rgba(105,193,250,.36),rgba(34,112,178,.09) 72%);
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-character>strong{
+ background:linear-gradient(100deg,rgba(14,53,119,.84),rgba(19,66,130,.78))!important;
+ color:#fff!important;font-size:clamp(.85rem,1vw,1rem)!important;
+}
+.game-shell[data-role="player"] .quick-wardrobe .quick-options .wardrobe-live-preview{
+ background:linear-gradient(120deg,rgba(17,70,132,.99),rgba(39,62,148,.99));
+ border:1px solid rgba(104,225,246,.9);
+}
+.game-shell[data-role="player"] .wardrobe-live-avatar{
+ background:radial-gradient(ellipse at 46% 35%,#6cc8ee,#2d78c7 70%,#2352a4)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .game-shell[data-role="player"] .quick-wardrobe .quick-character{transition:none}
+}
+
+.game-shell[data-role="player"] .wardrobe-edit-action{
+ border:1px solid rgba(127,255,229,.56);border-radius:9px;
+ background:rgba(8,56,113,.65);padding:8px 11px;
+ cursor:pointer;text-align:left;min-height:36px;width:max-content;
+ max-width:100%;font-weight:800;
+}
+.game-shell[data-role="player"] .wardrobe-edit-action:focus-visible{
+ outline:3px solid #fff;outline-offset:2px;
+}
+.game-shell[data-role="player"] .customizer-highlight{
+ border-radius:14px;outline:2px solid rgba(96,236,214,.35);
+ outline-offset:5px;
 }

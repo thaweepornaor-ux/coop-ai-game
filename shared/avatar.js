@@ -164,28 +164,63 @@ export function renderAvatar(options = {}) {
   const pose = ['wave','celebrate','think','confident'].includes(input.pose) ? input.pose : 'stand';
   // Dedicated complete arm + visible palm/fingers geometry per pose.
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
-  const leftRest = `<path d="M53 103 Q43 106 43 118 L39 138 Q38 144 42 146 L46 146 Q50 143 51 138 L58 116 Z"/><g transform="translate(42 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 7L-5 15M-1 8L-1 16M2 8L3 15M5 6L7 12" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
-  const rightRest = `<path d="M107 103 Q117 106 117 118 L121 138 Q122 144 118 146 L114 146 Q110 143 109 138 L102 116 Z"/><g transform="translate(118 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 6L-6 12M-2 8L-3 15M1 8L1 16M4 7L5 15" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
+  const leftRest = `<path d="M53 103 Q43 106 43 118 L39 138 Q38 144 42 146 L46 146 Q50 143 51 138 L58 116 Z"/><g transform="translate(42 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 7L-5 15M-1 8L-1 16M2 8L3 15M5 6L7 12" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
+  const rightRest = `<path d="M107 103 Q117 106 117 118 L121 138 Q122 144 118 146 L114 146 Q110 143 109 138 L102 116 Z"/><g transform="translate(118 145)"><ellipse cy="5" rx="5.3" ry="7"/><path d="M-4 6L-6 12M-2 8L-3 15M1 8L1 16M4 7L5 15" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/></g>`;
   const waveArm = `<path d="M53 105Q42 103 38 94L28 78Q25 73 27 70Q31 67 35 73L51 92L58 111Z"/><g transform="translate(27 68) rotate(-15)"><ellipse cy="-5" rx="5.5" ry="7"/><path d="M-4 -7L-7 -17M-1 -9L-2 -21M2 -9L3 -21M5 -7L8 -17" fill="none" stroke="${skin}" stroke-width="3.1" stroke-linecap="round"/><path d="M-6 -1L-12 -6" stroke="${skin}" stroke-width="3.1" stroke-linecap="round"/></g>`;
-  const cheerLeft = `<path d="M53 105Q45 102 41 91L32 68Q29 63 32 60Q37 57 40 64L57 106Z"/><g transform="translate(31 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -5L-6 -11M-1 -6L-2 -13M2 -6L3 -13M5 -4L7 -10" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
-  const cheerRight = `<path d="M107 105Q115 102 119 91L128 68Q131 63 128 60Q123 57 120 64L103 106Z"/><g transform="translate(129 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -4L-7 -10M-2 -6L-3 -13M1 -6L2 -13M4 -5L6 -11" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
+  const cheerLeft = `<path d="M53 105Q45 102 41 91L32 68Q29 63 32 60Q37 57 40 64L57 106Z"/><g transform="translate(31 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -5L-6 -11M-1 -6L-2 -13M2 -6L3 -13M5 -4L7 -10" fill="none" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
+  const cheerRight = `<path d="M107 105Q115 102 119 91L128 68Q131 63 128 60Q123 57 120 64L103 106Z"/><g transform="translate(129 58)"><ellipse cy="-2" rx="5.3" ry="5.8"/><path d="M-4 -4L-7 -10M-2 -6L-3 -13M1 -6L2 -13M4 -5L6 -11" fill="none" stroke="${skin}" stroke-width="3" stroke-linecap="round"/></g>`;
   const armShape = pose === 'wave' ? waveArm+rightRest
     : pose === 'celebrate' ? cheerLeft+cheerRight
-    : pose === 'think' ? leftRest+`<path d="M108 106Q117 110 116 121L106 134Q102 137 98 133L91 91Q90 86 94 84Q99 84 101 90L108 119Z"/><g transform="translate(93 86)"><ellipse rx="4.5" ry="6"/><path d="M-2 -3L-3 -10M1 -5L2 -12" stroke="${skinShade}" stroke-width="1.3" stroke-linecap="round"/></g>`
-    : pose === 'confident' ? `<path d="M53 105Q44 108 44 121L42 133Q42 138 47 139L60 138Q64 135 60 133L51 131L57 112Z"/><ellipse cx="60" cy="135" rx="5" ry="4"/>`+`<path d="M107 105Q116 108 116 121L118 133Q118 138 113 139L100 138Q96 135 100 133L109 131L103 112Z"/><ellipse cx="100" cy="135" rx="5" ry="4"/>`
+    : pose === 'think' ? leftRest+`<path d="M108 106Q117 110 116 121L106 134Q102 137 98 133L91 91Q90 86 94 84Q99 84 101 90L108 119Z"/><g transform="translate(93 86)"><ellipse rx="4.5" ry="6"/><path d="M-2 -3L-3 -10M1 -5L2 -12" fill="none" stroke="${skinShade}" stroke-width="1.3" stroke-linecap="round"/></g>`
+    : pose === 'confident' ? `<path d="M53 105Q44 108 44 121L42 133Q42 138 47 139L60 138Q64 135 60 133L51 131L57 112Z"/><g data-avatar-part="left-confident-hand"><ellipse cx="60" cy="135" rx="5" ry="4"/><path d="M57 133L54 130M59 132L57 128M62 132L61 128" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/></g>`+`<path d="M107 105Q116 108 116 121L118 133Q118 138 113 139L100 138Q96 135 100 133L109 131L103 112Z"/><g data-avatar-part="right-confident-hand"><ellipse cx="100" cy="135" rx="5" ry="4"/><path d="M103 133L106 130M101 132L103 128M98 132L99 128" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/></g>`
     : leftRest+rightRest;
-  // Sleeve endpoints follow the exact arm direction for each pose.
-  // Overlay after the torso so every arm emerges from a visible fabric sleeve.
-  const sleeveSegments = pose === 'wave'
-    ? ['M54 106 Q48 103 43 98','M107 107 Q114 112 115 119']
-    : pose === 'celebrate'
-    ? ['M54 106 Q47 103 43 94','M106 106 Q113 103 117 94']
-    : pose === 'think'
-    ? ['M53 106 Q47 111 45 120','M107 106 Q114 110 114 118']
-    : pose === 'confident'
-    ? ['M53 106 Q47 111 45 120','M107 106 Q113 111 115 120']
-    : ['M53 106 Q47 111 45 120','M107 106 Q113 111 115 120'];
-  const sleeveOverlay = sleeveSegments.map(d=>`<path d="${d}" fill="none" stroke="url(#${materialPrefix}-shirt-lit)" stroke-width="12" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${shade(shirtColor)}" stroke-width=".8" stroke-linecap="round" opacity=".4"/>`).join('');
+  // Each pose has its own closed fabric sleeve silhouettes, rather than
+  // fixed-width strokes laid over skin. Shoulder ends overlap the shirt body;
+  // cuff ends terminate at the actual forearm direction of that pose.
+  const sleevesByPose = {
+    stand: [
+      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
+      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+    ],
+    wave: [
+      'M54 98Q48 96 44 92L37 86Q33 87 30 93L39 104Q47 114 55 114L59 108Z',
+      'M109 99Q114 100 117 108L121 118Q119 122 111 124L103 111Q100 104 109 99Z',
+    ],
+    celebrate: [
+      'M54 99Q49 96 46 88L41 82Q35 83 32 88L38 102Q44 114 55 114L59 107Z',
+      'M106 99Q111 96 114 88L119 82Q125 83 128 88L122 102Q116 114 105 114L101 107Z',
+    ],
+    think: [
+      'M51 99Q46 100 43 108L39 118Q41 122 49 124L57 111Q60 104 51 99Z',
+      'M109 99Q115 101 118 109L120 118Q117 123 109 124L102 110Q100 104 109 99Z',
+    ],
+    confident: [
+      'M51 99Q46 101 43 109L40 118Q42 123 50 124L57 110Q60 104 51 99Z',
+      'M109 99Q114 101 117 109L120 118Q118 123 110 124L103 110Q100 104 109 99Z',
+    ],
+  };
+  const sleeves = sleevesByPose[pose];
+  // The cuff follows each shoulder-to-forearm direction.  A soft fabric edge
+  // reads as a rolled hem instead of a hard painted outline over the skin.
+  const cuffsByPose = {
+    stand:['M39 118Q43 122 49 124','M121 118Q117 122 111 124'],
+    wave:['M30 93Q34 99 39 104','M121 118Q117 122 111 124'],
+    celebrate:['M32 88Q35 95 38 102','M128 88Q125 95 122 102'],
+    think:['M39 118Q43 122 49 124','M120 118Q116 123 109 124'],
+    confident:['M40 118Q44 122 50 124','M120 118Q116 122 110 124'],
+  };
+  // Highlight only the raised fabric fold; skin remains visible underneath
+  // and the cuff follows the actual exposed forearm for every pose.
+  const foldsByPose = {
+    stand:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
+    wave:['M50 100Q44 98 39 94','M112 102Q115 108 117 113'],
+    celebrate:['M50 100Q44 94 40 88','M110 100Q116 94 120 88'],
+    think:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
+    confident:['M48 102Q45 108 43 113','M112 102Q115 108 117 113']
+  };
+  const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
+    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".48" stroke-width="1.35" stroke-linecap="round"/>`
+  ).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
   // All fills still derive from the user's exact selected outfit palette.
@@ -195,5 +230,5 @@ export function renderAvatar(options = {}) {
     <linearGradient id="${materialPrefix}-pants-lit" x1="0%" x2="100%" y1="0%" y2="30%"><stop offset="0%" stop-color="${shade(bottomColor)}"/><stop offset="33%" stop-color="${bottomColor}"/><stop offset="67%" stop-color="${bottomColor}"/><stop offset="100%" stop-color="${shade(bottomColor)}"/></linearGradient>
     <radialGradient id="${materialPrefix}-face-lit" cx="29%" cy="24%" r="85%"><stop offset="0%" stop-color="${skin}"/><stop offset="40%" stop-color="${skin}"/><stop offset="100%" stop-color="${skinShade}"/></radialGradient>
   </defs>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:visible"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".16"/>${materialDefs}${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="url(#${materialPrefix}-skin-lit)">${armShape}</g><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path d="${shirtPath}" fill="url(#${materialPrefix}-shirt-lit)"/><path d="M46 113L55 118M105 118L114 113" stroke="${shade(shirtColor)}" stroke-width="2" stroke-linecap="round"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/><path d="M62 115Q69 121 71 133M97 116Q91 124 91 136" fill="none" stroke="#fff" stroke-width="1" opacity=".13"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}${sleeveOverlay}<g fill="url(#${materialPrefix}-face-lit)"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path d="M65 56Q69 54 73 56M87 56Q91 54 95 56" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/><g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g><g fill="#D57468" opacity=".26"><ellipse cx="64" cy="72" rx="5" ry="2.8"/><ellipse cx="96" cy="72" rx="5" ry="2.8"/></g><path d="M73 78Q80 ${78+smileDepth} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220" role="img" aria-label="ตัวละครผู้เล่น" style="display:block;width:100%;height:100%;overflow:visible"><ellipse cx="80" cy="209" rx="37" ry="5" fill="#34445D" opacity=".16"/>${materialDefs}${backHair(selected.hairStyle.value, hairColor)}${bottom}${shoes}<g fill="url(#${materialPrefix}-skin-lit)">${armShape}</g><rect x="72" y="81" width="16" height="20" rx="6" fill="${skin}"/><path d="M72 84Q80 91 88 84V91Q80 96 72 91Z" fill="${skinShade}"/><path d="${shirtPath}" fill="url(#${materialPrefix}-shirt-lit)"/><path d="M61 139Q80 144 99 139" fill="none" stroke="${shade(shirtColor)}" stroke-width="2" opacity=".35"/><path d="M62 115Q69 121 71 133M97 116Q91 124 91 136" fill="none" stroke="#fff" stroke-width="1" opacity=".13"/>${shirtDetail(selected.shirtStyle.value, shirtColor)}${sleeveOverlay}<g fill="url(#${materialPrefix}-face-lit)"><ellipse cx="57" cy="63" rx="5" ry="7"/><ellipse cx="103" cy="63" rx="5" ry="7"/><ellipse cx="80" cy="61" rx="${faceWidth}" ry="${faceLength}"/></g><path d="M55 62Q59 59 60 65M105 62Q101 59 100 65" fill="none" stroke="${skinShade}" stroke-width="1.5" stroke-linecap="round"/><path d="M80 63L77 ${noseTip}Q80 ${noseTip+2} 83 ${noseTip}" fill="none" stroke="${skinShade}" stroke-width="1.8" stroke-linecap="round"/>${frontHair(selected.hairStyle.value, hairColor)}<path d="M65 56Q69 54 73 56M87 56Q91 54 95 56" fill="none" stroke="${shade(hairColor)}" stroke-width="2" stroke-linecap="round"/><g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g><g fill="#D57468" opacity=".26"><ellipse cx="64" cy="72" rx="5" ry="2.8"/><ellipse cx="96" cy="72" rx="5" ry="2.8"/></g><path d="M73 78Q80 ${78+smileDepth} 87 78" fill="none" stroke="#854E43" stroke-width="2" stroke-linecap="round"/>${eyewear(selected.glassesStyle.value)}${hat(selected.hatStyle.value, selected.hatColor.color)}</svg>`;
 }

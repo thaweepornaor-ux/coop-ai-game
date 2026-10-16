@@ -278,6 +278,27 @@ async function wardrobe(page) {
  assert.equal(await gallery.getByRole('button').count(),10);
  await page.getByRole('button',{name:'ตัวละครหญิง',exact:true}).click();
  assert.equal(await gallery.getByRole('button').count(),10);
+ // Geometry gate: every gallery portrait must stay in its own grid row;
+ // this catches feet or arms covering the Thai character name.
+ for(const genderName of ['ตัวละครชาย','ตัวละครหญิง']){
+  await page.getByRole('button',{name:genderName,exact:true}).click();
+  const layout=await gallery.locator('.quick-character').evaluateAll(cards=>cards.map(card=>{
+   const portrait=card.querySelector('.quick-character-portrait');
+   const caption=card.querySelector('strong');
+   if(!portrait||!caption)return {missing:true};
+   const a=portrait.getBoundingClientRect(),b=caption.getBoundingClientRect();
+   return {portraitBottom:a.bottom,captionTop:b.top,
+     svgCount:portrait.querySelectorAll('svg').length,
+     pngCount:portrait.querySelectorAll('img').length};
+  }));
+  assert.equal(layout.length,10,genderName+' gallery should contain ten avatars');
+  for(const card of layout){
+   assert.equal(card.missing,undefined,'Each avatar card needs portrait and caption');
+   assert.ok(card.portraitBottom<=card.captionTop+1,'Avatar portrait must not overlap name');
+   assert.equal(card.svgCount,1,'Gallery thumbnail uses a single SVG');
+   assert.equal(card.pngCount,0,'Gallery thumbnail must not mix PNG and SVG');
+  }
+ }
  const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
@@ -286,14 +307,29 @@ async function wardrobe(page) {
  await livePreview.waitFor();
  assert.ok(await livePreview.locator('[role="img"]').count()>=1,'Expanded wardrobe displays the actual selected live character');
  const options=page.locator('.quick-options fieldset');
- assert.equal(await options.count(),7,'Only seven optional wardrobe groups are displayed');
- const styles=options.nth(2).locator('button');
+ assert.equal(await options.count(),8,'All eight wardrobe groups including hair color are displayed');
+ const hairColors=options.nth(2).locator('button');
+ await hairColors.nth(1).click();
+ assert.equal(await hairColors.nth(1).getAttribute('aria-pressed'),'true','Hair color can be customized');
+ const styles=options.nth(3).locator('button');
  await styles.nth(1).click();
  assert.equal(await styles.nth(1).getAttribute('aria-pressed'),'true');
- const shirtColors=options.nth(3).locator('button');
+ const shirtColors=options.nth(4).locator('button');
  await shirtColors.nth(2).click();
  assert.equal(await shirtColors.nth(2).getAttribute('aria-pressed'),'true');
  assert.equal(await livePreview.isVisible(),true,'Live selected avatar stays visible after a wardrobe change');
+ const poseButtons=livePreview.locator('.wardrobe-pose-choices button');
+ assert.equal(await poseButtons.count(),5,'Five live poses are immediately selectable');
+ await poseButtons.nth(1).click();
+ assert.equal(await poseButtons.nth(1).getAttribute('aria-pressed'),'true','Pose preview changes immediately');
+ const previewArtwork=livePreview.locator('.wardrobe-live-avatar');
+ assert.equal(await previewArtwork.locator('svg').count(),1,'Full body preview uses one coherent SVG across poses');
+ assert.equal(await previewArtwork.locator('img').count(),0,'Do not overlay differently proportioned PNG artwork in neutral pose');
+ await poseButtons.nth(4).click();
+ assert.equal(await poseButtons.nth(4).getAttribute('aria-pressed'),'true','Celebrate pose responds');
+ assert.equal(await previewArtwork.locator('svg').count(),1,'Switching poses preserves the same art renderer');
+
+ await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
  assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
 }
@@ -412,6 +448,21 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     }
     row.avatarRaster = await avatarPainted(page, size.width <= 900 ? '.quick-character.selected' : '.avatar-preview');
     row.checks.push({ wardrobe: await noOverflow(page, label + ' wardrobe') }); await shot(page, label + '-wardrobe');
+    // Keep actual per-pose raster evidence in the browser-proof artifact.
+    // This is artwork review material, not a claim that the anatomy is correct.
+    if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280','mobile-390'].includes(size.label)) {
+      const preview=page.locator('.quick-options .wardrobe-live-preview');
+      const poses=['stand','wave','think','confident','celebrate'];
+      for(let index=0;index<poses.length;index++){
+        const button=preview.locator('.wardrobe-pose-choices button').nth(index);
+        await button.click();
+        assert.equal(await button.getAttribute('aria-pressed'),'true',label+' '+poses[index]+' should be selected');
+        await preview.screenshot({path:path.join(out,label+'-avatar-'+poses[index]+'.png'),timeout:15_000});
+      }
+      await preview.locator('.wardrobe-pose-choices button').first().click();
+      row.checks.push({avatarPoseScreenshots:poses.length});
+    }
+
     if (browserName === 'chromium' && reducedMotion === 'no-preference' && ['desktop-1280', 'mobile-390'].includes(size.label)) previewImage = await screenshotPreview(page, label + '-wardrobe');
     await stage('motion-controls');
     // Learners should not face technical animation toggles on their quick-join screen.
