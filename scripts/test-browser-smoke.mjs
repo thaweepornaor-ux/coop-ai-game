@@ -315,6 +315,13 @@ async function wardrobe(page) {
  const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
  assert.equal(await chosen.getAttribute('aria-pressed'),'true','Choosing the face changes real selected state');
+ const hero=page.locator('.character-stage .avatar-preview svg');
+ const selectedCard=chosen.locator('svg');
+ assert.equal(await hero.count(),1,'Selected hero uses the same vector rig as chosen gallery card');
+ const portraitGeometry=await selectedCard.evaluate(svg=>[...svg.querySelectorAll('[data-sleeve-side]')].map(el=>el.getAttribute('d')));
+ const heroGeometry=await hero.evaluate(svg=>[...svg.querySelectorAll('[data-sleeve-side]')].map(el=>el.getAttribute('d')));
+ assert.deepEqual(heroGeometry,portraitGeometry,'Selected large hero and gallery must display the identical arm pose');
+
  assert.equal(await page.locator('.quick-options').isVisible(),true,'Wardrobe options are expanded by default');
  const livePreview=page.locator('.quick-options .wardrobe-live-preview');
  await livePreview.waitFor();
