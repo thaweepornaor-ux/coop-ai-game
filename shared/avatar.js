@@ -215,7 +215,7 @@ export function renderAvatar(options = {}) {
     stand:['M39 118Q43 122 49 124','M121 118Q117 122 111 124'],
     wave:['M30 93Q34 99 39 104','M121 118Q117 122 111 124'],
     celebrate:['M32 88Q35 95 38 102','M128 88Q125 95 122 102'],
-    think:['M39 118Q43 122 49 124','M120 118Q116 123 109 124'],
+    think:['M39 118Q43 122 49 124','M120 118Q116 122 109 124'],
     confident:['M40 118Q44 122 50 124','M120 118Q116 122 110 124'],
   };
   // Highlight only the raised fabric fold; skin remains visible underneath
