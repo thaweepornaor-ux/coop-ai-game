@@ -23,7 +23,7 @@ const escape=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const cards=[];
 const audited=[];
 for(const person of people) for(const pose of poses) for(const shirtStyle of shirtStyles) {
- const options={...person,shirtStyle,pose,materialPrefix:'proof-'+person.presetId+'-'+pose+'-'+shirtStyle};
+ const options={...person,shirtStyle,pose,materialPrefix:'proof-'+person.presetId+'-'+pose+(allOutfits?'-'+shirtStyle:'')};
  const svg=renderAvatar(options);
  audited.push({id:person.presetId,pose,shirtStyle,svg});
  cards.push('<article><div class="portrait">'+svg+'</div><strong>'+escape(person.presetId)+' — '+escape(pose)+' — '+escape(shirtStyle)+'</strong></article>');
@@ -51,7 +51,7 @@ if(validate){
   if((svg.match(/data-sleeve-side=/g)||[]).length!==2)faults.push(label+' incomplete shirt sleeves');
   if(/fill="none" fill="none"/.test(svg))faults.push(label+' duplicate SVG fill attributes');
   if(/NaN|undefined|<script/.test(svg))faults.push(label+' invalid markup value');
-  if(!svg.includes('id="proof-'+id+'-'+pose+'-'+shirtStyle+'-skin-lit"'))faults.push(label+' material mismatch');
+  if(!svg.includes('id="proof-'+id+'-'+pose+(allOutfits?'-'+shirtStyle:'')+'-skin-lit"'))faults.push(label+' material mismatch');
  }
  if(faults.length){console.error(faults.join('\n'));process.exitCode=1;}
  else console.log('Validated all '+audited.length+' figure SVGs (structural only; review images manually).');
