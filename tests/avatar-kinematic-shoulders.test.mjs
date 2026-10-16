@@ -135,3 +135,18 @@ test('bulk integrated celebration palms and confident fists remain symmetric',()
   assert.equal((confident.match(/data-avatar-part="fist-knuckles"/g)||[]).length,2);
  }
 });
+
+test('full pose-and-wardrobe matrix keeps closed sleeves, paired cuffs and valid anatomy',()=>{
+ const poses=['stand','wave','think','confident','celebrate'];
+ for(const bodyStyle of ['male','female']) for(const shirtStyle of ['tshirt','polo','shirt','jacket']) for(const pose of poses){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+  const description=bodyStyle+'/'+shirtStyle+'/'+pose;
+  assert.equal((svg.match(/data-sleeve-side="left"/g)||[]).length,1,description+' left sleeve');
+  assert.equal((svg.match(/data-sleeve-side="right"/g)||[]).length,1,description+' right sleeve');
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,description+' paired cuffs');
+  assert.equal((svg.match(/data-avatar-part="left-forearm"/g)||[]).length,1,description+' left forearm');
+  assert.equal((svg.match(/data-avatar-part="right-forearm"/g)||[]).length,1,description+' right forearm');
+  assert.doesNotMatch(svg,/NaN|undefined|Infinity/,description+' valid geometry');
+  assert.equal((svg.match(/<svg /g)||[]).length,1,description+' unique root');
+ }
+});
