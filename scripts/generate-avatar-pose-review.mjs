@@ -26,7 +26,7 @@ for(const person of people) for(const pose of poses) for(const shirtStyle of shi
  const options={...person,shirtStyle,pose,materialPrefix:'proof-'+person.presetId+'-'+pose+(allOutfits?'-'+shirtStyle:'')};
  const svg=renderAvatar(options);
  audited.push({id:person.presetId,pose,shirtStyle,svg});
- cards.push('<article><div class="portrait">'+svg+'</div><strong>'+escape(person.presetId)+' — '+escape(pose)+' — '+escape(shirtStyle)+'</strong></article>');
+ cards.push('<article><div class="portrait">'+svg+'</div><strong>'+escape(person.presetId)+' — '+escape(pose)+(allOutfits?' — '+escape(shirtStyle):'')+'</strong></article>');
 }
 const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'+
  '<title>Avatar pose review (not a release)</title><style>'+
