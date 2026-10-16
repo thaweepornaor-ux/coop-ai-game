@@ -107,3 +107,24 @@ test('reshaped thinking elbow and confident arms stay bilateral in 400 avatar re
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,context+' sleeves retained');
  }
 });
+
+test('raised forearm geometry follows cuffs without losing the paired hands',()=>{
+ for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
+  const svg=renderAvatar({presetId:id,bodyStyle:id[0]==='F'?'female':'male',shirtStyle,pose,materialPrefix:'raised-'+id+'-'+shirtStyle+'-'+pose});
+  const ctx=id+'/'+shirtStyle+'/'+pose;
+  const left=svg.match(/data-avatar-part="left-forearm" d="([^"]+)"/);
+  const right=svg.match(/data-avatar-part="right-forearm" d="([^"]+)"/);
+  assert.ok(left&&right,ctx+' forearms present');
+  if(pose==='wave'){
+   assert.match(left[1],/M30 93Q27 85 25 78/,ctx+' left raised arm refined');
+   assert.equal((svg.match(/data-avatar-part="wave-palm-assembly"/g)||[]).length,1,ctx+' wave hand integrated');
+  }
+  if(pose==='celebrate'){
+   assert.match(left[1],/M32 88Q30 78 28 69/,ctx+' left celebratory forearm refined');
+   assert.match(right[1],/M128 88Q130 78 132 69/,ctx+' mirrored right celebratory forearm refined');
+   assert.equal((svg.match(/data-avatar-part="celebration-palm"/g)||[]).length,2,ctx+' both palms present');
+  }
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,ctx+' cuff count unchanged');
+  assert.equal((svg.match(/data-sleeve-side="(?:left|right)"/g)||[]).length,2,ctx+' both fabrics intact');
+ }
+});
