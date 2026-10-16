@@ -334,3 +334,13 @@ test('relaxed hands have independent tapered fingertips with perfectly matched h
   }
  }
 });
+
+test('celebration palms use larger matching wrists and fingers across all clothes',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  assert.equal((svg.match(/data-avatar-part="celebration-palm" transform="scale\(\.94\)"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="open-hand"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  assert.match(svg,/data-avatar-part="mirrored-right-hand" transform="translate\(129 58\) scale\(-1 1\)"/);
+ }
+});
