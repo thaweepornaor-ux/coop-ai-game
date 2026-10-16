@@ -12,7 +12,7 @@ type LoadedState='loading'|'ok'|'error';
  * PNG layer mode requires a complete aligned set; until then the fully-selectable
  * SVG fallback renders ALL chosen clothing, hair and glasses without hiding parts.
  */
-export function Avatar({options={},className,pose='stand',svgOnly=false}:AvatarProps){
+export function Avatar({options={},className,pose='stand',svgOnly=false,motion=false}:AvatarProps){
  const uniqueMaterialId=useId().replace(/[^a-zA-Z0-9_-]/g,'');
  const v=options as Record<string,unknown>;
  // Preview-only vector rendering must never wait for unrelated raster layers.
@@ -23,7 +23,7 @@ export function Avatar({options={},className,pose='stand',svgOnly=false}:AvatarP
  const signature=parts.map(p=>p?.src||'?').join('|');
  const everyLoaded=pose==='stand'&&complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
  const fallback=useMemo(()=>renderAvatar({...options,pose,materialPrefix:'avatar-'+uniqueMaterialId}),[JSON.stringify(options),pose,uniqueMaterialId]);
- return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
+ return <div className={[className,motion?'game-avatar-motion game-avatar-motion-'+pose:''].filter(Boolean).join(' ')} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
   {!svgOnly&&pose==='stand'&&complete&&<div key={signature} aria-hidden="true" style={{position:'absolute',inset:0,opacity:everyLoaded?1:0,pointerEvents:'none'}}>
     {parts.filter((p):p is NonNullable<typeof p>=>!!p).map((part,index)=><img key={part.src} src={part.src} alt="" onLoad={e=>{const img=e.currentTarget;void img.decode().then(()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'ok'}))).catch(()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'})));}} onError={()=>setLoaded(prev=>({...prev,[signature+'|'+part.src]:'error'}))} decoding="async" style={{position:'absolute',left:part.position!.x+'%',top:part.position!.y+'%',width:part.position!.scale+'%',height:'auto',maxHeight:'65%',transform:'translate(-50%,-50%)',objectFit:'contain',zIndex:index+1}}/>)}

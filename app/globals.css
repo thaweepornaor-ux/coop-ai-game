@@ -302,3 +302,16 @@ html,body{max-width:100%;overflow-x:clip}
  :fullscreen .host-score-count{font-size:.95rem}
  :fullscreen .simple-join-ticket .qr{max-width:390px}
 }
+
+/* Avatar motion is deliberately presentation-only: the original anatomy,
+   selected clothing, and snapshot SVG stay unchanged for visual review. */
+@keyframes game-avatar-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes game-avatar-wave{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-3px) rotate(-1.2deg)}65%{transform:translateY(-1px) rotate(1.2deg)}}
+@keyframes game-avatar-cheer{0%,100%{transform:translateY(0) scale(1)}35%{transform:translateY(-5px) scale(1.012)}70%{transform:translateY(-2px) scale(1.005)}}
+.game-avatar-motion>div{transform-origin:50% 85%;animation:game-avatar-idle 3.6s ease-in-out infinite;will-change:transform}
+.game-avatar-motion-wave>div{animation-name:game-avatar-wave;animation-duration:2.3s}
+.game-avatar-motion-celebrate>div{animation-name:game-avatar-cheer;animation-duration:1.55s}
+.game-avatar-motion-think>div{animation-duration:4.8s}
+.game-avatar-motion-confident>div{animation-duration:3.1s}
+@media(prefers-reduced-motion:reduce){.game-avatar-motion>div{animation:none!important;will-change:auto}}
+.motion-off .game-avatar-motion>div{animation:none!important;will-change:auto}
