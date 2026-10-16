@@ -225,8 +225,8 @@ test('relaxed palms use shared extended-finger silhouette and symmetric matching
   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
   const palm=svg.match(/data-avatar-part="relaxed-hand" d="([^"]+)"/);
   assert.ok(palm,bodyStyle+'/'+shirtStyle+'/'+pose);
-  assert.match(palm[1],/L-8 16Q-8 19/);
-  assert.match(palm[1],/L0 21Q0 24/);
+  assert.match(palm[1],/L-9 15Q-9 19/);
+  assert.match(palm[1],/L-1 22Q-1 25/);
   assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
  }
 });
@@ -318,5 +318,19 @@ test('wave finger contour separates digit tips without modifying celebration pal
   const celebrate=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
   assert.equal((celebrate.match(/data-avatar-part="celebration-palm"/g)||[]).length,2);
   assert.equal((celebrate.match(/data-avatar-part="open-hand"/g)||[]).length,2);
+ }
+});
+
+test('relaxed hands have independent tapered fingertips with perfectly matched highlight clipping',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  for(const pose of ['stand','wave','think']){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   assert.match(svg,/data-avatar-part="relaxed-hand" d="M-5 -1Q-9 1 -9 7/);
+   assert.match(svg,/L-1 22Q-1 25 1 25/);
+   assert.match(svg,/L7 13Q9 15 11 13/);
+   assert.equal((svg.match(/data-avatar-part="relaxed-hand"/g)||[]).length,pose==='stand'?2:1);
+   assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
+   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  }
  }
 });

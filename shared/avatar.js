@@ -175,14 +175,15 @@ export function renderAvatar(options = {}) {
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
   // Resting palms share one anatomical silhouette. The right hand mirrors
   // the left rather than using a shorter, asymmetrical finger geometry.
-  const relaxedPalm = '<path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -8 7L-8 16Q-8 19 -6 19Q-4 19 -4 16L-4 20Q-4 23 -2 23Q0 23 0 20L0 21Q0 24 2 24Q4 24 4 20L5 18Q7 20 8 17L8 13Q11 14 12 11Q12 9 9 7L6 1Q2 -3 -5 -1Z"/>';
-  const relaxedCreases = `<path d="M-3 9L-3 14M1 10L1 15M5 9L5 13" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
+  const relaxedPalmPath = 'M-5 -1Q-9 1 -9 7L-9 15Q-9 19 -7 19Q-5 19 -5 16L-5 20Q-5 23 -3 23Q-1 23 -1 20L-1 22Q-1 25 1 25Q3 25 3 21L3 19Q3 22 5 22Q7 22 7 19L7 13Q9 15 11 13Q13 11 10 8L6 2Q2 -3 -5 -1Z';
+  const relaxedPalm = `<path data-avatar-part="relaxed-hand" d="${relaxedPalmPath}"/>`;
+  const relaxedCreases = `<path d="M-5 10L-5 16M-1 11L-1 19M3 10L3 17" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
   // Add a clipped palm-volume highlight to the shared resting hand. Both hands
   // use exactly the same contour, so the right-hand mirror also mirrors light.
   const relaxedPalmVolume = (side) => {
     const clipId = `${materialPrefix}-palm-${side}`;
-    const palmPath = 'M-5 -1Q-8 1 -8 7L-8 16Q-8 19 -6 19Q-4 19 -4 16L-4 20Q-4 23 -2 23Q0 23 0 20L0 21Q0 24 2 24Q4 24 4 20L5 18Q7 20 8 17L8 13Q11 14 12 11Q12 9 9 7L6 1Q2 -3 -5 -1Z';
-    return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M5 8Q7 9 7 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
+    const palmPath = relaxedPalmPath;
+    return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M6 7Q8 10 9 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
   };
   const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 128 38 139Q37 145 38 147Q42 151 47 147Q49 144 48 139Q49 131 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
   const rightRest = `<path data-avatar-part="right-forearm" d="M121 118Q123 128 122 139Q123 145 122 147Q118 151 113 147Q111 144 112 139Q111 131 111 124Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
