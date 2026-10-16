@@ -373,6 +373,9 @@ async function wardrobe(page) {
    assert.equal(await previewArtwork.locator('[data-avatar-part="'+side+'-forearm"]').count(),1,'Every pose should connect '+side+' forearm to the sleeve');
   }
   assert.equal(await previewArtwork.locator('[data-avatar-part="sleeve-cuff"]').count(),2,'Each pose has two fabric cuffs');
+  if(poseIndex===0||poseIndex===1||poseIndex===4){
+   assert.equal(await previewArtwork.locator('[data-avatar-part="mirrored-right-hand"]').count(),1,'Right palm points outward in live pose');
+  }
  }
 
 
