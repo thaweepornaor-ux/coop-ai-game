@@ -271,9 +271,18 @@ export function renderAvatar(options = {}) {
     : selected.shirtStyle.value === 'tshirt'
     ? {edgeWidth:1.15,edgeOpacity:.38,foldOpacity:.16}
     : {edgeWidth:1.45,edgeOpacity:.5,foldOpacity:.2};
-  const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
-    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity="${sleeveFinish.foldOpacity}" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity="${sleeveFinish.edgeOpacity}" stroke-width="${sleeveFinish.edgeWidth}" stroke-linecap="round"/>`
-  ).join('') + '</g>';
+  // Each sleeve's illumination is clipped to its own moving fabric polygon.
+  // This prevents highlight strokes spilling into bare skin at the armpit or cuff.
+  const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) => {
+    const direction = side===0?'left':'right';
+    const clipId = materialPrefix+'-sleeve-'+direction;
+    const raised = pose==='celebrate'||(pose==='wave'&&side===0);
+    const fold = foldsByPose[pose][side];
+    const volume = raised
+      ? (side===0?'M31 89Q42 98 55 107':'M129 89Q118 98 105 107')
+      : (side===0?'M42 109Q48 104 56 106':'M118 109Q112 104 104 106');
+    return `<clipPath id="${clipId}"><path d="${d}"/></clipPath><path data-sleeve-side="${direction}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".14" stroke-width=".6" stroke-linejoin="round"/><g data-avatar-part="sleeve-material-${direction}" clip-path="url(#${clipId})"><path data-avatar-part="sleeve-volume" d="${volume}" fill="none" stroke="#fff" stroke-opacity=".23" stroke-width="6" stroke-linecap="round"/><path data-avatar-part="sleeve-fold" d="${fold}" fill="none" stroke="#fff" stroke-opacity="${sleeveFinish.foldOpacity}" stroke-width="1.6" stroke-linecap="round"/></g><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity="${sleeveFinish.edgeOpacity}" stroke-width="${sleeveFinish.edgeWidth}" stroke-linecap="round"/>`;
+  }).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
   // All fills still derive from the user's exact selected outfit palette.
