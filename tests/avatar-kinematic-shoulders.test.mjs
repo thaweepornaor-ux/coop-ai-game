@@ -35,7 +35,12 @@ test('moving sleeves cover shoulder seams; thinking hand and arm cross in front 
    const cuff=svg.indexOf('data-avatar-part="sleeve-cuff"');
    assert.ok(torso>=0&&torso<shoulder&&shoulder<seam&&seam<sleeve&&sleeve<cuff,pose+' layers must hide exposed shoulder patch');
    const forearm=svg.indexOf('data-avatar-part="right-forearm"');
-   if(pose==='think') assert.ok(forearm>torso&&forearm<shoulder,'thinking arm goes in front of shirt, below its sleeve');
+   const restingLeft=svg.indexOf('data-avatar-part="left-forearm"');
+   if(pose==='think') {
+    assert.ok(forearm>torso&&forearm<shoulder,'thinking arm goes in front of shirt, below its sleeve');
+    assert.ok(restingLeft<torso,'relaxed left arm must remain behind the shirt');
+    assert.equal((svg.match(/data-avatar-part="left-forearm"/g)||[]).length,1);
+   }
    else assert.ok(forearm<torso,'resting and raised arms stay behind shirt');
    assert.match(svg,/data-avatar-part="right-forearm"/);
    assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
