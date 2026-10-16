@@ -98,7 +98,7 @@ test('neutral palm volume is shared by both hands without changing selected skin
   assert.equal((stand.match(/data-avatar-part="palm-volume"/g)||[]).length,2);
   for(const side of ['left','right']){
    assert.match(stand,new RegExp('id="avatar-palm-'+side+'"'));
-   assert.match(stand,new RegExp('clip-path="url\\\\(#avatar-palm-'+side+'\\\\)"'));
+   assert.ok(stand.includes('clip-path="url(#avatar-palm-'+side+')"'),'Palm highlight must reference its own clipping mask');
   }
   assert.equal((stand.match(/data-avatar-part="thumb-fold"/g)||[]).length,2);
   assert.equal((stand.match(/data-avatar-part="relaxed-hand"/g)||[]).length,2);
