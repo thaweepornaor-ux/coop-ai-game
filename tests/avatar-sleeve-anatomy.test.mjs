@@ -48,7 +48,7 @@ test('every sleeve is finished by a pose-aligned soft cuff, not a disconnected d
   const svg=renderAvatar({pose,bodyStyle});
   assert.equal((svg.match(/data-avatar-part="sleeve-fold"/g)||[]).length,2,'two shoulder-to-cuff fabric fold highlights');
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,`${pose}/${bodyStyle}: two visible fabric hems`);
-  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"[^>]*stroke-opacity="\.48"/g)||[]).length,2,'two softly shaded cuffs');
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"[^>]*stroke-opacity="0.5"/g)||[]).length,2,'polo shirt cuffs use their fabric-specific soft seam');
   assert.doesNotMatch(svg,/stroke-width="12"/,'no tubular sleeve overlays');
  }
 });
