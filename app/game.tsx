@@ -453,7 +453,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       try{
         const response=await fetch('/api/game?room='+encodeURIComponent(session!.room),{headers:{Authorization:'Bearer '+session!.token},cache:'no-store',signal:request.signal});
         const data=await response.json() as ApiResponse;
-        if(disposed||thisGeneration!==generation.current)return;
+        if(disposed||retired||thisGeneration!==generation.current)return;
         if(!response.ok){if(response.status===401||response.status===404){
           // Another host opened a fresh class and retired this room.
           // NEVER keep the prior students' pictures or scoreboard on screen.
