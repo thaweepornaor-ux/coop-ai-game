@@ -150,3 +150,20 @@ test('full pose-and-wardrobe matrix keeps closed sleeves, paired cuffs and valid
   assert.equal((svg.match(/<svg /g)||[]).length,1,description+' unique root');
  }
 });
+
+test('all twenty face presets preserve hand anatomy and sleeves across every pose and shirt',()=>{
+ const poses=['stand','wave','think','confident','celebrate'];
+ for(const prefix of ['M','F'])for(let i=1;i<=10;i++)for(const shirtStyle of ['tshirt','polo','shirt','jacket'])for(const pose of poses){
+  const presetId=prefix+String(i).padStart(2,'0');
+  const svg=renderAvatar({presetId,bodyStyle:prefix==='M'?'male':'female',shirtStyle,pose});
+  const which=presetId+'/'+shirtStyle+'/'+pose;
+  assert.equal((svg.match(/data-avatar-part="pose-sleeves"/g)||[]).length,1,which+' sleeve group');
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,which+' hem endpoints');
+  assert.equal((svg.match(/data-avatar-part="left-forearm"/g)||[]).length,1,which+' left arm');
+  assert.equal((svg.match(/data-avatar-part="right-forearm"/g)||[]).length,1,which+' right arm');
+  assert.doesNotMatch(svg,/NaN|undefined|Infinity/,which+' finite geometry');
+  if(pose==='celebrate')assert.equal((svg.match(/data-avatar-part="open-hand"/g)||[]).length,2,which+' open palms');
+  if(pose==='confident')assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2,which+' fists');
+  if(pose==='think')assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,1,which+' pondering hand');
+ }
+});
