@@ -249,3 +249,14 @@ test('confident knuckle creases do not protrude above the closed fist contour',(
   assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
  }
 });
+
+test('jacket sleeve stitching is clipped and only appears on jacket across five poses',()=>{
+ for(const bodyStyle of ['male','female'])for(const pose of ['stand','wave','think','confident','celebrate']){
+  for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   assert.equal((svg.match(/data-avatar-part="jacket-sleeve-stitch"/g)||[]).length,shirtStyle==='jacket'?2:0);
+   assert.equal((svg.match(/data-avatar-part="sleeve-underarm-seam"/g)||[]).length,2);
+   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  }
+ }
+});
