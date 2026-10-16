@@ -166,7 +166,7 @@ export function renderAvatar(options = {}) {
   const expressionSmile = pose === 'celebrate' ? smileDepth + 3 : pose === 'wave' ? smileDepth + 1.3 : pose === 'think' ? Math.max(3,smileDepth - 2) : smileDepth;
   const poseEyes = pose === 'celebrate'
     ? `<g data-avatar-part="joyful-eyes" fill="none" stroke="#293443" stroke-width="2.3" stroke-linecap="round"><path d="M${80-eyeOffset-3} ${eyeY+1}Q${80-eyeOffset} ${eyeY-2} ${80-eyeOffset+3} ${eyeY+1}"/><path d="M${80+eyeOffset-3} ${eyeY+1}Q${80+eyeOffset} ${eyeY-2} ${80+eyeOffset+3} ${eyeY+1}"/></g>`
-    : `${poseEyes}`;
+    : `<g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g>`;
   // Dedicated complete arm + visible palm/fingers geometry per pose.
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
   const leftRest = `<path d="M53 103 Q43 106 43 118 L39 138 Q38 144 42 146 L46 146 Q50 143 51 138 L58 116 Z"/><g transform="translate(42 145)"><path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -7 7L-7 14Q-7 17 -5 17Q-3 17 -3 14L-3 18Q-2 21 0 20Q2 20 2 17Q3 20 5 18L6 13Q9 14 10 11Q10 9 7 7L5 1Q2 -3 -5 -1Z"/><path d="M-3 9L-3 14M1 10L1 15M5 9L5 13" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/></g>`;
