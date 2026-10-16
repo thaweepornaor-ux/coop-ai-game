@@ -321,3 +321,14 @@ test('relaxed hands have independent tapered fingertips with perfectly matched h
   }
  }
 });
+
+test('relaxed palm visible contours match the highlighted clipping geometry exactly',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket'])for(const pose of ['stand','wave','think']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+  const outlines=[...svg.matchAll(/data-avatar-part="relaxed-hand" d="([^"]+)"/g)].map(m=>m[1]);
+  const clip=outlines[0];
+  assert.ok(clip,bodyStyle+'/'+shirtStyle+'/'+pose);
+  for(const outline of outlines)assert.ok(svg.includes('<path d="'+outline+'"/></clipPath>'),'Palm highlight clipping must match hand silhouette');
+  assert.equal(outlines.length,pose==='stand'?2:1);
+ }
+});
