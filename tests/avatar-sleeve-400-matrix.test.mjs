@@ -88,3 +88,22 @@ test('three expressive hand gestures keep their wrist details attached across th
   assert.ok(!svg.includes('undefined'),context+' no missing hand interpolation');
  }
 });
+
+test('reshaped thinking elbow and confident arms stay bilateral in 400 avatar renders',()=>{
+ const poses=['stand','wave','celebrate','think','confident'];
+ for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
+  const svg=renderAvatar({presetId:id,bodyStyle:id[0]==='F'?'female':'male',shirtStyle,pose,materialPrefix:'elbow-'+id+'-'+shirtStyle+'-'+pose});
+  const context=id+'/'+shirtStyle+'/'+pose;
+  const left=svg.match(/data-avatar-part="left-forearm" d="([^"]+)"/);
+  const right=svg.match(/data-avatar-part="right-forearm" d="([^"]+)"/);
+  assert.ok(left&&right,context+' both arms must render');
+  assert.equal((left[1].match(/Z/g)||[]).length,1,context+' closed left forearm');
+  assert.equal((right[1].match(/Z/g)||[]).length,1,context+' closed right forearm');
+  if(pose==='confident'){
+   assert.match(left[1],/Q44 141 50 142/,context+' reshaped left elbow');
+   assert.match(right[1],/Q116 141 110 142/,context+' reshaped right elbow');
+  }
+  if(pose==='think')assert.match(right[1],/Q120 137 114 138/,context+' smooth bent forearm');
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,context+' sleeves retained');
+ }
+});
