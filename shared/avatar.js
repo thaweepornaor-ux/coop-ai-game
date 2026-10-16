@@ -173,11 +173,11 @@ export function renderAvatar(options = {}) {
     : `<g fill="#293443"><ellipse cx="${80-eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/><ellipse cx="${80+eyeOffset}" cy="${eyeY}" rx="${eyeWidth}" ry="2.7"/></g><g fill="#FFFFFF"><circle cx="${80-eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/><circle cx="${80+eyeOffset+.5}" cy="${eyeY-.9}" r=".7"/></g>`;
   // Dedicated complete arm + visible palm/fingers geometry per pose.
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
-  const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 128 38 139Q37 145 38 147Q42 151 47 147Q49 144 48 139Q49 131 49 124Z"/><g transform="translate(42 145)"><path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -7 7L-7 14Q-7 17 -5 17Q-3 17 -3 14L-3 18Q-2 21 0 20Q2 20 2 17Q3 20 5 18L6 13Q9 14 10 11Q10 9 7 7L5 1Q2 -3 -5 -1Z"/><path d="M-3 9L-3 14M1 10L1 15M5 9L5 13" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/></g>`;
   // Resting palms share one anatomical silhouette. The right hand mirrors
   // the left rather than using a shorter, asymmetrical finger geometry.
   const relaxedPalm = '<path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -7 7L-7 14Q-7 17 -5 17Q-3 17 -3 14L-3 18Q-2 21 0 20Q2 20 2 17Q3 20 5 18L6 13Q9 14 10 11Q10 9 7 7L5 1Q2 -3 -5 -1Z"/>';
   const relaxedCreases = `<path d="M-3 9L-3 14M1 10L1 15M5 9L5 13" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
+  const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 128 38 139Q37 145 38 147Q42 151 47 147Q49 144 48 139Q49 131 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedCreases}</g>`;
   const rightRest = `<path data-avatar-part="right-forearm" d="M121 118Q123 128 122 139Q123 145 122 147Q118 151 113 147Q111 144 112 139Q111 131 111 124Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedCreases}</g>`;
   // Finger crease lines are deliberately subtle: they provide readable
   // articulation at small card sizes without making the palms look skeletal.
