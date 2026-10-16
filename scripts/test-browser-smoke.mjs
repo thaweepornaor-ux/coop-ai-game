@@ -86,7 +86,7 @@ async function boundedCase(browser, label, budgetMs, body) {
   const started = Date.now();
   const row = { label, status: 'running', stage: 'context-setup', budgetMs, checks: [] };
   report.cases.push(row); emitCase(row); await saveReport();
-  const contexts = new Set(), pages = [], errors = [];
+  const contexts = new Set(), pages = [], errors = [], failedRequests = [];
   let active = true, timedOut = false, timer, previewImage;
   const stage = async name => {
     if (!active || timedOut) throw new Error('Case was aborted');
@@ -108,6 +108,12 @@ async function boundedCase(browser, label, budgetMs, body) {
     page.setDefaultTimeout(15_000); page.setDefaultNavigationTimeout(10_000);
     pages.push(page);
     page.on('pageerror', error => errors.push(safeCaseText(`${page.url()} :: ${error.message}`)));
+    page.on('requestfailed', request => {
+      if (failedRequests.length >= 12) return;
+      let pathname = 'unknown';
+      try { pathname = new URL(request.url()).pathname; } catch {}
+      failedRequests.push({page: safeCaseText(new URL(page.url()).pathname), method: request.method(), pathname, reason: safeCaseText(request.failure()?.errorText || 'unknown')});
+    });
     return page;
   };
   const timeout = new Promise((_, reject) => {
@@ -127,6 +133,7 @@ async function boundedCase(browser, label, budgetMs, body) {
   } catch (error) {
     row.status = 'failed'; row.error = safeCaseText(error.message);
     row.runtimeErrors = errors.slice(0, 4);
+    row.failedRequests = failedRequests.slice(0, 12);
     // A timed out context is already being closed. Other failures retain a
     // bounded actual screenshot before cleanup; no synthetic evidence is used.
     if (!timedOut) await Promise.allSettled(pages.slice(0, 2).map((page, index) =>
