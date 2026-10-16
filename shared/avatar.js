@@ -209,8 +209,17 @@ export function renderAvatar(options = {}) {
     think:['M39 118Q43 122 49 124','M120 118Q116 123 109 124'],
     confident:['M40 118Q44 122 50 124','M120 118Q116 122 110 124'],
   };
+  // Highlight only the raised fabric fold; skin remains visible underneath
+  // and the cuff follows the actual exposed forearm for every pose.
+  const foldsByPose = {
+    stand:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
+    wave:['M50 100Q44 98 39 94','M112 102Q115 108 117 113'],
+    celebrate:['M50 100Q44 94 40 88','M110 100Q116 94 120 88'],
+    think:['M48 102Q45 108 43 113','M112 102Q115 108 117 113'],
+    confident:['M48 102Q45 108 43 113','M112 102Q115 108 117 113']
+  };
   const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
-    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".25" stroke-width=".65" stroke-linejoin="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".58" stroke-width="1.45" stroke-linecap="round"/>`
+    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".48" stroke-width="1.35" stroke-linecap="round"/>`
   ).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
