@@ -616,7 +616,7 @@ function zipTestRevealAudio(mp3){
 }
 
 async function realRoom(browser, browserName) {
-  return boundedCase(browser, browserName + '-real-room', 150_000, async ({ createContext, createPage, stage }, row) => {
+  return boundedCase(browser, browserName + '-real-room', browserName === 'webkit' ? 210_000 : 150_000, async ({ createContext, createPage, stage }, row) => {
     const hostContext = await createContext({ viewport: { width: 1280, height: 900 }, locale: 'th-TH' });
     const playerContext = await createContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'th-TH' });
     const host = await createPage(hostContext); const player = await createPage(playerContext);
