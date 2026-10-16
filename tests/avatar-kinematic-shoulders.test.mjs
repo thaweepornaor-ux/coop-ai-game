@@ -260,3 +260,12 @@ test('jacket sleeve stitching is clipped and only appears on jacket across five 
   }
  }
 });
+
+test('jacket shoulder yokes stay exclusive to jacket across all poses',()=>{
+ for(const bodyStyle of ['male','female'])for(const pose of ['stand','wave','celebrate','think','confident'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+  assert.equal((svg.match(/data-avatar-part="jacket-shoulder-yoke"/g)||[]).length,shirtStyle==='jacket'?2:0);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="sleeve-material-(left|right)"/g)||[]).length,2);
+ }
+});
