@@ -431,6 +431,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     const retireRoom=()=>{
       if(disposed||retired)return;
       retired=true;
+      if(tick){window.clearTimeout(tick);tick=undefined;}
       snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
       setError(session!.role==='host'
         ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
@@ -448,6 +449,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     };
     window.addEventListener('storage',onHostRoomChange);
     async function poll(){
+      if(disposed||retired)return;
       request=new AbortController();const started=Date.now();
       const timeout=window.setTimeout(()=>request?.abort(),4500);
       try{
