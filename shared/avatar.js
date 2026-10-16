@@ -213,7 +213,10 @@ export function renderAvatar(options = {}) {
   // Confident fists must be visible in FRONT of the waist. Their two
   // forearms stay behind the shirt to preserve the shoulder and sleeve joins.
   const confidentForearms = `<path data-avatar-part="left-forearm" d="M40 118Q38 132 44 139Q50 144 60 138L63 134Q60 131 57 132L49 130L50 124Z"/><path data-avatar-part="right-forearm" d="M120 118Q122 132 116 139Q110 144 100 138L97 134Q100 131 103 132L111 130L110 124Z"/>`;
-  const confidentFists = `<g data-avatar-part="left-confident-hand"><path data-avatar-part="closed-hand" d="M55 135Q54 131 57 130L62 129Q66 129 67 133Q68 137 63 139L58 139Q55 139 55 135Z"/><path d="M57 133L54 130M59 132L57 128M62 132L61 128" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/></g><g data-avatar-part="right-confident-hand"><path data-avatar-part="closed-hand" d="M105 135Q106 131 103 130L98 129Q94 129 93 133Q92 137 97 139L102 139Q105 139 105 135Z"/><path d="M103 133L106 130M101 132L103 128M98 132L99 128" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/></g>`;
+  // Both clenched hands share the same knuckle and thumb contour. Mirroring
+  // around the 160-unit centerline keeps the pose balanced across outfits.
+  const confidentFistArt = `<path data-avatar-part="closed-hand" d="M55 135Q54 131 57 130L62 129Q66 129 67 133Q68 137 63 139L58 139Q55 139 55 135Z"/><path data-avatar-part="fist-knuckles" d="M57 133L54 130M59 132L57 128M62 132L61 128" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/><path data-avatar-part="fist-volume" d="M57 134Q58 132 61 132Q64 132 65 134Q64 137 60 137Q57 137 57 134Z" fill="#fff" fill-opacity=".09"/>`;
+  const confidentFists = `<g data-avatar-part="left-confident-hand">${confidentFistArt}</g><g data-avatar-part="right-confident-hand" transform="translate(160 0) scale(-1 1)">${confidentFistArt}</g>`;
   const armShape = pose === 'wave' ? waveArm+rightRest
     : pose === 'celebrate' ? cheerLeft+cheerRight
     : pose === 'think' ? leftRest+thinkingRight
