@@ -19,7 +19,7 @@ const previewPoses=[
 export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;onChange:(next:Record<string,string>)=>void}){
  const [gender,setGender]=useState<'male'|'female'>(avatar.bodyStyle==='female'?'female':'male');
  useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
- const [previewPose,setPreviewPose]=useState<(typeof previewPoses)[number]['value']>('stand');
+ const [previewPose,setPreviewPose]=useState<(typeof previewPoses)[number]['value']>(()=>poseForAvatarPreset(avatar.presetId));
  const [customizationFocus,setCustomizationFocus]=useState(false);
  const selectedId=avatar.presetId;
  const activePreset=CHARACTERS.find(c=>c.id===selectedId);
@@ -30,6 +30,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
      glassesStyle:person.glasses?(person.glassesStyle==='round'?'round':'rectangle'):'none',
      bottomStyle:person.bottomStyle,shirtColor:person.shirtColor,bottomColor:person.bottomColor,
      shirtStyle:'polo',shoeColor:'black',hatStyle:'none'});
+   setPreviewPose(poseForAvatarPreset(person.id));
    onChange(next);
  };
  const chooseGender=(next:'male'|'female')=>{
