@@ -55,7 +55,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       className={'quick-character'+(selectedId===c.id?' selected':'')}
       aria-label={c.label+(selectedId===c.id?' เลือกอยู่':'')}
       aria-pressed={selectedId===c.id} onClick={()=>selectPreset(c)}>
-      <span className="quick-character-portrait"><Avatar options={{...normalizeWardrobe({presetId:c.id,bodyStyle:c.gender}),
+      <span className="quick-character-portrait"><Avatar options={selectedId===c.id?avatar:{...normalizeWardrobe({presetId:c.id,bodyStyle:c.gender}),
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
         hatStyle:'none',shirtStyle:'polo',shoeColor:'black'}} svgOnly pose={poseForAvatarPreset(c.id)} motion={false}/></span>
