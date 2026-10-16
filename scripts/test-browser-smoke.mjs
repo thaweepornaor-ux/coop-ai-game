@@ -590,6 +590,50 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     assert.equal(await toggle.isVisible(),false,'Advanced motion settings must not clutter learner setup');
     row.motion=await page.evaluate(()=>({reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,runningCssAnimations:document.getAnimations().filter(x=>x.playState==='running').length}));
     if(reducedMotion==='reduce')assert.equal(row.motion.runningCssAnimations,0,'Reduced motion should stop CSS effects');
+    // Verify actual computed animations in both browser engines, not merely
+    // the presence of CSS strings in source. Shoulder-linked cloth must share
+    // its arm's animation name; motion-off and OS reduced motion stop both.
+    if(size.label==='desktop-1280'||(size.label==='mobile-390'&&reducedMotion==='reduce')){
+      const studio=page.locator('.quick-options .wardrobe-live-preview');
+      const poseButtons=studio.locator('.wardrobe-pose-choices button');
+      for(const [index,pose,sides] of [[1,'wave',['left']],[4,'celebrate',['left','right']]]){
+        await poseButtons.nth(index).click();
+        await page.waitForFunction(target=>{
+          const svg=document.querySelector('.quick-options .wardrobe-live-preview svg[data-avatar-pose]');
+          return svg?.getAttribute('data-avatar-pose')===target;
+        },pose,{timeout:12000});
+        const measured=await studio.evaluate((root,params)=>{
+          root.classList.add('game-avatar-motion','game-avatar-motion-'+params.pose);
+          const sample=()=>params.sides.map(side=>{
+            const svg=root.querySelector('svg[data-avatar-pose="'+params.pose+'"]');
+            const arm=svg?.querySelector('[data-avatar-part="'+side+'-articulated-arm"]');
+            const cloth=svg?.querySelector('[data-avatar-part="'+side+'-articulated-sleeve"]');
+            return {side,exists:!!arm&&!!cloth,
+              armAnimation:arm?getComputedStyle(arm).animationName:'missing',
+              clothAnimation:cloth?getComputedStyle(cloth).animationName:'missing'};
+          });
+          const running=sample();
+          document.body.classList.add('motion-off');
+          const stopped=sample();
+          document.body.classList.remove('motion-off');
+          root.classList.remove('game-avatar-motion','game-avatar-motion-'+params.pose);
+          return {running,stopped};
+        },{pose,sides});
+        for(const joint of measured.running){
+          assert.ok(joint.exists,label+' '+pose+' '+joint.side+' paired joint elements');
+          assert.equal(joint.armAnimation,joint.clothAnimation,label+' '+pose+' '+joint.side+' paired animation');
+          assert.equal(joint.armAnimation,reducedMotion==='reduce'?'none':pose==='wave'?'game-avatar-wave-joint':'game-avatar-cheer-'+joint.side+'-joint',
+            label+' '+pose+' '+joint.side+' OS motion mode');
+        }
+        for(const joint of measured.stopped){
+          assert.equal(joint.armAnimation,'none',label+' '+pose+' '+joint.side+' motion-off arm');
+          assert.equal(joint.clothAnimation,'none',label+' '+pose+' '+joint.side+' motion-off cloth');
+        }
+      }
+      await poseButtons.first().click();
+      row.checks.push('Real computed joint motions track both forearm and cloth, and stop together under motion-off/reduced-motion');
+    }
+
     return { previewImage };
   });
 }
