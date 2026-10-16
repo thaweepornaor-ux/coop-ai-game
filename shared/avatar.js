@@ -233,8 +233,16 @@ export function renderAvatar(options = {}) {
     '<path data-avatar-part="left-shoulder-cap" d="M49 101Q53 97 57 99Q61 101 61 107L57 113Q52 110 49 105Z"/>',
     '<path data-avatar-part="right-shoulder-cap" d="M111 101Q107 97 103 99Q99 101 99 107L103 113Q108 110 111 105Z"/>'
   ].join('') + '</g>';
+  // Fabric geometry is shared; outfit style changes only its finishing treatment.
+  const sleeveFinish = selected.shirtStyle.value === 'jacket'
+    ? {edgeWidth:2.4,edgeOpacity:.65,foldOpacity:.13}
+    : selected.shirtStyle.value === 'shirt'
+    ? {edgeWidth:1.6,edgeOpacity:.54,foldOpacity:.24}
+    : selected.shirtStyle.value === 'tshirt'
+    ? {edgeWidth:1.15,edgeOpacity:.38,foldOpacity:.16}
+    : {edgeWidth:1.45,edgeOpacity:.5,foldOpacity:.2};
   const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
-    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".48" stroke-width="1.35" stroke-linecap="round"/>`
+    `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity="${sleeveFinish.foldOpacity}" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity="${sleeveFinish.edgeOpacity}" stroke-width="${sleeveFinish.edgeWidth}" stroke-linecap="round"/>`
   ).join('') + '</g>';
   const shoes = `<g fill="${shoeColor}"><path d="M61 189L74 189L76 197Q75 203 61 203L52 203Q48 196 57 194Z"/><path d="M86 189L99 189L103 194Q112 196 108 203H98Q85 203 84 197Z"/></g><path d="M51 202H76M85 202H109" stroke="#D1D6D9" stroke-width="3" stroke-linecap="round"/><path d="M62 193L69 194M92 194L99 193" stroke="${shade(shoeColor)}" stroke-width="2" stroke-linecap="round"/>`;
   // Material-lighting pass for editable avatars. Each SVG owns its gradient IDs.
