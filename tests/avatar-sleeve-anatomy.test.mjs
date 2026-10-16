@@ -46,8 +46,9 @@ test('confident pose has separate hands with defined digits on both sides',()=>{
 test('every sleeve is finished by a pose-aligned soft cuff, not a disconnected dark outline',()=>{
  for(const pose of poses)for(const bodyStyle of genders){
   const svg=renderAvatar({pose,bodyStyle});
+  assert.equal((svg.match(/data-avatar-part="sleeve-fold"/g)||[]).length,2,'two shoulder-to-cuff fabric fold highlights');
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,`${pose}/${bodyStyle}: two visible fabric hems`);
-  assert.equal((svg.match(/stroke-opacity="\.58"/g)||[]).length,2,'two softly shaded cuffs');
+  assert.equal((svg.match(/stroke-opacity="\.48"/g)||[]).length,2,'two softly shaded cuffs');
   assert.doesNotMatch(svg,/stroke-width="12"/,'no tubular sleeve overlays');
  }
 });
