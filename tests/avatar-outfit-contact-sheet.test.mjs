@@ -1,8 +1,11 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {readFileSync,rmSync} from 'node:fs';
+import test from 'node:test';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';import {readFileSync,rmSync,mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 test('visual QA produces a complete 400-render matrix for all twenty presets, five poses and four shirts',()=>{
- const file='artifacts/avatar-qa/all-outfits-contact-sheet.html';
+ const dir=mkdtempSync(join(tmpdir(),'coop-avatar-outfits-'));
+ const file=join(dir,'all-outfits-contact-sheet.html');
  try{
-  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--outfits','--validate'],{stdio:'pipe'});
+  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--outfits','--validate'],{stdio:'pipe',env:{...process.env,COOP_AVATAR_QA_OUTPUT_DIR:dir}});
   const html=readFileSync(file,'utf8');
   assert.equal((html.match(/<article\b[^>]*>/g)||[]).length,400);
   assert.equal((html.match(/<svg /g)||[]).length,400);
@@ -22,5 +25,5 @@ test('visual QA produces a complete 400-render matrix for all twenty presets, fi
   const ids=[...html.matchAll(/<linearGradient id="(proof-[MF]\d{2}-(?:stand|wave|celebrate|think|confident)-(?:tshirt|polo|shirt|jacket)-skin-lit)"/g)];
   assert.equal(ids.length,400);
   assert.equal(new Set(ids.map(x=>x[1])).size,400);
- }finally{rmSync(file,{force:true});}
+ }finally{rmSync(dir,{recursive:true,force:true});}
 });
