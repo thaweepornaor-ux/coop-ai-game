@@ -1,12 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {readFileSync,rmSync} from 'node:fs';
-const location='artifacts/avatar-qa/pose-contact-sheet.html';
+import {readFileSync,rmSync,mkdtempSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+
 
 test('pose contact sheet renders ten complete avatars with unique material IDs',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'coop-avatar-poses-'));
+ const location=join(dir,'pose-contact-sheet.html');
  try{
-  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs'],{stdio:'pipe'});
+  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs'],{stdio:'pipe',env:{...process.env,COOP_AVATAR_QA_OUTPUT_DIR:dir}});
   const html=readFileSync(location,'utf8');
   assert.equal((html.match(/<article\b[^>]*>/g)||[]).length,10);
   assert.equal((html.match(/<svg /g)||[]).length,10);
@@ -15,8 +19,8 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
    assert.match(html,new RegExp('F01 — '+pose));
   }
   assert.equal((html.match(/<g data-avatar-part="pose-sleeves">/g)||[]).length,10);
-  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--validate'],{stdio:'pipe'});
-  const full=readFileSync('artifacts/avatar-qa/all-presets-contact-sheet.html','utf8');
+  execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--validate'],{stdio:'pipe',env:{...process.env,COOP_AVATAR_QA_OUTPUT_DIR:dir}});
+  const full=readFileSync(join(dir,'all-presets-contact-sheet.html'),'utf8');
   assert.equal((full.match(/<article\b[^>]*>/g)||[]).length,100);
   assert.equal((full.match(/<svg /g)||[]).length,100);
   for(const prefix of ['M','F'])for(let n=1;n<=10;n++)for(const pose of ['stand','wave','celebrate','think','confident']){
@@ -36,5 +40,5 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
    const portrait=full.slice(Math.max(0,first-11500),first);
    assert.ok(portrait.includes('proof-'+preset.id+'-stand'),'preset should use its own SVG gradient');
   }
- }finally{rmSync('artifacts/avatar-qa',{recursive:true,force:true});}
+ }finally{rmSync(dir,{recursive:true,force:true});}
 });
