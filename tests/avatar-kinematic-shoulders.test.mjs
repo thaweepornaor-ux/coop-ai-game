@@ -219,3 +219,14 @@ test('celebration hands share the same five-digit palm and remain mirrored acros
   assert.match(svg,/data-avatar-part="mirrored-right-hand" transform="translate\(129 58\) scale\(-1 1\)"/);
  }
 });
+
+test('relaxed palms use shared extended-finger silhouette and symmetric matching clipping',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket'])for(const pose of ['stand','wave','think']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+  const palm=svg.match(/data-avatar-part="relaxed-hand" d="([^"]+)"/);
+  assert.ok(palm,bodyStyle+'/'+shirtStyle+'/'+pose);
+  assert.match(palm[1],/L-8 16Q-8 19/);
+  assert.match(palm[1],/L0 21Q0 24/);
+  assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
+ }
+});

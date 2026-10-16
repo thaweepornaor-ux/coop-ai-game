@@ -175,13 +175,13 @@ export function renderAvatar(options = {}) {
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
   // Resting palms share one anatomical silhouette. The right hand mirrors
   // the left rather than using a shorter, asymmetrical finger geometry.
-  const relaxedPalm = '<path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -7 7L-7 14Q-7 17 -5 17Q-3 17 -3 14L-3 18Q-2 21 0 20Q2 20 2 17Q3 20 5 18L6 13Q9 14 10 11Q10 9 7 7L5 1Q2 -3 -5 -1Z"/>';
+  const relaxedPalm = '<path data-avatar-part="relaxed-hand" d="M-5 -1Q-8 1 -8 7L-8 16Q-8 19 -6 19Q-4 19 -4 16L-4 20Q-4 23 -2 23Q0 23 0 20L0 21Q0 24 2 24Q4 24 4 20L5 18Q7 20 8 17L8 13Q11 14 12 11Q12 9 9 7L6 1Q2 -3 -5 -1Z"/>';
   const relaxedCreases = `<path d="M-3 9L-3 14M1 10L1 15M5 9L5 13" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
   // Add a clipped palm-volume highlight to the shared resting hand. Both hands
   // use exactly the same contour, so the right-hand mirror also mirrors light.
   const relaxedPalmVolume = (side) => {
     const clipId = `${materialPrefix}-palm-${side}`;
-    const palmPath = 'M-5 -1Q-8 1 -7 7L-7 14Q-7 17 -5 17Q-3 17 -3 14L-3 18Q-2 21 0 20Q2 20 2 17Q3 20 5 18L6 13Q9 14 10 11Q10 9 7 7L5 1Q2 -3 -5 -1Z';
+    const palmPath = 'M-5 -1Q-8 1 -8 7L-8 16Q-8 19 -6 19Q-4 19 -4 16L-4 20Q-4 23 -2 23Q0 23 0 20L0 21Q0 24 2 24Q4 24 4 20L5 18Q7 20 8 17L8 13Q11 14 12 11Q12 9 9 7L6 1Q2 -3 -5 -1Z';
     return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M5 8Q7 9 7 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
   };
   const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 128 38 139Q37 145 38 147Q42 151 47 147Q49 144 48 139Q49 131 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
