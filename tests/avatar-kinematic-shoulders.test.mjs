@@ -287,3 +287,13 @@ test('confident hands use a rounded integrated fist silhouette in all garments',
   assert.equal((svg.match(/data-avatar-part="fist-knuckles"/g)||[]).length,2);
  }
 });
+
+test('thinking hand keeps one enlarged integrated palm and its shading across all outfits',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'think'});
+  assert.match(svg,/data-avatar-part="thinking-hand" d="M-6 2Q-8 -1 -6 -6/);
+  assert.match(svg,/data-avatar-part="thinking-palm-volume" d="M-4 0Q-4 -3 -1 -5/);
+  assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+ }
+});
