@@ -269,3 +269,13 @@ test('jacket shoulder yokes stay exclusive to jacket across all poses',()=>{
   assert.equal((svg.match(/data-avatar-part="sleeve-material-(left|right)"/g)||[]).length,2);
  }
 });
+
+test('confident forearm contours taper smoothly into both mirrored fists',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  assert.match(svg,/L60 136Q57 133 55 133L49 130/);
+  assert.match(svg,/L100 136Q103 133 105 133L111 130/);
+  assert.equal((svg.match(/data-avatar-part="fist-knuckle-light" d="M58 133Q61 132 64 133"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
+ }
+});
