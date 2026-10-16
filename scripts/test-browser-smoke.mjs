@@ -375,6 +375,8 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="thumb-fold"]').count(),2,'Both thumbs retain their folds in the browser');
  await poseButtons.nth(2).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-hand"]').count(),1,'Thinking pose displays one joined palm and fingers');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-finger-joints"]').count(),1,'Thinking pose has articulated finger joints in real browser');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-palm-volume"]').count(),1,'Thinking palm retains subtle depth in real browser');
  await poseButtons.nth(3).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="closed-hand"]').count(),2,'Confident pose displays both enclosed fist contours');
  const confidentPaintOrder=await previewArtwork.locator('svg').evaluate(svg=>{
