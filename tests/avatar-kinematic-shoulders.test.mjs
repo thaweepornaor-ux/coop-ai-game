@@ -109,3 +109,15 @@ test('neutral palm volume is shared by both hands without changing selected skin
   }
  }
 });
+
+test('celebrating raised hands share one mirrored four-finger silhouette across wardrobes',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  const hands=[...svg.matchAll(/data-avatar-part="open-hand" d="([^"]+)"/g)].map(m=>m[1]);
+  assert.equal(hands.length,2,'two open celebration palms');
+  assert.equal(hands[0],hands[1],'right raised palm must mirror exactly the left contour');
+  assert.equal((svg.match(/data-avatar-part="mirrored-right-hand"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="wrist-crease"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="finger-creases"/g)||[]).length,2);
+ }
+});
