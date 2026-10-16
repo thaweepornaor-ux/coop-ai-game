@@ -175,9 +175,9 @@ export function renderAvatar(options = {}) {
   // Keep each silhouette attached to its shoulder. Hands are drawn at endpoints.
   // Resting palms share one anatomical silhouette. The right hand mirrors
   // the left rather than using a shorter, asymmetrical finger geometry.
-  const relaxedPalmPath = 'M-5 -1Q-9 1 -9 7L-9 15Q-9 19 -7 19Q-5 19 -5 16L-5 20Q-5 23 -3 23Q-1 23 -1 20L-1 22Q-1 25 1 25Q3 25 3 21L3 19Q3 22 5 22Q7 22 7 19L7 13Q9 15 11 13Q13 11 10 8L6 2Q2 -3 -5 -1Z';
+  const relaxedPalmPath = 'M-5 -1Q-9 1 -9 7L-9 15Q-9 19 -7 19Q-5 19 -5 16L-5 20Q-5 23 -3 23Q-1 23 -1 20L-1 22Q-1 24 1 24Q3 24 3 20L3 18Q3 21 5 21Q7 21 7 18L7 13Q9 15 11 13Q13 11 10 8L6 2Q2 -3 -5 -1Z';
   const relaxedPalm = `<path data-avatar-part="relaxed-hand" d="${relaxedPalmPath}"/>`;
-  const relaxedCreases = `<path d="M-5 10L-5 16M-1 11L-1 19M3 10L3 17" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
+  const relaxedCreases = `<path d="M-5 11L-5 16M-1 12L-1 19M3 11L3 17" fill="none" stroke="${skinShade}" stroke-opacity=".48" stroke-width=".85" stroke-linecap="round"/>`;
   // Add a clipped palm-volume highlight to the shared resting hand. Both hands
   // use exactly the same contour, so the right-hand mirror also mirrors light.
   const relaxedPalmVolume = (side) => {
@@ -185,8 +185,8 @@ export function renderAvatar(options = {}) {
     const palmPath = relaxedPalmPath;
     return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M6 7Q8 10 9 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
   };
-  const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 128 38 139Q37 145 38 147Q42 151 47 147Q49 144 48 139Q49 131 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
-  const rightRest = `<path data-avatar-part="right-forearm" d="M121 118Q123 128 122 139Q123 145 122 147Q118 151 113 147Q111 144 112 139Q111 131 111 124Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
+  const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 127 38 139Q37 144 39 146Q41 149 43 148Q47 148 48 143Q49 136 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
+  const rightRest = `<path data-avatar-part="right-forearm" d="M121 118Q123 127 122 139Q123 144 121 146Q119 149 117 148Q113 148 112 143Q111 136 111 124Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
   // Finger crease lines are deliberately subtle: they provide readable
   // articulation at small card sizes without making the palms look skeletal.
   // The paths are pose-local so raised and resting fingers are not reused.
