@@ -14,7 +14,7 @@ const anchors={
 test('actual two forearms are anchored to the two pose-aware cuffs in forty body and shirt combinations',()=>{
  for(const [pose,[left,right]] of Object.entries(anchors))for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
   const svg=renderAvatar({pose,bodyStyle,shirtStyle,skinTone:'tan'});
-  const group=svg.match(/<g fill="url\(#avatar-skin-lit\)">([\s\S]*?)<\/g>/)?.[1]??'';
+  const group=svg.slice(svg.indexOf('<g fill="url(#avatar-skin-lit)">'),svg.indexOf('<rect x="72" y="81"'));
   assert.match(group,new RegExp('data-avatar-part="left-forearm" d="'+left));
   assert.match(group,new RegExp('data-avatar-part="right-forearm" d="'+right));
   assert.equal((group.match(/data-avatar-part="(left|right)-forearm"/g)||[]).length,2,pose+' exposed arms');
