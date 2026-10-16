@@ -307,6 +307,8 @@ async function wardrobe(page) {
   }));
   for(const rig of rigAudit){
     assert.deepEqual(rig,{torso:1,sleeves:2,hands:2},genderName+' avatar has a single torso and two complete sleeve-to-arm joints');
+    // The source galleries share the same joint geometry, with distinct poses.
+
 
   }
  }
