@@ -109,3 +109,14 @@ test('neutral palm volume is shared by both hands without changing selected skin
   }
  }
 });
+
+test('thinking gesture retains distinct finger joints and palm volume without duplicating forearms',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'think'});
+  assert.equal((svg.match(/data-avatar-part="thinking-finger-joints"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="thinking-palm-volume"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,1);
+  for(const side of ['left','right']) assert.equal((svg.match(new RegExp('data-avatar-part="'+side+'-forearm"','g'))||[]).length,1);
+  assert.doesNotMatch(svg,/NaN|undefined/);
+ }
+});
