@@ -189,3 +189,12 @@ test('thinking pose preserves single articulated thumb and finger highlight with
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('underarm sleeve seams follow both sleeves and remain clipped in every pose',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket'])for(const pose of ['stand','wave','think','confident','celebrate']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+  assert.equal((svg.match(/data-avatar-part="sleeve-underarm-seam"/g)||[]).length,2,bodyStyle+'/'+shirtStyle+'/'+pose);
+  assert.equal((svg.match(/data-avatar-part="sleeve-material-(?:left|right)"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+ }
+});
