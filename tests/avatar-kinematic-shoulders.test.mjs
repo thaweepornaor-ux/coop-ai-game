@@ -179,3 +179,12 @@ test('raised hands have matched palm depth and thumb folds at every wardrobe cho
   assert.equal((renderAvatar({bodyStyle,shirtStyle,pose:'stand'}).match(/data-avatar-part="raised-palm-depth"/g)||[]).length,0);
  }
 });
+
+test('both confident fists retain mirrored knuckle light and thumb folds across wardrobes',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  for(const part of ['closed-hand','fist-knuckles','fist-volume','fist-thumb-fold','fist-knuckle-light']){
+   assert.equal((svg.match(new RegExp('data-avatar-part="'+part+'"','g'))||[]).length,2,bodyStyle+'/'+shirtStyle+'/'+part);
+  }
+ }
+});
