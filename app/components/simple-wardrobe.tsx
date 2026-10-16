@@ -21,6 +21,9 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
  useEffect(()=>{setGender(avatar.bodyStyle==='female'?'female':'male')},[avatar.bodyStyle]);
  const [previewPose,setPreviewPose]=useState<(typeof previewPoses)[number]['value']>(()=>poseForAvatarPreset(avatar.presetId));
  const [customizationFocus,setCustomizationFocus]=useState(false);
+ // Game restore, room re-entry, or parent-led preset changes must also re-sync
+ // the pose; ordinary outfit edits do not reset a manually chosen preview pose.
+ useEffect(()=>{setPreviewPose(poseForAvatarPreset(avatar.presetId))},[avatar.presetId]);
  const selectedId=avatar.presetId;
  const activePreset=CHARACTERS.find(c=>c.id===selectedId);
  const activePoseLabel=previewPoses.find(p=>p.value===previewPose)?.label||'ยืน';
