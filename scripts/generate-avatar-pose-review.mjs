@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Local visual QA contact sheet. No game routes, publishing or user data.
 import {writeFileSync,mkdirSync,readFileSync} from 'node:fs';
+import {join} from 'node:path';
 import {renderAvatar} from '../shared/avatar.js';
 
 const poses=['stand','wave','celebrate','think','confident'];
@@ -42,8 +43,9 @@ const html='<!doctype html><html lang="en"><meta charset="utf-8"><meta name="vie
  '<p class="note">Check shoulder-to-sleeve contact, wrists/fingers, continuity, feet, hairstyle, and equal framing. Not proof of visual acceptance.</p>'+
  '<div class="toolbar"><label>Preset <select id="preset-filter"><option value="all">All 20 presets</option>'+people.map(p=>'<option value="'+escape(p.presetId)+'">'+escape(p.presetId)+'</option>').join('')+'</select></label><label>Shirt <select id="shirt-filter">'+shirtStyles.map(x=>'<option value="'+escape(x)+'"'+(x==='polo'?' selected':'')+'>'+escape(x)+'</option>').join('')+'</select></label><label>Pose <select id="pose-filter"><option value="all">All poses</option>'+poses.map(p=>'<option value="'+escape(p)+'">'+escape(p)+'</option>').join('')+'</select></label><button id="export-review" type="button">Export review CSV</button><output id="visible-count"></output></div>'+ 
  '<main class="grid">'+cards.join('')+'</main><script>const preset=document.getElementById("preset-filter"),shirt=document.getElementById("shirt-filter"),poseFilter=document.getElementById("pose-filter"),cards=[...document.querySelectorAll("article")];const escapeCsv=v=>String(v).replaceAll(String.fromCharCode(34),String.fromCharCode(34,34));document.querySelectorAll(".review-status").forEach(select=>select.addEventListener("change",()=>{select.closest("article").dataset.review=select.value;apply()}));function apply(){let n=0;for(const card of cards){card.hidden=(preset.value!=="all"&&card.dataset.preset!==preset.value)||card.dataset.shirt!==shirt.value||(poseFilter.value!=="all"&&card.dataset.pose!==poseFilter.value);if(!card.hidden)n++}document.getElementById("visible-count").textContent=n+" visible / "+cards.length+" generated; "+cards.filter(c=>c.dataset.review!=="unreviewed").length+" reviewed"}preset.addEventListener("change",apply);shirt.addEventListener("change",apply);poseFilter.addEventListener("change",apply);document.getElementById("export-review").addEventListener("click",()=>{const rows=[["preset","pose","shirt","review"],...cards.map(c=>[c.dataset.preset,c.dataset.pose,c.dataset.shirt,c.dataset.review])];const csv=rows.map(cols=>cols.map(v=>String.fromCharCode(34)+escapeCsv(v)+String.fromCharCode(34)).join(",")).join("\\r\\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download="avatar-art-review.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)});apply();</script></html>';
-mkdirSync('artifacts/avatar-qa',{recursive:true});
-writeFileSync(allOutfits?'artifacts/avatar-qa/all-outfits-contact-sheet.html':fullMatrix?'artifacts/avatar-qa/all-presets-contact-sheet.html':'artifacts/avatar-qa/pose-contact-sheet.html',html,'utf8');
+const outputDir=process.env.COOP_AVATAR_QA_OUTPUT_DIR||'artifacts/avatar-qa';
+mkdirSync(outputDir,{recursive:true});
+writeFileSync(join(outputDir,allOutfits?'all-outfits-contact-sheet.html':fullMatrix?'all-presets-contact-sheet.html':'pose-contact-sheet.html'),html,'utf8');
 console.log('Wrote avatar pose review ('+cards.length+' poses; full='+fullMatrix+')');
 
 if(validate){
