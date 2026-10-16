@@ -279,3 +279,11 @@ test('confident forearm contours taper smoothly into both mirrored fists',()=>{
   assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
  }
 });
+
+test('confident hands use a rounded integrated fist silhouette in all garments',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  assert.equal((svg.match(/data-avatar-part="closed-hand" d="M54 135Q53 130 57 129Q61 127 65 130Q69 132 69 136Q69 140 64 141L58 141Q54 140 54 135Z"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="fist-knuckles"/g)||[]).length,2);
+ }
+});
