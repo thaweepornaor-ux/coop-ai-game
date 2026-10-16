@@ -230,3 +230,14 @@ test('relaxed palms use shared extended-finger silhouette and symmetric matching
   assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
  }
 });
+
+test('confident fists have the same enlarged mirrored scale in all outfits',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  assert.match(svg,/data-avatar-part="left-confident-hand" transform="translate\(60 135\) scale\(1\.16\) translate\(-60 -135\)"/);
+  assert.match(svg,/data-avatar-part="right-confident-hand" transform="translate\(160 0\) scale\(-1 1\)"/);
+  assert.equal((svg.match(/scale\(1\.16\) translate\(-60 -135\)/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+ }
+});
