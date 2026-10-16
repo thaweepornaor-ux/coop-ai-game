@@ -230,8 +230,8 @@ export function renderAvatar(options = {}) {
   // Shoulder caps share the torso cloth material. The soft join is laid behind
   // each sleeve, while the cuff contour is drawn over exposed skin.
   const shoulderCaps = '<g data-avatar-part="shoulder-caps">' + [
-    '<ellipse data-avatar-part="left-shoulder-cap" cx="55" cy="103" rx="8.5" ry="7.4"/>',
-    '<ellipse data-avatar-part="right-shoulder-cap" cx="105" cy="103" rx="8.5" ry="7.4"/>'
+    '<path data-avatar-part="left-shoulder-cap" d="M49 101Q53 97 57 99Q61 101 61 107L57 113Q52 110 49 105Z"/>',
+    '<path data-avatar-part="right-shoulder-cap" d="M111 101Q107 97 103 99Q99 101 99 107L103 113Q108 110 111 105Z"/>'
   ].join('') + '</g>';
   const sleeveOverlay = '<g data-avatar-part="pose-sleeves">' + sleeves.map((d, side) =>
     `<path data-sleeve-side="${side === 0 ? 'left' : 'right'}" d="${d}" fill="url(#${materialPrefix}-shirt-lit)" stroke="${shade(shirtColor)}" stroke-opacity=".16" stroke-width=".5" stroke-linejoin="round"/><path data-avatar-part="sleeve-fold" d="${foldsByPose[pose][side]}" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.6" stroke-linecap="round"/><path data-avatar-part="sleeve-cuff" d="${cuffsByPose[pose][side]}" fill="none" stroke="${shade(shirtColor)}" stroke-opacity=".48" stroke-width="1.35" stroke-linecap="round"/>`
