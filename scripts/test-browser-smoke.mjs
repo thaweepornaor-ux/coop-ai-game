@@ -379,12 +379,18 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),1,'Celebration face visibly closes both eyes');
  await poseButtons.nth(0).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),0,'Neutral pose restores open eyes');
+ const shoulderPoseProfiles=[];
  for(let poseIndex=0;poseIndex<5;poseIndex++){
   await poseButtons.nth(poseIndex).click();
   for(const side of ['left','right']){
    assert.equal(await previewArtwork.locator('[data-avatar-part="'+side+'-forearm"]').count(),1,'Every pose should connect '+side+' forearm to the sleeve');
   }
   assert.equal(await previewArtwork.locator('[data-avatar-part="sleeve-cuff"]').count(),2,'Each pose has two fabric cuffs');
+  shoulderPoseProfiles.push(await previewArtwork.locator('svg').evaluate(svg=>({
+   pose:svg.getAttribute('data-avatar-pose'),
+   left:svg.querySelector('[data-avatar-part="left-shoulder-cap"]')?.getAttribute('d'),
+   right:svg.querySelector('[data-avatar-part="right-shoulder-cap"]')?.getAttribute('d')
+  })));
   if(poseIndex===0||poseIndex===1||poseIndex===4){
    assert.equal(await previewArtwork.locator('[data-avatar-part="mirrored-right-hand"]').count(),1,'Right palm points outward in live pose');
   }
@@ -392,6 +398,10 @@ async function wardrobe(page) {
 
 
 
+ assert.deepEqual(shoulderPoseProfiles.map(x=>x.pose),['stand','wave','think','confident','celebrate']);
+ assert.notEqual(shoulderPoseProfiles[0].left,shoulderPoseProfiles[1].left,'Left shoulder geometry must rotate when waving');
+ assert.equal(shoulderPoseProfiles[0].right,shoulderPoseProfiles[1].right,'Right shoulder stays neutral while waving');
+ assert.notEqual(shoulderPoseProfiles[0].right,shoulderPoseProfiles[4].right,'Both shoulders must rotate when celebrating');
  await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
  assert.equal(await page.locator('input[placeholder*="รหัส"]').count(),0,'No learner room-code field');
