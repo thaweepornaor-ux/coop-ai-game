@@ -3,6 +3,7 @@ import {useEffect,useState} from 'react';
 import {Avatar,AVATAR_OPTIONS,type AvatarOptionKey} from './avatar';
 import {CHARACTERS,type CharacterPreset} from '../../shared/characters';
 import {normalizeWardrobe} from '../../shared/avatar-registry';
+import {poseForAvatarPreset} from '../../shared/avatar-pose.js';
 
 const choices: {key:AvatarOptionKey;label:string;max?:number}[]=[
  {key:'skinTone',label:'สีผิว'}, {key:'hairStyle',label:'ทรงผม'}, {key:'hairColor',label:'สีผม'},
@@ -57,7 +58,7 @@ export function SimpleWardrobe({avatar,onChange}:{avatar:Record<string,string>;o
       <span className="quick-character-portrait"><Avatar options={{...normalizeWardrobe({presetId:c.id,bodyStyle:c.gender}),
         bodyStyle:c.gender,presetId:c.id,skinTone:c.skinTone,hairStyle:c.hairStyle,
         hairColor:c.hairColor,shirtColor:c.shirtColor,bottomStyle:c.bottomStyle,bottomColor:c.bottomColor,glassesStyle:c.glasses?(c.glassesStyle==='round'?'round':'rectangle'):'none',
-        hatStyle:'none',shirtStyle:'polo',shoeColor:'black'}} svgOnly pose={(['wave','confident','think','stand','celebrate'] as const)[index%5]} motion={false}/></span>
+        hatStyle:'none',shirtStyle:'polo',shoeColor:'black'}} svgOnly pose={poseForAvatarPreset(c.id)} motion={false}/></span>
       <strong>{c.label}</strong>
       {selectedId===c.id&&<span className="quick-check" aria-hidden="true">✓</span>}
     </button>)}
