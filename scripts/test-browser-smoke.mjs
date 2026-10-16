@@ -376,6 +376,8 @@ async function wardrobe(page) {
   cuff:svg.querySelectorAll('[data-avatar-part="sleeve-cuff"]').length
  }));
  assert.deepEqual(handCounts,{open:2,relaxed:0,think:0,cuff:2},'Celebrate pose uses two contiguous hands and two garment cuffs');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="raised-palm-depth"]').count(),2,'Both cheering palms show matched depth');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="raised-thumb-fold"]').count(),2,'Both cheering thumbs show a joint fold');
  const celebratedPalms=await previewArtwork.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[data-avatar-part="open-hand"]')].map(el=>el.getAttribute('d')));
  assert.equal(celebratedPalms.length,2,'Browser has both cheering palms');
  assert.equal(celebratedPalms[0],celebratedPalms[1],'Live cheering palms mirror identical finger anatomy');
