@@ -428,6 +428,25 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
     if(!session)return;
     let disposed=false,retired=false,tick:number|undefined,request:AbortController|null=null;
     const thisGeneration=++generation.current;
+    const retireRoom=()=>{
+      if(disposed||retired)return;
+      retired=true;
+      snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
+      setError(session.role==='host'
+        ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
+        :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
+      setShowRecovery(true);setNetwork('online');
+    };
+    const onHostRoomChange=(event:StorageEvent)=>{
+      if(session.role!=='host'||event.key!==sessionKey('host')||!event.newValue)return;
+      try{
+        const next=JSON.parse(event.newValue) as Session;
+        if(next.role==='host'&&next.room!==session.room){
+          retireRoom();request?.abort();
+        }
+      }catch{}
+    };
+    window.addEventListener('storage',onHostRoomChange);
     async function poll(){
       request=new AbortController();const started=Date.now();
       const timeout=window.setTimeout(()=>request?.abort(),4500);
@@ -438,23 +457,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
         if(!response.ok){if(response.status===401||response.status===404){
           // Another host opened a fresh class and retired this room.
           // NEVER keep the prior students' pictures or scoreboard on screen.
-          snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
-          setError(session!.role==='host'
-            ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
-            :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
-          setShowRecovery(true);
-          // This token is permanently revoked. Do not issue another request
-          // against the retired classroom; a new room gets its own effect.
-          retired=true;
-          setNetwork('online');
+          retireRoom();
           return;
         }throw new Error(data.error||'เชื่อมต่อไม่ได้')}
         const state=(data.snapshot||data) as Snapshot;acceptState(state,started,Date.now());
-      }catch{if(!disposed)setNetwork('offline')}
+      }catch{if(!disposed&&!retired)setNetwork('offline')}
       finally{window.clearTimeout(timeout);if(!disposed&&!retired)tick=window.setTimeout(poll,850)}
     }
     void poll();
-    return()=>{disposed=true;request?.abort();if(tick)window.clearTimeout(tick)};
+    return()=>{disposed=true;window.removeEventListener('storage',onHostRoomChange);request?.abort();if(tick)window.clearTimeout(tick)};
   },[session]);
   useEffect(()=>{
     if(!session||session.role!=='host')return;
