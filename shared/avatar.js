@@ -184,7 +184,7 @@ export function renderAvatar(options = {}) {
   const relaxedPalmVolume = (side) => {
     const clipId = `${materialPrefix}-palm-${side}`;
     const palmPath = relaxedPalmPath;
-    return `<g data-avatar-part="${direction}-articulated-sleeve"><clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M6 7Q8 10 9 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
+    return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M6 7Q8 10 9 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
   };
   const leftRest = `<path data-avatar-part="left-forearm" d="${armForPose('stand','left').forearm}"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
   const rightRest = `<path data-avatar-part="right-forearm" d="${armForPose('stand','right').forearm}"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
