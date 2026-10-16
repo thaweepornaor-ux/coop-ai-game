@@ -35,7 +35,7 @@ test('400 avatar combinations preserve paired, pose-specific sleeve and shoulder
    const clip=start>=0&&finish>start?svg.slice(start,finish):'';
    assert.ok(clip,context+' '+side+' clipped sleeve material');
    if(shirtStyle==='polo')assert.match(clip,/data-avatar-part="polo-sleeve-tailoring"/,context+' polo finish clipped');
-   if(shirtStyle==='shirt')assert.match(clip[2],/data-avatar-part="shirt-sleeve-tailoring"/,context+' shirt finish clipped');
+   if(shirtStyle==='shirt')assert.match(clip,/data-avatar-part="shirt-sleeve-tailoring"/,context+' shirt finish clipped');
   }
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,context+' two cuffs');
   assert.equal((svg.match(/data-avatar-part="shoulder-join-(?:left|right)"/g)||[]).length,2,context+' two joins');
