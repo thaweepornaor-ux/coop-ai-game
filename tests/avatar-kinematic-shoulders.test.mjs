@@ -96,6 +96,10 @@ test('neutral palm volume is shared by both hands without changing selected skin
  for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket'])for(const skinTone of ['fair','warm','tan','deep']){
   const stand=renderAvatar({bodyStyle,shirtStyle,skinTone,pose:'stand'});
   assert.equal((stand.match(/data-avatar-part="palm-volume"/g)||[]).length,2);
+  for(const side of ['left','right']){
+   assert.match(stand,new RegExp('id="avatar-palm-'+side+'"'));
+   assert.match(stand,new RegExp('clip-path="url\\\\(#avatar-palm-'+side+'\\\\)"'));
+  }
   assert.equal((stand.match(/data-avatar-part="thumb-fold"/g)||[]).length,2);
   assert.equal((stand.match(/data-avatar-part="relaxed-hand"/g)||[]).length,2);
   assert.match(stand,/data-avatar-part="mirrored-right-hand"/);
