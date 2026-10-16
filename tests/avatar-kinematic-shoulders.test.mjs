@@ -326,7 +326,7 @@ test('relaxed hands have independent tapered fingertips with perfectly matched h
   for(const pose of ['stand','wave','think']){
    const svg=renderAvatar({bodyStyle,shirtStyle,pose});
    assert.match(svg,/data-avatar-part="relaxed-hand" d="M-5 -1Q-9 1 -9 7/);
-   assert.match(svg,/L-1 22Q-1 25 1 25/);
+   assert.match(svg,/L-1 22Q-1 24 1 24/);
    assert.match(svg,/L7 13Q9 15 11 13/);
    assert.equal((svg.match(/data-avatar-part="relaxed-hand"/g)||[]).length,pose==='stand'?2:1);
    assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
