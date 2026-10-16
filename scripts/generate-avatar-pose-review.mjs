@@ -54,6 +54,13 @@ if(validate){
   if(/fill="none" fill="none"/.test(svg))faults.push(label+' duplicate SVG fill attributes');
   if(/NaN|undefined|<script/.test(svg))faults.push(label+' invalid markup value');
   if(!svg.includes('id="proof-'+id+'-'+pose+(allOutfits?'-'+shirtStyle:'')+'-skin-lit"'))faults.push(label+' material mismatch');
+  const ids=[...svg.matchAll(/\\bid="([^"]+)"/g)].map(m=>m[1]);
+  if(new Set(ids).size!==ids.length)faults.push(label+' duplicated material/clip ID');
+  for(const match of svg.matchAll(/url\\(#([^)]*)\\)/g)){
+    if(!ids.includes(match[1]))faults.push(label+' unresolved SVG paint or clip reference '+match[1]);
+  }
+  if((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length!==2)faults.push(label+' incomplete cuff hems');
+  if((svg.match(/data-avatar-part="left-forearm"/g)||[]).length!==1||(svg.match(/data-avatar-part="right-forearm"/g)||[]).length!==1)faults.push(label+' incomplete forearm silhouette');
  }
  if(faults.length){console.error(faults.join('\n'));process.exitCode=1;}
  else console.log('Validated all '+audited.length+' figure SVGs (structural only; review images manually).');
