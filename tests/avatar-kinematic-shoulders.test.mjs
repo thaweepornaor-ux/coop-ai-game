@@ -241,3 +241,11 @@ test('confident fists have the same enlarged mirrored scale in all outfits',()=>
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('confident knuckle creases do not protrude above the closed fist contour',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  assert.equal((svg.match(/data-avatar-part="fist-knuckles" d="M57 134Q58 133 59 134M60 133Q61 132 62 133M63 133Q64 133 65 134"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
+ }
+});
