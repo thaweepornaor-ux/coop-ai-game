@@ -24,6 +24,16 @@ test('400 avatar combinations preserve paired, pose-specific sleeve and shoulder
    assert.match(svg,new RegExp('id="qa-'+id+'-'+shirtStyle+'-'+pose+'-sleeve-'+side+'"'),context+' '+side+' clip ID is unique');
    assert.match(svg,new RegExp('clip-path="url\\(#qa-'+id+'-'+shirtStyle+'-'+pose+'-sleeve-'+side+'\\)"'),context+' '+side+' shading clipped to fabric');
   }
+  const poloCount=(svg.match(/data-avatar-part="polo-sleeve-tailoring"/g)||[]).length;
+  const shirtCount=(svg.match(/data-avatar-part="shirt-sleeve-tailoring"/g)||[]).length;
+  assert.equal(poloCount,shirtStyle==='polo'?2:0,context+' polo has exactly its two tailored sleeve seams');
+  assert.equal(shirtCount,shirtStyle==='shirt'?2:0,context+' shirt has exactly its two sleeve seams');
+  for(const side of ['left','right']){
+   const clip=svg.match(new RegExp('<g data-avatar-part="sleeve-material-'+side+'" clip-path="url\\\\\\(#([^"]+)\\\\\\)"[^>]*>([\\s\\S]*?)</g>'));
+   assert.ok(clip,context+' '+side+' clipped sleeve material');
+   if(shirtStyle==='polo')assert.match(clip[2],/data-avatar-part="polo-sleeve-tailoring"/,context+' polo finish clipped');
+   if(shirtStyle==='shirt')assert.match(clip[2],/data-avatar-part="shirt-sleeve-tailoring"/,context+' shirt finish clipped');
+  }
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,context+' two cuffs');
   assert.equal((svg.match(/data-avatar-part="shoulder-join-(?:left|right)"/g)||[]).length,2,context+' two joins');
   assert.equal((svg.match(/data-avatar-part="jacket-shoulder-yoke"/g)||[]).length,shirtStyle==='jacket'?2:0,context+' jacket yoke only on jacket');
