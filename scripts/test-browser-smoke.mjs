@@ -375,6 +375,23 @@ async function wardrobe(page) {
  assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-hand"]').count(),1,'Thinking pose displays one joined palm and fingers');
  await poseButtons.nth(3).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="closed-hand"]').count(),2,'Confident pose displays both enclosed fist contours');
+ const confidentPaintOrder=await previewArtwork.locator('svg').evaluate(svg=>{
+  const nodes=[...svg.querySelectorAll('*')];
+  const index=selector=>nodes.indexOf(svg.querySelector(selector));
+  return {
+    torso:index('[data-avatar-part="shirt-torso"]'),
+    leftArm:index('[data-avatar-part="left-forearm"]'),
+    rightArm:index('[data-avatar-part="right-forearm"]'),
+    leftFist:index('[data-avatar-part="left-confident-hand"]'),
+    rightFist:index('[data-avatar-part="right-confident-hand"]'),
+    shoulder:index('[data-avatar-part="left-shoulder-cap"]')
+  };
+ });
+ assert.ok(confidentPaintOrder.leftArm>=0&&confidentPaintOrder.leftArm<confidentPaintOrder.torso,'Confident left forearm stays behind shirt in browser');
+ assert.ok(confidentPaintOrder.rightArm>=0&&confidentPaintOrder.rightArm<confidentPaintOrder.torso,'Confident right forearm stays behind shirt in browser');
+ assert.ok(confidentPaintOrder.leftFist>confidentPaintOrder.torso&&confidentPaintOrder.rightFist>confidentPaintOrder.torso,'Live confident fists visibly paint in front of torso');
+ assert.ok(confidentPaintOrder.leftFist<confidentPaintOrder.shoulder&&confidentPaintOrder.rightFist<confidentPaintOrder.shoulder,'Fists belong below sleeve assembly');
+
  await poseButtons.nth(4).click();
  assert.equal(await previewArtwork.locator('[data-avatar-part="joyful-eyes"]').count(),1,'Celebration face visibly closes both eyes');
  await poseButtons.nth(0).click();
