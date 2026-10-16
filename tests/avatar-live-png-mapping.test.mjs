@@ -17,9 +17,9 @@ test('uploaded PNG shirt and shoe aliases resolve to actual wardrobe selections'
  assert.equal(result.selected.some(p=>p.src==='/avatar-parts/shoes_female_white_sneakers.png'),false);
 });
 test('playable Avatar uses validated layer stack rather than independent lookups',()=>{
- assert.match(source,/const stack=playableAvatarLayers\(v,PNG_PARTS\)/);
- assert.match(source,/const parts=stack\.layers/);
- assert.match(source,/const complete=stack\.ready/);
+ assert.match(source,/const stack=svgOnly\?null:playableAvatarLayers\(v,PNG_PARTS\)/);
+ assert.match(source,/const parts=stack\?\.layers\?\?\[\]/);
+ assert.match(source,/const complete=stack\?\.ready\?\?false/);
 });
 test('existing cropped PNG previews are not authorized as a full playable avatar',()=>{
  assert.equal(avatarSelectionReadiness(choices).ready,false);
