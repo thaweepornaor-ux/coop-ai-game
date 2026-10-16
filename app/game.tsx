@@ -432,7 +432,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       if(disposed||retired)return;
       retired=true;
       snapshotRef.current=null;setSnapshot(null);setQr('');setJoinUrl('');
-      setError(session.role==='host'
+      setError(session!.role==='host'
         ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
         :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
       setShowRecovery(true);setNetwork('online');
