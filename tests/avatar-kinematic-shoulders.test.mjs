@@ -120,3 +120,18 @@ test('thinking gesture retains distinct finger joints and palm volume without du
   assert.doesNotMatch(svg,/NaN|undefined/);
  }
 });
+
+test('bulk integrated celebration palms and confident fists remain symmetric',()=>{
+ for(const bodyStyle of ['male','female']) for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const cheer=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  const waveHands=[...cheer.matchAll(/data-avatar-part="open-hand" d="([^"]+)"/g)].map(x=>x[1]);
+  assert.equal(waveHands.length,2);
+  assert.equal(waveHands[0],waveHands[1]);
+  const confident=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  const fists=[...confident.matchAll(/data-avatar-part="closed-hand" d="([^"]+)"/g)].map(x=>x[1]);
+  assert.equal(fists.length,2);
+  assert.equal(fists[0],fists[1]);
+  assert.equal((confident.match(/data-avatar-part="fist-volume"/g)||[]).length,2);
+  assert.equal((confident.match(/data-avatar-part="fist-knuckles"/g)||[]).length,2);
+ }
+});
