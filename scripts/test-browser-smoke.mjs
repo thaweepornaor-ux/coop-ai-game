@@ -323,12 +323,17 @@ async function wardrobe(page) {
  const portraitGeometry=await selectedCard.evaluate(svg=>[...svg.querySelectorAll('[data-sleeve-side]')].map(el=>el.getAttribute('d')));
  const heroGeometry=await hero.evaluate(svg=>[...svg.querySelectorAll('[data-sleeve-side]')].map(el=>el.getAttribute('d')));
  assert.deepEqual(heroGeometry,portraitGeometry,'Selected large hero and gallery must display the identical arm pose');
+ const activePreview=page.locator('.wardrobe-live-avatar svg');
+ const chosenPoseGeometry=await activePreview.evaluate(svg=>[...svg.querySelectorAll('[data-sleeve-side]')].map(el=>el.getAttribute('d')));
+ assert.deepEqual(chosenPoseGeometry,portraitGeometry,'Live editing preview starts on the same pose as the newly chosen character');
  const selectedHemBefore=await chosen.locator('[data-avatar-part="sleeve-cuff"]').first().getAttribute('stroke-width');
  await page.locator('.quick-options fieldset').nth(3).getByRole('button',{name:'เสื้อแจ็กเก็ต'}).click();
  const selectedHemAfter=await chosen.locator('[data-avatar-part="sleeve-cuff"]').first().getAttribute('stroke-width');
  const heroHemAfter=await hero.locator('[data-avatar-part="sleeve-cuff"]').first().getAttribute('stroke-width');
  assert.notEqual(selectedHemAfter,selectedHemBefore,'Customizing shirt visibly changes selected gallery card');
  assert.equal(selectedHemAfter,heroHemAfter,'Selected card and large hero use matching garment seam styling');
+ const previewHemAfter=await activePreview.locator('[data-avatar-part="sleeve-cuff"]').first().getAttribute('stroke-width');
+ assert.equal(previewHemAfter,selectedHemAfter,'Live preview also reflects the edited jacket material');
 
 
  assert.equal(await page.locator('.quick-options').isVisible(),true,'Wardrobe options are expanded by default');
