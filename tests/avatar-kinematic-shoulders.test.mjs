@@ -167,3 +167,15 @@ test('all twenty face presets preserve hand anatomy and sleeves across every pos
   if(pose==='think')assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,1,which+' pondering hand');
  }
 });
+
+test('raised hands have matched palm depth and thumb folds at every wardrobe choice',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  for(const [pose,count] of [['wave',1],['celebrate',2]]){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   assert.equal((svg.match(/data-avatar-part="raised-palm-depth"/g)||[]).length,count,pose+' palm highlights');
+   assert.equal((svg.match(/data-avatar-part="raised-thumb-fold"/g)||[]).length,count,pose+' thumb creases');
+   assert.equal((svg.match(/data-avatar-part="finger-creases"/g)||[]).length,count,pose+' finger joints');
+  }
+  assert.equal((renderAvatar({bodyStyle,shirtStyle,pose:'stand'}).match(/data-avatar-part="raised-palm-depth"/g)||[]).length,0);
+ }
+});
