@@ -207,3 +207,15 @@ test('confident fists have paired thumb joints and knuckle lighting after WebKit
   }
  }
 });
+
+test('celebration hands share the same five-digit palm and remain mirrored across outfits',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  assert.equal((svg.match(/data-avatar-part="celebration-palm"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="open-hand"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="finger-creases"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="raised-palm-depth"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  assert.match(svg,/data-avatar-part="mirrored-right-hand" transform="translate\(129 58\) scale\(-1 1\)"/);
+ }
+});
