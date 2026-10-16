@@ -298,6 +298,17 @@ async function wardrobe(page) {
    assert.equal(card.svgCount,1,'Gallery thumbnail uses a single SVG');
    assert.equal(card.pngCount,0,'Gallery thumbnail must not mix PNG and SVG');
   }
+  // Inspect real rendered character SVGs, not just the thumbnail bounding boxes.
+  const rigAudit=await gallery.locator('.quick-character').evaluateAll(cards=>cards.map(card=>{
+    const svg=card.querySelector('svg');
+    return {torso:svg?.querySelectorAll('[data-avatar-part="shirt-torso"]').length??0,
+      sleeves:svg?.querySelectorAll('[data-sleeve-side]').length??0,
+      hands:svg?.querySelectorAll('[data-avatar-part="left-forearm"],[data-avatar-part="right-forearm"]').length??0};
+  }));
+  for(const rig of rigAudit){
+    assert.deepEqual(rig,{torso:1,sleeves:2,hands:2},genderName+' avatar has a single torso and two complete sleeve-to-arm joints');
+
+  }
  }
  const chosen=gallery.locator('.quick-character').nth(2);
  await chosen.click();
