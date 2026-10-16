@@ -109,3 +109,15 @@ test('neutral palm volume is shared by both hands without changing selected skin
   }
  }
 });
+
+test('confident pose mirrors one hand anatomy across all shirts and bodies',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  const fists=[...svg.matchAll(/data-avatar-part="closed-hand" d="([^"]+)"/g)].map(m=>m[1]);
+  assert.equal(fists.length,2);
+  assert.equal(fists[0],fists[1],'closed palms share a contour');
+  assert.match(svg,/data-avatar-part="right-confident-hand" transform="translate\(160 0\) scale\(-1 1\)"/);
+  assert.equal((svg.match(/data-avatar-part="fist-volume"/g)||[]).length,2);
+  assert.equal((svg.match(/data-avatar-part="fist-knuckles"/g)||[]).length,2);
+ }
+});
