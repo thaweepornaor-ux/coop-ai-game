@@ -23,3 +23,22 @@ test('shoulder joints and caps follow all five actual arm poses rather than fixe
   assert.notEqual(getPart(variants[0],'right-shoulder-cap'),getPart(variants[3],'right-shoulder-cap'),'thinking shoulder follows bent arm');
  }
 });
+
+test('moving sleeves cover shoulder seams; thinking hand and arm cross in front of clothing',()=>{
+ for(const bodyStyle of ['male','female']) for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  for(const pose of poses){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   const torso=svg.indexOf('data-avatar-part="shirt-torso"');
+   const shoulder=svg.indexOf('data-avatar-part="left-shoulder-cap"');
+   const seam=svg.indexOf('data-avatar-part="shoulder-join-left"');
+   const sleeve=svg.indexOf('data-sleeve-side="left"');
+   const cuff=svg.indexOf('data-avatar-part="sleeve-cuff"');
+   assert.ok(torso>=0&&torso<shoulder&&shoulder<seam&&seam<sleeve&&sleeve<cuff,pose+' layers must hide exposed shoulder patch');
+   const forearm=svg.indexOf('data-avatar-part="right-forearm"');
+   if(pose==='think') assert.ok(forearm>torso&&forearm<shoulder,'thinking arm goes in front of shirt, below its sleeve');
+   else assert.ok(forearm<torso,'resting and raised arms stay behind shirt');
+   assert.match(svg,/data-avatar-part="right-forearm"/);
+   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  }
+ }
+});
