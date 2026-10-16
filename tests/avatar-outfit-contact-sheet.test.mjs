@@ -18,6 +18,10 @@ test('visual QA produces a complete 400-render matrix for all twenty presets, fi
   assert.equal((html.match(/class="review-status"/g)||[]).length,400);
   assert.equal((html.match(/data-review="unreviewed"/g)||[]).length,400);
   assert.match(html,/id="export-review"/);
+  assert.match(html,/id="import-review"/);
+  assert.match(html,/id="import-result"/);
+  assert.ok(html.includes('review rows restored'));
+  assert.ok(html.includes('Invalid review CSV header'));
   assert.ok(html.includes('avatar-art-review.csv'));
   for(const prefix of ['M','F'])for(let n=1;n<=10;n++)for(const pose of ['stand','wave','celebrate','think','confident'])for(const shirt of ['tshirt','polo','shirt','jacket']){
    assert.ok(html.includes(prefix+String(n).padStart(2,'0')+' — '+pose+' — '+shirt));
