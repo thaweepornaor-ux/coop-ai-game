@@ -386,6 +386,12 @@ async function wardrobe(page) {
    assert.equal(await previewArtwork.locator('[data-avatar-part="'+side+'-forearm"]').count(),1,'Every pose should connect '+side+' forearm to the sleeve');
   }
   assert.equal(await previewArtwork.locator('[data-avatar-part="sleeve-cuff"]').count(),2,'Each pose has two fabric cuffs');
+  assert.equal(await previewArtwork.locator('[data-avatar-part="sleeve-volume"]').count(),2,'Both fabric volumes render in the live pose');
+  for(const side of ['left','right']){
+   const joint=previewArtwork.locator('[data-avatar-part="sleeve-material-'+side+'"]');
+   const clip=await joint.getAttribute('clip-path');
+   assert.match(clip||'',/^url\(#avatar-[\w-]+-sleeve-(?:left|right)\)$/,'Live sleeve material is bounded by the true shoulder-to-cuff path');
+  }
   shoulderPoseProfiles.push(await previewArtwork.locator('svg').evaluate(svg=>({
    pose:svg.getAttribute('data-avatar-pose'),
    left:svg.querySelector('[data-avatar-part="left-shoulder-cap"]')?.getAttribute('d'),

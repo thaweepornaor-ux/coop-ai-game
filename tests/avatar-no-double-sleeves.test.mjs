@@ -16,6 +16,6 @@ test('raised-arm poses have distinctly aligned sleeves independent of torso outl
  const profiles=poses.map(pose=>renderAvatar({pose,bodyStyle:'male'}));
  const toros=profiles.map(svg=>svg.match(/data-avatar-part="shirt-torso" d="([^"]+)"/)?.[1]);
  assert.equal(new Set(toros).size,1,'torso must not rotate with the arms');
- const sleeves=profiles.map(svg=>svg.match(/<g data-avatar-part="pose-sleeves">([\s\S]*?)<\/g>/)?.[1]);
+ const sleeves=profiles.map(svg=>[...svg.matchAll(/<path data-sleeve-side="(?:left|right)" d="([^"]+)"/g)].map(x=>x[1]).join('|'));
  assert.equal(new Set(sleeves).size,5,'arm motion comes from each unique sleeve profile');
 });
