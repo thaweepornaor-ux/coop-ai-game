@@ -47,3 +47,16 @@ test('moving sleeves cover shoulder seams; thinking hand and arm cross in front 
   }
  }
 });
+
+test('raised open hands have articulated finger details for both sides without losing anatomy',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const wave=renderAvatar({bodyStyle,shirtStyle,pose:'wave'});
+  const cheer=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  assert.equal((wave.match(/data-avatar-part="finger-creases"/g)||[]).length,1,'one raised waving palm');
+  assert.equal((cheer.match(/data-avatar-part="finger-creases"/g)||[]).length,2,'two raised cheering palms');
+  assert.equal((wave.match(/data-avatar-part="open-hand"/g)||[]).length,1);
+  assert.equal((cheer.match(/data-avatar-part="open-hand"/g)||[]).length,2);
+  assert.doesNotMatch(wave,/NaN|undefined/);
+  assert.doesNotMatch(cheer,/NaN|undefined/);
+ }
+});
