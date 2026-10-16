@@ -8,6 +8,9 @@ test('visual QA produces a complete 400-render matrix for all twenty presets, fi
   assert.equal((html.match(/<svg /g)||[]).length,400);
   assert.match(html,/id="preset-filter"/);
   assert.match(html,/id="shirt-filter"/);
+  assert.match(html,/id="pose-filter"/);
+  assert.ok(html.includes('poseFilter.addEventListener("change",apply)'));
+  assert.ok(html.includes('card.dataset.pose!==poseFilter.value'));
   assert.equal((html.match(/data-shirt="/g)||[]).length,400);
   assert.equal((html.match(/class="review-status"/g)||[]).length,400);
   assert.equal((html.match(/data-review="unreviewed"/g)||[]).length,400);
