@@ -313,5 +313,28 @@ html,body{max-width:100%;overflow-x:clip}
 .game-avatar-motion-celebrate>div{animation-name:game-avatar-cheer;animation-duration:1.55s}
 .game-avatar-motion-think>div{animation-duration:4.8s}
 .game-avatar-motion-confident>div{animation-duration:3.1s}
+/* Arm and sleeve share identical animated joint angles and origins. The
+   SVG artist previews remain static because they do not enable motion. */
+@keyframes game-avatar-wave-joint{0%,100%{transform:rotate(0deg)}35%{transform:rotate(-4deg)}68%{transform:rotate(3deg)}}
+@keyframes game-avatar-cheer-left-joint{0%,100%{transform:rotate(0deg)}45%{transform:rotate(-3deg)}70%{transform:rotate(2deg)}}
+@keyframes game-avatar-cheer-right-joint{0%,100%{transform:rotate(0deg)}45%{transform:rotate(3deg)}70%{transform:rotate(-2deg)}}
+.game-avatar-motion-wave svg [data-avatar-part="left-articulated-arm"],
+.game-avatar-motion-wave svg [data-avatar-part="left-articulated-sleeve"]{
+  transform-box:view-box;transform-origin:54px 99px;
+  animation:game-avatar-wave-joint 2.3s ease-in-out infinite
+}
+.game-avatar-motion-celebrate svg [data-avatar-part="left-articulated-arm"],
+.game-avatar-motion-celebrate svg [data-avatar-part="left-articulated-sleeve"]{
+  transform-box:view-box;transform-origin:54px 99px;
+  animation:game-avatar-cheer-left-joint 1.55s ease-in-out infinite
+}
+.game-avatar-motion-celebrate svg [data-avatar-part="right-articulated-arm"],
+.game-avatar-motion-celebrate svg [data-avatar-part="right-articulated-sleeve"]{
+  transform-box:view-box;transform-origin:106px 99px;
+  animation:game-avatar-cheer-right-joint 1.55s ease-in-out infinite
+}
 @media(prefers-reduced-motion:reduce){.game-avatar-motion>div{animation:none!important;will-change:auto}}
 .motion-off .game-avatar-motion>div{animation:none!important;will-change:auto}
+
+@media(prefers-reduced-motion:reduce){.game-avatar-motion svg [data-avatar-part$="articulated-arm"],.game-avatar-motion svg [data-avatar-part$="articulated-sleeve"]{animation:none!important}}
+.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-arm"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-sleeve"]{animation:none!important}
