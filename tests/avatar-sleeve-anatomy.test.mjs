@@ -35,10 +35,12 @@ test('confident pose has separate hands with defined digits on both sides',()=>{
  for(const bodyStyle of genders){
   const svg=renderAvatar({pose:'confident',bodyStyle});
   for(const side of ['left','right']){
-   const hand=svg.match(new RegExp('<g data-avatar-part="'+side+'-confident-hand"(?: [^>]*)?>([\\\\s\\\\S]*?)<\\\\/g>'));
+   const start=svg.indexOf('<g data-avatar-part="'+side+'-confident-hand"');
+   const end=svg.indexOf('</g>',start);
+   const hand=start>=0&&end>start?svg.slice(start,end+4):null;
    assert.ok(hand, side+' hand missing');
-   assert.match(hand[1],/data-avatar-part="closed-hand"/);
-   assert.match(hand[1],/<path/);
+   assert.match(hand,/data-avatar-part="closed-hand"/);
+   assert.match(hand,/<path/);
   }
  }
 });
