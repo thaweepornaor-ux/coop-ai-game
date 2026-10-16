@@ -328,6 +328,19 @@ async function wardrobe(page) {
  await poseButtons.nth(4).click();
  assert.equal(await poseButtons.nth(4).getAttribute('aria-pressed'),'true','Celebrate pose responds');
  assert.equal(await previewArtwork.locator('svg').count(),1,'Switching poses preserves the same art renderer');
+ const handCounts=await previewArtwork.locator('svg').evaluate(svg=>({
+  open:svg.querySelectorAll('[data-avatar-part="open-hand"]').length,
+  relaxed:svg.querySelectorAll('[data-avatar-part="relaxed-hand"]').length,
+  think:svg.querySelectorAll('[data-avatar-part="thinking-hand"]').length,
+  cuff:svg.querySelectorAll('[data-avatar-part="sleeve-cuff"]').length
+ }));
+ assert.deepEqual(handCounts,{open:2,relaxed:0,think:0,cuff:2},'Celebrate pose uses two contiguous hands and two garment cuffs');
+ await poseButtons.nth(0).click();
+ assert.equal(await previewArtwork.locator('[data-avatar-part="relaxed-hand"]').count(),2,'Stand pose displays two finished resting hands');
+ await poseButtons.nth(2).click();
+ assert.equal(await previewArtwork.locator('[data-avatar-part="thinking-hand"]').count(),1,'Thinking pose displays one joined palm and fingers');
+ await poseButtons.nth(3).click();
+ assert.equal(await previewArtwork.locator('[data-avatar-part="closed-hand"]').count(),2,'Confident pose displays both enclosed fist contours');
 
  await poseButtons.first().click();
  assert.equal(await page.locator('select').count(),0);
