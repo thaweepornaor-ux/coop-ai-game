@@ -13,3 +13,15 @@ test('raised-pose hands are enclosed silhouettes with no detached stroke fingers
   }
  }
 });
+
+test('neutral arms and thinking pose have continuous fingers for both bodies and outfits',()=>{
+ for(const gender of ['male','female'])for(const style of ['polo','tshirt','shirt','jacket']){
+  for(const [pose,rest,think] of [['stand',2,0],['wave',1,0],['think',1,1],['confident',0,0],['celebrate',0,0]]){
+   const svg=renderAvatar({bodyStyle:gender,shirtStyle:style,pose});
+   assert.equal((svg.match(/data-avatar-part="relaxed-hand"/g)||[]).length,rest,gender+'/'+style+'/'+pose+' relaxed');
+   assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,think,gender+'/'+style+'/'+pose+' think');
+   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+   assert.doesNotMatch(svg, /NaN|undefined/, 'render must contain valid numbers');
+  }
+ }
+});
