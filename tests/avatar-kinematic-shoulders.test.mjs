@@ -297,3 +297,13 @@ test('thinking hand keeps one enlarged integrated palm and its shading across al
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('wave hand scales all finger, palm and wrist details together about the same anchor',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'wave'});
+  assert.match(svg,/data-avatar-part="wave-palm-assembly" transform="scale\(1\.12\)"/);
+  assert.equal((svg.match(/data-avatar-part="wave-palm-assembly"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="open-hand"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+ }
+});
