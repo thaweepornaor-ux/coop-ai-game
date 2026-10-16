@@ -214,7 +214,7 @@ export function renderAvatar(options = {}) {
   // Use the same clearly separated five-digit silhouette on both raised hands.
   // The mirrored hand is transformed as a unit, so finger direction, thumb
   // position and palm lighting stay symmetric without detached finger pieces.
-  const celebrationPalm = `<g data-avatar-part="celebration-palm" transform="scale(.8)"><path data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-13 -10 -10 -11Q-8 -12 -6 -8L-5 -10L-8 -19Q-9 -22 -6 -23Q-3 -23 -2 -19L-1 -11L-3 -23Q-3 -26 0 -26Q3 -26 3 -22L4 -11L5 -22Q5 -25 8 -24Q10 -23 9 -20L8 -10L10 -17Q11 -20 13 -18Q15 -16 13 -12L10 -1Q9 6 2 8Q-4 8 -5 2Z"/>${raisedPalmDepth('cheer')}${fingerDetail('open')}${wristDetail('cheer')}</g>`;
+  const celebrationPalm = `<g data-avatar-part="celebration-palm" transform="scale(.94)"><path data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-13 -10 -10 -11Q-8 -12 -6 -8L-5 -10L-8 -19Q-9 -22 -6 -23Q-3 -23 -2 -19L-1 -11L-3 -23Q-3 -26 0 -26Q3 -26 3 -22L4 -11L5 -22Q5 -25 8 -24Q10 -23 9 -20L8 -10L10 -17Q11 -20 13 -18Q15 -16 13 -12L10 -1Q9 6 2 8Q-4 8 -5 2Z"/>${raisedPalmDepth('cheer')}${fingerDetail('open')}${wristDetail('cheer')}</g>`;
   const cheerLeft = `<path data-avatar-part="left-forearm" d="M32 88Q29 76 27 65Q26 59 31 58Q36 57 38 64Q37 84 38 102Z"/><g transform="translate(31 58)">${celebrationPalm}</g>`;
   const cheerRight = `<path data-avatar-part="right-forearm" d="M128 88Q131 76 133 65Q134 59 129 58Q124 57 122 64Q123 84 122 102Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(129 58) scale(-1 1)">${celebrationPalm}</g>`;
   // Keep the relaxed left arm behind the shirt while only the raised right
