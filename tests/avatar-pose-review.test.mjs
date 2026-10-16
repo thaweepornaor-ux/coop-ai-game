@@ -8,7 +8,7 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
  try{
   execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs'],{stdio:'pipe'});
   const html=readFileSync(location,'utf8');
-  assert.equal((html.match(/<article>/g)||[]).length,10);
+  assert.equal((html.match(/<article\b[^>]*>/g)||[]).length,10);
   assert.equal((html.match(/<svg /g)||[]).length,10);
   for(const pose of ['stand','wave','celebrate','think','confident']){
    assert.match(html,new RegExp('M01 — '+pose));
@@ -17,7 +17,7 @@ test('pose contact sheet renders ten complete avatars with unique material IDs',
   assert.equal((html.match(/<g data-avatar-part="pose-sleeves">/g)||[]).length,10);
   execFileSync(process.execPath,['scripts/generate-avatar-pose-review.mjs','--all','--validate'],{stdio:'pipe'});
   const full=readFileSync('artifacts/avatar-qa/all-presets-contact-sheet.html','utf8');
-  assert.equal((full.match(/<article>/g)||[]).length,100);
+  assert.equal((full.match(/<article\b[^>]*>/g)||[]).length,100);
   assert.equal((full.match(/<svg /g)||[]).length,100);
   for(const prefix of ['M','F'])for(let n=1;n<=10;n++)for(const pose of ['stand','wave','celebrate','think','confident']){
    assert.ok(full.includes(prefix+String(n).padStart(2,'0')+' — '+pose));
