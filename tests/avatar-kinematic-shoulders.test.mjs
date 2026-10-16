@@ -53,6 +53,8 @@ test('raised open hands have articulated finger details for both sides without l
   const wave=renderAvatar({bodyStyle,shirtStyle,pose:'wave'});
   const cheer=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
   assert.equal((wave.match(/data-avatar-part="finger-creases"/g)||[]).length,1,'one raised waving palm');
+  assert.equal((wave.match(/data-avatar-part="wrist-crease"/g)||[]).length,1,'waving wrist follows its palm');
+  assert.equal((cheer.match(/data-avatar-part="wrist-crease"/g)||[]).length,2,'both cheering wrists follow their palms');
   assert.equal((cheer.match(/data-avatar-part="finger-creases"/g)||[]).length,2,'two raised cheering palms');
   assert.equal((wave.match(/data-avatar-part="open-hand"/g)||[]).length,1);
   assert.equal((cheer.match(/data-avatar-part="open-hand"/g)||[]).length,2);
