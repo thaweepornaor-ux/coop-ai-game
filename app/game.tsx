@@ -426,7 +426,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
   useEffect(()=>{sessionRef.current=session;setPendingChoice(null)},[session]);
   useEffect(()=>{
     if(!session)return;
-    let disposed=false,tick:number|undefined,request:AbortController|null=null;
+    let disposed=false,retired=false,tick:number|undefined,request:AbortController|null=null;
     const thisGeneration=++generation.current;
     async function poll(){
       request=new AbortController();const started=Date.now();
@@ -443,10 +443,15 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
             ?'ห้องก่อนหน้าสิ้นสุดแล้ว หากต้องการสอนอีกครั้งให้กด “เริ่มเกมใหม่” ครับ'
             :'ห้องก่อนหน้าสิ้นสุดแล้ว กรุณาสแกน QR Code ใหม่จากผู้สอนครับ');
           setShowRecovery(true);
+          // This token is permanently revoked. Do not issue another request
+          // against the retired classroom; a new room gets its own effect.
+          retired=true;
+          setNetwork('online');
+          return;
         }throw new Error(data.error||'เชื่อมต่อไม่ได้')}
         const state=(data.snapshot||data) as Snapshot;acceptState(state,started,Date.now());
       }catch{if(!disposed)setNetwork('offline')}
-      finally{window.clearTimeout(timeout);if(!disposed)tick=window.setTimeout(poll,850)}
+      finally{window.clearTimeout(timeout);if(!disposed&&!retired)tick=window.setTimeout(poll,850)}
     }
     void poll();
     return()=>{disposed=true;request?.abort();if(tick)window.clearTimeout(tick)};
