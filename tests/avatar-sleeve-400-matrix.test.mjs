@@ -73,3 +73,18 @@ test('relaxed hand contours and left/right forearms stay mirrored across all 400
   assert.equal((svg.match(/data-avatar-part="right-forearm"/g)||[]).length,1,id+'/'+shirtStyle+'/'+pose+' right forearm');
  }
 });
+
+test('three expressive hand gestures keep their wrist details attached across the full wardrobe matrix',()=>{
+ for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
+  const context=id+'/'+shirtStyle+'/'+pose;
+  const svg=renderAvatar({presetId:id,bodyStyle:id.startsWith('F')?'female':'male',shirtStyle,pose,materialPrefix:'gesture-'+id+'-'+shirtStyle+'-'+pose});
+  const expected={stand:[],wave:[],celebrate:['celebration-wrist-contour'],think:['thinking-wrist-contour'],confident:['fist-wrist-contour']}[pose];
+  for(const part of ['thinking-wrist-contour','celebration-wrist-contour','fist-wrist-contour']){
+   const count=(svg.match(new RegExp('data-avatar-part="'+part+'"','g'))||[]).length;
+   assert.equal(count,expected.includes(part)?(part==='thinking-wrist-contour'?1:2):0,context+' '+part);
+  }
+  if(pose==='think')assert.ok(svg.indexOf('data-avatar-part="thinking-wrist-contour"')>svg.indexOf('data-avatar-part="thinking-hand"'),context+' wrist remains in thinking-hand assembly');
+  if(pose==='celebrate')assert.equal((svg.match(/data-avatar-part="mirrored-right-hand"/g)||[]).length,1,context+' mirrored raised hand');
+  assert.ok(!svg.includes('undefined'),context+' no missing hand interpolation');
+ }
+});
