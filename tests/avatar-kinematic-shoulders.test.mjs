@@ -307,3 +307,17 @@ test('wave hand scales all finger, palm and wrist details together about the sam
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('relaxed hands have independent tapered fingertips with perfectly matched highlight clipping',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  for(const pose of ['stand','wave','think']){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   assert.match(svg,/data-avatar-part="relaxed-hand" d="M-5 -1Q-9 1 -9 7/);
+   assert.match(svg,/L-1 22Q-1 25 1 25/);
+   assert.match(svg,/L7 13Q9 15 11 13/);
+   assert.equal((svg.match(/data-avatar-part="relaxed-hand"/g)||[]).length,pose==='stand'?2:1);
+   assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
+   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+  }
+ }
+});
