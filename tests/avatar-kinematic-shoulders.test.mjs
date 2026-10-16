@@ -225,8 +225,8 @@ test('relaxed palms use shared extended-finger silhouette and symmetric matching
   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
   const palm=svg.match(/data-avatar-part="relaxed-hand" d="([^"]+)"/);
   assert.ok(palm,bodyStyle+'/'+shirtStyle+'/'+pose);
-  assert.match(palm[1],/L-8 16Q-8 19/);
-  assert.match(palm[1],/L0 21Q0 24/);
+  assert.match(palm[1],/L-9 15Q-9 19/);
+  assert.match(palm[1],/L-1 22Q-1 25/);
   assert.equal((svg.match(/data-avatar-part="palm-volume"/g)||[]).length,pose==='stand'?2:1);
  }
 });
