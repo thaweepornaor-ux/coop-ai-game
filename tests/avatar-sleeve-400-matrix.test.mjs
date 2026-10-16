@@ -60,3 +60,16 @@ test('arms and hands remain pose-specific rather than all reusing a default',()=
  assert.match(sample('confident'),/data-avatar-part="left-confident-hand"/);
  assert.match(sample('stand'),/data-avatar-part="relaxed-hand"/);
 });
+
+test('relaxed hand contours and left/right forearms stay mirrored across all 400 variants',()=>{
+ for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
+  const svg=renderAvatar({presetId:id,bodyStyle:id.startsWith('F')?'female':'male',shirtStyle,pose,materialPrefix:'hand-qa-'+id+'-'+shirtStyle+'-'+pose});
+  const relaxed=pose==='stand'||pose==='wave'||pose==='think';
+  assert.equal((svg.match(/data-avatar-part="relaxed-hand"/g)||[]).length,relaxed?(pose==='stand'?2:1):0,id+'/'+shirtStyle+'/'+pose+' relaxed palm count');
+  if(pose==='stand'||pose==='wave'){
+   assert.match(svg,/data-avatar-part="mirrored-right-hand" transform="translate\(118 145\) scale\(-1 1\)"/,id+'/'+shirtStyle+'/'+pose+' right mirror');
+  }
+  assert.equal((svg.match(/data-avatar-part="left-forearm"/g)||[]).length,1,id+'/'+shirtStyle+'/'+pose+' left forearm');
+  assert.equal((svg.match(/data-avatar-part="right-forearm"/g)||[]).length,1,id+'/'+shirtStyle+'/'+pose+' right forearm');
+ }
+});
