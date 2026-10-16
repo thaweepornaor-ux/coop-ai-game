@@ -363,6 +363,8 @@ async function wardrobe(page) {
  assert.equal(await poseButtons.count(),5,'Five live poses are immediately selectable');
  await poseButtons.nth(1).click();
  assert.equal(await poseButtons.nth(1).getAttribute('aria-pressed'),'true','Pose preview changes immediately');
+ assert.equal(await livePreview.locator('[data-avatar-part="raised-palm-depth"]').count(),1,'Wave displays one raised-palm highlight');
+ assert.equal(await livePreview.locator('[data-avatar-part="raised-thumb-fold"]').count(),1,'Wave displays one thumb articulation');
  const previewArtwork=livePreview.locator('.wardrobe-live-avatar');
  assert.equal(await previewArtwork.locator('svg').count(),1,'Full body preview uses one coherent SVG across poses');
  assert.equal(await previewArtwork.locator('img').count(),0,'Do not overlay differently proportioned PNG artwork in neutral pose');
@@ -376,6 +378,8 @@ async function wardrobe(page) {
   cuff:svg.querySelectorAll('[data-avatar-part="sleeve-cuff"]').length
  }));
  assert.deepEqual(handCounts,{open:2,relaxed:0,think:0,cuff:2},'Celebrate pose uses two contiguous hands and two garment cuffs');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="raised-palm-depth"]').count(),2,'Celebrate shows two palm highlights');
+ assert.equal(await previewArtwork.locator('[data-avatar-part="raised-thumb-fold"]').count(),2,'Celebrate shows two thumb folds');
  const celebratedPalms=await previewArtwork.locator('svg').evaluate(svg=>[...svg.querySelectorAll('[data-avatar-part="open-hand"]')].map(el=>el.getAttribute('d')));
  assert.equal(celebratedPalms.length,2,'Browser has both cheering palms');
  assert.equal(celebratedPalms[0],celebratedPalms[1],'Live cheering palms mirror identical finger anatomy');
