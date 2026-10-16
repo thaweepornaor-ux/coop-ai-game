@@ -307,3 +307,16 @@ test('wave hand scales all finger, palm and wrist details together about the sam
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('wave finger contour separates digit tips without modifying celebration palms',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'wave'});
+  assert.match(svg,/data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-14 -10 -11 -12/);
+  assert.match(svg,/L-4 -25Q-5 -29 -1 -29/);
+  assert.match(svg,/L5 -24Q5 -28 9 -27/);
+  assert.equal((svg.match(/data-avatar-part="wave-palm-assembly"/g)||[]).length,1);
+  const celebrate=renderAvatar({bodyStyle,shirtStyle,pose:'celebrate'});
+  assert.equal((celebrate.match(/data-avatar-part="celebration-palm"/g)||[]).length,2);
+  assert.equal((celebrate.match(/data-avatar-part="open-hand"/g)||[]).length,2);
+ }
+});
