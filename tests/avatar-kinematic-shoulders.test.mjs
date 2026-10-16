@@ -198,3 +198,12 @@ test('underarm sleeve seams follow both sleeves and remain clipped in every pose
   assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
  }
 });
+
+test('confident fists have paired thumb joints and knuckle lighting after WebKit room fix',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'confident'});
+  for(const part of ['closed-hand','fist-knuckles','fist-volume','fist-thumb-fold','fist-knuckle-light']){
+   assert.equal((svg.match(new RegExp('data-avatar-part="'+part+'"','g'))||[]).length,2,bodyStyle+'/'+shirtStyle+'/'+part);
+  }
+ }
+});
