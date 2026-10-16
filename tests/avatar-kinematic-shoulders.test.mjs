@@ -179,3 +179,13 @@ test('raised hands have matched palm depth and thumb folds at every wardrobe cho
   assert.equal((renderAvatar({bodyStyle,shirtStyle,pose:'stand'}).match(/data-avatar-part="raised-palm-depth"/g)||[]).length,0);
  }
 });
+
+test('thinking pose preserves single articulated thumb and finger highlight with all outfit styles',()=>{
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  const svg=renderAvatar({bodyStyle,shirtStyle,pose:'think'});
+  assert.equal((svg.match(/data-avatar-part="thinking-thumb-joint"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="thinking-finger-highlight"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="thinking-finger-joints"/g)||[]).length,1);
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2);
+ }
+});
