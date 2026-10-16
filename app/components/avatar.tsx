@@ -15,12 +15,13 @@ type LoadedState='loading'|'ok'|'error';
 export function Avatar({options={},className,pose='stand',svgOnly=false}:AvatarProps){
  const uniqueMaterialId=useId().replace(/[^a-zA-Z0-9_-]/g,'');
  const v=options as Record<string,unknown>;
- const stack=playableAvatarLayers(v,PNG_PARTS);
- const parts=stack.layers;
- const complete=stack.ready;
+ // Preview-only vector rendering must never wait for unrelated raster layers.
+ const stack=svgOnly?null:playableAvatarLayers(v,PNG_PARTS);
+ const parts=stack?.layers??[];
+ const complete=stack?.ready??false;
  const [loaded,setLoaded]=useState<Record<string,LoadedState>>({});
  const signature=parts.map(p=>p?.src||'?').join('|');
- const everyLoaded=!svgOnly&&pose==='stand'&&complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
+ const everyLoaded=pose==='stand'&&complete&&parts.every(p=>p&&loaded[signature+'|'+p.src]==='ok');
  const fallback=useMemo(()=>renderAvatar({...options,pose,materialPrefix:'avatar-'+uniqueMaterialId}),[JSON.stringify(options),pose,uniqueMaterialId]);
  return <div className={className} role="img" aria-label="ตัวละครผู้เล่น" style={{position:'relative',aspectRatio:'3 / 4',width:'100%',height:'100%',display:'grid',placeItems:'center'}}>
   {!everyLoaded&&<div style={{width:'100%',height:'100%'}} dangerouslySetInnerHTML={{__html:fallback}}/>}
