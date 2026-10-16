@@ -107,7 +107,7 @@ async function boundedCase(browser, label, budgetMs, body) {
     if (!active || timedOut) throw new Error('Case was aborted');
     page.setDefaultTimeout(15_000); page.setDefaultNavigationTimeout(10_000);
     pages.push(page);
-    page.on('pageerror', error => errors.push(safeCaseText(error.message)));
+    page.on('pageerror', error => errors.push(safeCaseText(`${page.url()} :: ${error.message}`)));
     return page;
   };
   const timeout = new Promise((_, reject) => {
