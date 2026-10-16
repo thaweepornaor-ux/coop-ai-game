@@ -13,5 +13,7 @@ test('retired classrooms stop polling rather than retrying forbidden room tokens
  assert.match(source,/window\.removeEventListener\('storage',onHostRoomChange\)/);
  assert.match(source,/if\(next\.role==='host'&&next\.room!==session\.room\)/);
  assert.match(source,/if\(!disposed&&!retired\)tick=window\.setTimeout\(poll,850\)/);
+ assert.match(source,/if\(tick\)\{window\.clearTimeout\(tick\);tick=undefined;\}/);
+ assert.match(source,/async function poll\(\)\{\s*if\(disposed\|\|retired\)return;/);
  assert.match(source,/if\(disposed\|\|retired\|\|thisGeneration!==generation\.current\)return/);
 });
