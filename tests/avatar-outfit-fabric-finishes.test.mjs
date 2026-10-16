@@ -5,7 +5,7 @@ test('forty pose/gender/shirt combinations have structurally joined and cloth-sp
   const svg=renderAvatar({bodyStyle,pose,shirtStyle,shirtColor:'mint'});
   const hems=[...svg.matchAll(/data-avatar-part="sleeve-cuff"[^>]*stroke-opacity="([^"]+)" stroke-width="([^"]+)"/g)];
   assert.equal(hems.length,2);
-  for(const h of hems){assert.equal(h[1],opacity);assert.equal(h[2],width);}
+  for(const h of hems){assert.equal(Number(h[1]),Number(opacity));assert.equal(Number(h[2]),Number(width));}
   assert.equal((svg.match(/data-avatar-part="(left|right)-forearm"/g)||[]).length,2);
   assert.equal((svg.match(/data-avatar-part="(left|right)-shoulder-cap"/g)||[]).length,2);
  }
