@@ -6,6 +6,7 @@ import { Avatar, AVATAR_OPTIONS } from './components/avatar';
 import { normalizeWardrobe } from '../shared/avatar-registry';
 import {STUDIO_TRANSFER_KEY,validateStudioTransfer} from '../shared/avatar-studio-transfer.js';
 import { SimpleWardrobe } from './components/simple-wardrobe';
+import {poseForAvatarPreset} from '../shared/avatar-pose.js';
 import { scoreCsv } from '../shared/score-export.js';
 import { unpackQuizVoiceZip } from '../shared/quiz-voice-zip.js';
 import { unpackAnswerVoiceZip } from '../shared/answer-voice-zip.js';
@@ -715,7 +716,7 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
       <div className="customizer-preview">
         <div className="eyebrow">สำหรับผู้เรียน</div>
         <h1>เลือกตัวละคร<br/><em>แล้วเข้าเล่นเลย</em></h1>
-        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false} pose="confident"/></div>
+        <div className="character-stage"><Avatar options={avatar} className="avatar-preview" motion={false} svgOnly pose={poseForAvatarPreset(avatar.presetId)}/></div>
         <div className="character-name"><strong>{name.trim()||'ตัวละครของฉัน'}</strong></div>
       </div>
       <form className="wardrobe card" onSubmit={e=>{e.preventDefault();join()}}>
