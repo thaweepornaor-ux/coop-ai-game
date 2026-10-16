@@ -78,3 +78,16 @@ test('confident fists paint in front of torso while their forearms stay behind',
   assert.equal((svg.match(/data-avatar-part="closed-hand"/g)||[]).length,2);
  }
 });
+
+test('both neutral hands have identical mirrored silhouettes across poses and outfits',()=>{
+ const getRelaxed=svg=>[...svg.matchAll(/data-avatar-part="relaxed-hand" d="([^"]+)"/g)].map(x=>x[1]);
+ for(const bodyStyle of ['male','female'])for(const shirtStyle of ['tshirt','polo','shirt','jacket']){
+  for(const pose of ['stand','wave','think']){
+   const svg=renderAvatar({bodyStyle,shirtStyle,pose});
+   const hands=getRelaxed(svg);
+   assert.equal(hands.length,pose==='stand'?2:pose==='wave'?1:1,pose+' relaxed hand count');
+   if(pose==='stand')assert.equal(hands[0],hands[1],'left and right relaxed hands must mirror the same geometry');
+   assert.doesNotMatch(svg,/NaN|undefined/);
+  }
+ }
+});
