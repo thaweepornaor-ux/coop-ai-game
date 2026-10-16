@@ -1,3 +1,4 @@
+import {AVATAR_ARM_RIG,armForPose} from './avatar-arm-rig.js';
 /** Legacy-safe wardrobe choices. Values are always selected from a whitelist. */
 const optionList = (items) => Object.freeze(items.map((item) => Object.freeze(item)));
 export const AVATAR_OPTIONS = Object.freeze({
@@ -185,8 +186,8 @@ export function renderAvatar(options = {}) {
     const palmPath = relaxedPalmPath;
     return `<clipPath id="${clipId}"><path d="${palmPath}"/></clipPath><g clip-path="url(#${clipId})"><path data-avatar-part="palm-volume" d="M-3 1Q1 -1 4 2Q6 5 5 9Q2 8 -2 10Q-4 6 -3 1Z" fill="#fff" fill-opacity=".12"/></g><path data-avatar-part="thumb-fold" d="M6 7Q8 10 9 11" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".32" stroke-linecap="round"/>`;
   };
-  const leftRest = `<path data-avatar-part="left-forearm" d="M39 118Q37 127 38 139Q37 144 39 146Q41 149 43 148Q47 148 48 143Q49 136 49 124Z"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
-  const rightRest = `<path data-avatar-part="right-forearm" d="M121 118Q123 127 122 139Q123 144 121 146Q119 149 117 148Q113 148 112 143Q111 136 111 124Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
+  const leftRest = `<path data-avatar-part="left-forearm" d="${armForPose('stand','left').forearm}"/><g transform="translate(42 145)">${relaxedPalm}${relaxedPalmVolume('left')}${relaxedCreases}</g>`;
+  const rightRest = `<path data-avatar-part="right-forearm" d="${armForPose('stand','right').forearm}"/><g data-avatar-part="mirrored-right-hand" transform="translate(118 145) scale(-1 1)">${relaxedPalm}${relaxedPalmVolume('right')}${relaxedCreases}</g>`;
   // Finger crease lines are deliberately subtle: they provide readable
   // articulation at small card sizes without making the palms look skeletal.
   // The paths are pose-local so raised and resting fingers are not reused.
@@ -211,21 +212,21 @@ export function renderAvatar(options = {}) {
     const thumb = kind === 'wave' ? 'M-7 -8Q-5 -6 -4 -3' : 'M-5 -8Q-3 -6 -3 -3';
     return `<path data-avatar-part="raised-palm-depth" d="${highlight}" fill="#fff" fill-opacity=".12"/><path data-avatar-part="raised-thumb-fold" d="${thumb}" fill="none" stroke="${skinShade}" stroke-width=".8" stroke-opacity=".35" stroke-linecap="round"/>`;
   };
-  const waveArm = `<path data-avatar-part="left-forearm" d="M30 93Q27 85 25 78Q23 73 24 70Q25 66 28 67Q32 68 34 75Q36 87 39 104Z"/><g transform="translate(27 68) rotate(-15)"><g data-avatar-part="wave-palm-assembly" transform="scale(1.12)"><path data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-14 -10 -11 -12Q-8 -13 -6 -9L-5 -11L-9 -20Q-10 -24 -7 -25Q-4 -25 -3 -21L-1 -12L-4 -25Q-5 -29 -1 -29Q2 -29 3 -25L4 -12L5 -24Q5 -28 9 -27Q12 -26 11 -22L9 -11L12 -19Q14 -22 16 -20Q19 -18 16 -13L12 -1Q10 7 3 9Q-4 9 -5 2Z"/><path d="M-4 1Q1 4 6 0" fill="none" stroke="${skinShade}" stroke-width="1.1" stroke-opacity=".44" stroke-linecap="round"/>${raisedPalmDepth('wave')}${fingerDetail('open')}${wristDetail('wave')}</g></g>`;
+  const waveArm = `<path data-avatar-part="left-forearm" d="${armForPose('wave','left').forearm}"/><g transform="translate(27 68) rotate(-15)"><g data-avatar-part="wave-palm-assembly" transform="scale(1.12)"><path data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-14 -10 -11 -12Q-8 -13 -6 -9L-5 -11L-9 -20Q-10 -24 -7 -25Q-4 -25 -3 -21L-1 -12L-4 -25Q-5 -29 -1 -29Q2 -29 3 -25L4 -12L5 -24Q5 -28 9 -27Q12 -26 11 -22L9 -11L12 -19Q14 -22 16 -20Q19 -18 16 -13L12 -1Q10 7 3 9Q-4 9 -5 2Z"/><path d="M-4 1Q1 4 6 0" fill="none" stroke="${skinShade}" stroke-width="1.1" stroke-opacity=".44" stroke-linecap="round"/>${raisedPalmDepth('wave')}${fingerDetail('open')}${wristDetail('wave')}</g></g>`;
   // Use the same clearly separated five-digit silhouette on both raised hands.
   // The mirrored hand is transformed as a unit, so finger direction, thumb
   // position and palm lighting stay symmetric without detached finger pieces.
   const celebrationPalm = `<g data-avatar-part="celebration-palm" transform="scale(.94)"><path data-avatar-part="open-hand" d="M-5 2Q-9 -1 -12 -7Q-13 -10 -10 -11Q-8 -12 -6 -8L-5 -10L-8 -19Q-9 -22 -6 -23Q-3 -23 -2 -19L-1 -11L-3 -23Q-3 -26 0 -26Q3 -26 3 -22L4 -11L5 -22Q5 -25 8 -24Q10 -23 9 -20L8 -10L10 -17Q11 -20 13 -18Q15 -16 13 -12L10 -1Q9 6 2 8Q-4 8 -5 2Z"/>${raisedPalmDepth('cheer')}${fingerDetail('open')}${wristDetail('cheer')}<path data-avatar-part="celebration-wrist-contour" d="M-5 4Q0 6 5 4" fill="none" stroke="${skinShade}" stroke-opacity=".3" stroke-width=".8" stroke-linecap="round"/></g>`;
-  const cheerLeft = `<path data-avatar-part="left-forearm" d="M32 88Q30 78 28 69Q26 62 29 59Q31 57 34 59Q37 61 38 67Q37 83 38 102Z"/><g transform="translate(31 58)">${celebrationPalm}</g>`;
-  const cheerRight = `<path data-avatar-part="right-forearm" d="M128 88Q130 78 132 69Q134 62 131 59Q129 57 126 59Q123 61 122 67Q123 83 122 102Z"/><g data-avatar-part="mirrored-right-hand" transform="translate(129 58) scale(-1 1)">${celebrationPalm}</g>`;
+  const cheerLeft = `<path data-avatar-part="left-forearm" d="${armForPose('celebrate','left').forearm}"/><g transform="translate(31 58)">${celebrationPalm}</g>`;
+  const cheerRight = `<path data-avatar-part="right-forearm" d="${armForPose('celebrate','right').forearm}"/><g data-avatar-part="mirrored-right-hand" transform="translate(129 58) scale(-1 1)">${celebrationPalm}</g>`;
   // Keep the relaxed left arm behind the shirt while only the raised right
   // forearm/hand crosses in front during thinking. Moving both arms to front
   // caused the left wrist and fingers to float over the torso hem.
   const thinkingWristContour = `<path data-avatar-part="thinking-wrist-contour" d="M-5 5Q0 8 5 5" fill="none" stroke="${skinShade}" stroke-opacity=".32" stroke-width=".8" stroke-linecap="round"/>`;
-  const thinkingRight = `<path data-avatar-part="right-forearm" d="M120 118Q124 125 122 130Q120 137 114 138Q109 139 105 133L91 101Q87 96 89 92Q91 87 96 89Q99 90 101 94L114 121L109 124Z"/><g transform="translate(93 86)"><path data-avatar-part="thinking-hand" d="M-6 2Q-8 -1 -6 -6L-4 -12Q-3 -16 0 -15Q3 -14 2 -10L1 -4L4 -12Q6 -15 9 -13Q11 -11 9 -7L8 2Q7 8 1 9Q-4 8 -6 2Z"/><path data-avatar-part="thinking-finger-joints" d="M-1 -4L1 0M2 -9Q4 -7 4 -4M-3 -8Q-2 -5 -3 -2" fill="none" stroke="${skinShade}" stroke-width=".85" stroke-opacity=".38" stroke-linecap="round"/><path data-avatar-part="thinking-palm-volume" d="M-4 0Q-4 -3 -1 -5L4 -4Q6 0 4 5Q0 7 -3 4Z" fill="#fff" fill-opacity=".09"/><path data-avatar-part="thinking-thumb-joint" d="M-5 -2Q-3 -1 -2 1" fill="none" stroke="${skinShade}" stroke-opacity=".35" stroke-width=".75" stroke-linecap="round"/><path data-avatar-part="thinking-finger-highlight" d="M1 -10Q2 -12 4 -11" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".7" stroke-linecap="round"/>${thinkingWristContour}</g>`;
+  const thinkingRight = `<path data-avatar-part="right-forearm" d="${armForPose('think','right').forearm}"/><g transform="translate(93 86)"><path data-avatar-part="thinking-hand" d="M-6 2Q-8 -1 -6 -6L-4 -12Q-3 -16 0 -15Q3 -14 2 -10L1 -4L4 -12Q6 -15 9 -13Q11 -11 9 -7L8 2Q7 8 1 9Q-4 8 -6 2Z"/><path data-avatar-part="thinking-finger-joints" d="M-1 -4L1 0M2 -9Q4 -7 4 -4M-3 -8Q-2 -5 -3 -2" fill="none" stroke="${skinShade}" stroke-width=".85" stroke-opacity=".38" stroke-linecap="round"/><path data-avatar-part="thinking-palm-volume" d="M-4 0Q-4 -3 -1 -5L4 -4Q6 0 4 5Q0 7 -3 4Z" fill="#fff" fill-opacity=".09"/><path data-avatar-part="thinking-thumb-joint" d="M-5 -2Q-3 -1 -2 1" fill="none" stroke="${skinShade}" stroke-opacity=".35" stroke-width=".75" stroke-linecap="round"/><path data-avatar-part="thinking-finger-highlight" d="M1 -10Q2 -12 4 -11" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".7" stroke-linecap="round"/>${thinkingWristContour}</g>`;
   // Confident fists must be visible in FRONT of the waist. Their two
   // forearms stay behind the shirt to preserve the shoulder and sleeve joins.
-  const confidentForearms = `<path data-avatar-part="left-forearm" d="M40 118Q38 127 41 134Q44 141 50 142Q54 142 61 138L61 135Q58 132 55 132L49 129L50 124Z"/><path data-avatar-part="right-forearm" d="M120 118Q122 127 119 134Q116 141 110 142Q106 142 99 138L99 135Q102 132 105 132L111 129L110 124Z"/>`;
+  const confidentForearms = `<path data-avatar-part="left-forearm" d="${armForPose('confident','left').forearm}"/><path data-avatar-part="right-forearm" d="${armForPose('confident','right').forearm}"/>`;
   // Joint highlights follow the same transformed hand group, so they cannot
   // detach when the character changes gender, outfit, or mirrored side.
   const confidentFistArt = `<path data-avatar-part="closed-hand" d="M54 135Q53 130 57 129Q61 127 65 130Q69 132 69 136Q69 140 64 141L58 141Q54 140 54 135Z"/><path data-avatar-part="fist-knuckles" d="M57 134Q58 133 59 134M60 133Q61 132 62 133M63 133Q64 133 65 134" fill="none" stroke="${skinShade}" stroke-width="1.2" stroke-linecap="round"/><path data-avatar-part="fist-volume" d="M57 134Q58 132 61 132Q64 132 65 134Q64 137 60 137Q57 137 57 134Z" fill="#fff" fill-opacity=".09"/><path data-avatar-part="fist-thumb-fold" d="M57 135Q58 133 61 134" fill="none" stroke="${skinShade}" stroke-opacity=".32" stroke-width=".72" stroke-linecap="round"/><path data-avatar-part="fist-knuckle-light" d="M58 133Q61 132 64 133" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width=".8" stroke-linecap="round"/><path data-avatar-part="fist-wrist-contour" d="M56 139Q60 141 65 139" fill="none" stroke="${skinShade}" stroke-opacity=".3" stroke-width=".8" stroke-linecap="round"/>`;
@@ -263,13 +264,7 @@ export function renderAvatar(options = {}) {
   const sleeves = sleevesByPose[pose];
   // The cuff follows each shoulder-to-forearm direction.  A soft fabric edge
   // reads as a rolled hem instead of a hard painted outline over the skin.
-  const cuffsByPose = {
-    stand:['M39 118Q43 122 49 124','M121 118Q117 122 111 124'],
-    wave:['M30 93Q34 99 39 104','M121 118Q117 122 111 124'],
-    celebrate:['M32 88Q35 95 38 102','M128 88Q125 95 122 102'],
-    think:['M39 118Q43 122 49 124','M120 118Q116 122 109 124'],
-    confident:['M40 118Q44 122 50 124','M120 118Q116 122 110 124'],
-  };
+  const cuffsByPose = Object.fromEntries(Object.keys(AVATAR_ARM_RIG).map(p=>[p,[armForPose(p,'left').cuff,armForPose(p,'right').cuff]]));
   // Highlight only the raised fabric fold; skin remains visible underneath
   // and the cuff follows the actual exposed forearm for every pose.
   const foldsByPose = {
