@@ -596,7 +596,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
     if(size.label==='desktop-1280'||(size.label==='mobile-390'&&reducedMotion==='reduce')){
       const studio=page.locator('.quick-options .wardrobe-live-preview');
       const poseButtons=studio.locator('.wardrobe-pose-choices button');
-      for(const [index,pose,sides] of [[1,'wave',['left']],[4,'celebrate',['left','right']]]){
+      for(const [index,pose,sides] of [[1,'wave',['left']],[2,'think',['right']],[3,'confident',['left','right']],[4,'celebrate',['left','right']]]){
         await poseButtons.nth(index).click();
         await page.waitForFunction(target=>{
           const svg=document.querySelector('.quick-options .wardrobe-live-preview svg[data-avatar-pose]');
@@ -608,9 +608,12 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
             const svg=root.querySelector('svg[data-avatar-pose="'+params.pose+'"]');
             const arm=svg?.querySelector('[data-avatar-part="'+side+'-articulated-arm"]');
             const cloth=svg?.querySelector('[data-avatar-part="'+side+'-articulated-sleeve"]');
+            const fist=params.pose==='confident'?svg?.querySelector('[data-avatar-part="'+side+'-articulated-fist"]'):null;
             return {side,exists:!!arm&&!!cloth,
               armAnimation:arm?getComputedStyle(arm).animationName:'missing',
-              clothAnimation:cloth?getComputedStyle(cloth).animationName:'missing'};
+              clothAnimation:cloth?getComputedStyle(cloth).animationName:'missing',
+              fistExists:params.pose!=='confident'||!!fist,
+              fistAnimation:fist?getComputedStyle(fist).animationName:'not-applicable'};
           });
           const running=sample();
           document.body.classList.add('motion-off');
@@ -621,13 +624,16 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
         },{pose,sides});
         for(const joint of measured.running){
           assert.ok(joint.exists,label+' '+pose+' '+joint.side+' paired joint elements');
+          assert.ok(joint.fistExists,label+' '+pose+' '+joint.side+' foreground fist available');
+          if(pose==='confident')assert.equal(joint.armAnimation,joint.fistAnimation,label+' '+pose+' '+joint.side+' fist moves with arm');
           assert.equal(joint.armAnimation,joint.clothAnimation,label+' '+pose+' '+joint.side+' paired animation');
-          assert.equal(joint.armAnimation,reducedMotion==='reduce'?'none':pose==='wave'?'game-avatar-wave-joint':'game-avatar-cheer-'+joint.side+'-joint',
+          assert.equal(joint.armAnimation,reducedMotion==='reduce'?'none':pose==='wave'?'game-avatar-wave-joint':pose==='think'?'game-avatar-think-joint':pose==='confident'?'game-avatar-confident-'+joint.side+'-joint':'game-avatar-cheer-'+joint.side+'-joint',
             label+' '+pose+' '+joint.side+' OS motion mode');
         }
         for(const joint of measured.stopped){
           assert.equal(joint.armAnimation,'none',label+' '+pose+' '+joint.side+' motion-off arm');
           assert.equal(joint.clothAnimation,'none',label+' '+pose+' '+joint.side+' motion-off cloth');
+          if(pose==='confident')assert.equal(joint.fistAnimation,'none',label+' '+pose+' '+joint.side+' motion-off fist');
         }
       }
       await poseButtons.first().click();
