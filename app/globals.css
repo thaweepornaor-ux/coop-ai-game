@@ -120,13 +120,36 @@ em{color:#15906b}
 .quick-character strong{font-size:.78rem;margin-top:6px}
 .quick-check{position:absolute;top:4px;right:4px;width:23px;height:23px;display:grid;place-items:center;background:#168568;border-radius:50%;color:white;font-size:.8rem}
 .quick-more-toggle{width:100%;border:1px dashed #96bca7;border-radius:12px;background:#f7fbf8;color:#246b52;padding:11px;font-size:.84rem;font-weight:700;min-height:48px}
-.quick-options{display:grid;gap:12px;max-height:360px;overflow:auto;padding:4px 5px 12px}
+.quick-options{display:grid;gap:14px;max-height:none;overflow:visible;padding:4px 2px 12px}
 .quick-options fieldset{min-width:0;border:0;border-top:1px solid #dfebe1;padding:10px 0 0}
 .quick-options legend{font-size:.82rem;font-weight:800;color:#315d4b;padding-right:12px}
 .quick-option-list{display:flex;flex-wrap:wrap;gap:7px}
 .quick-option-list button{display:inline-flex;align-items:center;gap:6px;border-radius:10px;min-height:38px;border:1px solid #cbded2;background:white;color:#315b4d;padding:7px 11px;font-size:.76rem}
 .quick-option-list button[aria-pressed=true]{border-color:#188265;background:#d8f2e3;color:#115e46;font-weight:800}
 .quick-option-list i{width:18px;height:18px;border-radius:50%;border:1px solid #aac5b6}
+/* The learner must see the currently selected avatar and ALL customization
+   controls without an unexplained secondary scroll panel or reveal toggle. */
+.quick-customize-title{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 12px;padding-top:8px;border-top:1px solid #dfebe1}
+.quick-customize-title strong{color:#194c3d;font-size:1.1rem}
+.quick-customize-title span{color:#658277;font-size:.86rem}
+.wardrobe-live-preview{display:grid;grid-template-columns:minmax(105px,148px) minmax(0,1fr);align-items:center;gap:9px 16px;padding:16px;border-radius:16px;border:1px solid #c6ded0;background:linear-gradient(145deg,#f6fbf7,#e5f4ec)}
+.wardrobe-live-avatar{grid-row:1 / span 2;display:grid;place-items:center;width:100%;height:200px;max-height:200px;min-width:0;overflow:hidden;border-radius:12px;background:radial-gradient(circle at 50% 40%,#fff 0%,#e0eee5 100%)}
+.wardrobe-live-avatar svg{display:block;width:100%;height:100%;object-fit:contain}
+.wardrobe-live-caption{display:grid;gap:5px;min-width:0;align-self:end;overflow-wrap:anywhere}
+.wardrobe-live-caption strong{font-size:1rem;color:#1d503f}
+.wardrobe-live-caption span{font-size:.86rem;line-height:1.5;color:#567567}
+.wardrobe-pose-choices{display:flex;gap:6px;flex-wrap:wrap;align-self:start}
+.wardrobe-pose-choices button{min-height:40px;padding:6px 10px;border:1px solid #b9d7c7;border-radius:10px;background:#fff;color:#285742;font-size:.84rem;font-weight:700}
+.wardrobe-pose-choices button[aria-pressed=true]{border-color:#168568;color:#12583f;background:#ceebdb;box-shadow:inset 0 0 0 1px #168568}
+.quick-options legend{font-size:.92rem}
+.quick-option-list button{font-size:.86rem;min-height:42px;white-space:normal;text-align:left}
+@media(max-width:430px){
+ .wardrobe-live-preview{grid-template-columns:minmax(95px,37%) minmax(0,1fr);gap:8px;padding:11px}
+ .wardrobe-live-avatar{height:170px;max-height:170px}
+ .wardrobe-pose-choices button{font-size:.79rem;min-height:38px;padding:5px 8px}
+ .wardrobe-live-caption strong{font-size:.92rem}
+}
+
 .lobby{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}
 .lobby .lobby-main{min-height:520px}
 .lobby h1{font-size:clamp(1.7rem,3.2vw,2.65rem)}
