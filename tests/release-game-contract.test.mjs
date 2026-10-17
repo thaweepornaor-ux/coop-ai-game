@@ -24,3 +24,15 @@ test('release documentation cannot silently imply staging deployment or physical
   assert.match(readme,/A passing check does \*\*not\*\* certify physical mobile devices/);
   assert.match(readme,/a real 25-person rehearsal/i);
 });
+
+test('host receives visible preflight warning before starting without approved R sound',()=>{
+ const game=read('../app/game.tsx');
+ const css=read('../app/globals.css');
+ assert.match(game,/host-audio-preflight/);
+ assert.match(game,/เสียงเฉลย R01–R15 ยังไม่พร้อมบนเครื่องนี้/);
+ assert.match(game,/กรุณาเลือก ZIP และทดลองฟังก่อนเริ่มกิจกรรม/);
+ assert.match(game,/role="status" aria-live="polite"/);
+ assert.match(game,/host-timing-preflight/);
+ assert.match(game,/เปิดให้ตอบ 8 วินาทีต่อข้อ/);
+ assert.match(css,/\.host-audio-preflight\.missing/);
+});
