@@ -616,11 +616,28 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
               fistAnimation:fist?getComputedStyle(fist).animationName:'not-applicable'};
           });
           const running=sample();
+          // Freeze every part at the same deterministic animation times. This
+          // compares real CSS transform matrices, beyond animation names.
+          const frames=params.reduced?[]:params.sides.map(side=>{
+            const svg=root.querySelector('svg[data-avatar-pose="'+params.pose+'"]');
+            const parts=['arm','sleeve',...(params.pose==='confident'?['fist']:[])];
+            const nodes=parts.map(part=>svg?.querySelector('[data-avatar-part="'+side+'-articulated-'+part+'"]'));
+            const animations=nodes.map(el=>el?.getAnimations().find(a=>a.animationName?.includes('game-avatar-')));
+            if(nodes.some(el=>!el)||animations.some(a=>!a))return {side,complete:false,aligned:false,moved:false};
+            const snap=time=>{
+              animations.forEach(a=>{a.pause();a.currentTime=time;});
+              return nodes.map(el=>getComputedStyle(el).transform);
+            };
+            const atZero=snap(0),atMid=snap(650);
+            return {side,complete:true,
+              aligned:new Set(atZero).size===1&&new Set(atMid).size===1,
+              moved:atZero[0]!==atMid[0]};
+          });
           document.body.classList.add('motion-off');
           const stopped=sample();
           document.body.classList.remove('motion-off');
           root.classList.remove('game-avatar-motion','game-avatar-motion-'+params.pose);
-          return {running,stopped};
+          return {running,stopped,frames};
         },{pose,sides});
         for(const joint of measured.running){
           assert.ok(joint.exists,label+' '+pose+' '+joint.side+' paired joint elements');
@@ -629,6 +646,11 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
           assert.equal(joint.armAnimation,joint.clothAnimation,label+' '+pose+' '+joint.side+' paired animation');
           assert.equal(joint.armAnimation,reducedMotion==='reduce'?'none':pose==='wave'?'game-avatar-wave-joint':pose==='think'?'game-avatar-think-joint':pose==='confident'?'game-avatar-confident-'+joint.side+'-joint':'game-avatar-cheer-'+joint.side+'-joint',
             label+' '+pose+' '+joint.side+' OS motion mode');
+        }
+        if(reducedMotion!=='reduce')for(const frame of measured.frames){
+          assert.ok(frame.complete,label+' '+pose+' '+frame.side+' actual CSS animation instances exist');
+          assert.ok(frame.aligned,label+' '+pose+' '+frame.side+' identical sampled matrices at 0ms and 650ms');
+          assert.ok(frame.moved,label+' '+pose+' '+frame.side+' sampled 650ms frame genuinely moves');
         }
         for(const joint of measured.stopped){
           assert.equal(joint.armAnimation,'none',label+' '+pose+' '+joint.side+' motion-off arm');
