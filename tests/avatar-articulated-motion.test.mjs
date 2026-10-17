@@ -39,3 +39,26 @@ test('arm/sleeve animations match and stop for reduced-motion or explicit off',(
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.game-avatar-motion svg/);
  assert.match(css,/\.motion-off \.game-avatar-motion svg/);
 });
+
+test('thinking and confident gesture joints bind palms, arms and hems on all 400 SVGs',()=>{
+ for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
+  const ctx=id+'/'+shirtStyle+'/'+pose;
+  const svg=renderAvatar({presetId:id,bodyStyle:id[0]==='F'?'female':'male',shirtStyle,pose,materialPrefix:'think-joint-'+id+'-'+shirtStyle+'-'+pose});
+  if(pose==='think'){
+   assert.equal((svg.match(/data-avatar-part="right-articulated-arm"/g)||[]).length,1,ctx+' bent thinking forearm');
+   assert.equal((svg.match(/data-avatar-part="thinking-hand"/g)||[]).length,1,ctx+' thinking palm');
+  }
+  if(pose==='confident'){
+   for(const side of ['left','right']){
+    assert.equal((svg.match(new RegExp('data-avatar-part="'+side+'-articulated-arm"','g'))||[]).length,1,ctx+' arm');
+    assert.equal((svg.match(new RegExp('data-avatar-part="'+side+'-articulated-fist"','g'))||[]).length,1,ctx+' fist');
+   }
+  }
+  assert.equal((svg.match(/data-avatar-part="sleeve-cuff"/g)||[]).length,2,ctx+' cuffs');
+ }
+ assert.match(css,/@keyframes game-avatar-think-joint/);
+ assert.match(css,/@keyframes game-avatar-confident-left-joint/);
+ assert.match(css,/@keyframes game-avatar-confident-right-joint/);
+ assert.match(css,/\.motion-off \.game-avatar-motion svg \[data-avatar-part\$="articulated-fist"\]/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\).*articulated-fist/);
+});
