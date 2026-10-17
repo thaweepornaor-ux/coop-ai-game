@@ -345,14 +345,16 @@ html,body{max-width:100%;overflow-x:clip}
  animation:game-avatar-think-joint 4.8s ease-in-out infinite
 }
 .game-avatar-motion-confident svg [data-avatar-part="left-articulated-arm"],
+.game-avatar-motion-confident svg [data-avatar-part="left-articulated-fist"],
 .game-avatar-motion-confident svg [data-avatar-part="left-articulated-sleeve"]{
  transform-box:view-box;transform-origin:53px 105px;
  animation:game-avatar-confident-left-joint 3.1s ease-in-out infinite
 }
 .game-avatar-motion-confident svg [data-avatar-part="right-articulated-arm"],
+.game-avatar-motion-confident svg [data-avatar-part="right-articulated-fist"],
 .game-avatar-motion-confident svg [data-avatar-part="right-articulated-sleeve"]{
  transform-box:view-box;transform-origin:107px 105px;
  animation:game-avatar-confident-right-joint 3.1s ease-in-out infinite
 }
-@media(prefers-reduced-motion:reduce){.game-avatar-motion svg [data-avatar-part$="articulated-arm"],.game-avatar-motion svg [data-avatar-part$="articulated-sleeve"]{animation:none!important}}
-.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-arm"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-sleeve"]{animation:none!important}
+@media(prefers-reduced-motion:reduce){.game-avatar-motion svg [data-avatar-part$="articulated-arm"],.game-avatar-motion svg [data-avatar-part$="articulated-sleeve"],.game-avatar-motion svg [data-avatar-part$="articulated-fist"]{animation:none!important}}
+.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-arm"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-sleeve"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-fist"]{animation:none!important}
