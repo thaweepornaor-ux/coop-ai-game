@@ -631,7 +631,8 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
             const atZero=snap(0),atMid=snap(650);
             return {side,complete:true,
               aligned:new Set(atZero).size===1&&new Set(atMid).size===1,
-              moved:atZero[0]!==atMid[0]};
+              moved:atZero[0]!==atMid[0],
+              pivotsAligned:new Set(nodes.map(el=>getComputedStyle(el).transformOrigin)).size===1};
           });
           document.body.classList.add('motion-off');
           const stopped=sample();
@@ -651,6 +652,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
           assert.ok(frame.complete,label+' '+pose+' '+frame.side+' actual CSS animation instances exist');
           assert.ok(frame.aligned,label+' '+pose+' '+frame.side+' identical sampled matrices at 0ms and 650ms');
           assert.ok(frame.moved,label+' '+pose+' '+frame.side+' sampled 650ms frame genuinely moves');
+          assert.ok(frame.pivotsAligned,label+' '+pose+' '+frame.side+' shoulder pivot matches for cloth/arm/fist');
         }
         for(const joint of measured.stopped){
           assert.equal(joint.armAnimation,'none',label+' '+pose+' '+joint.side+' motion-off arm');
@@ -659,7 +661,7 @@ async function surfaces(browser, browserName, size, reducedMotion = 'no-preferen
         }
       }
       await poseButtons.first().click();
-      row.checks.push('Real computed joint motions track both forearm and cloth, and stop together under motion-off/reduced-motion');
+      row.checks.push('Real computed joint transforms and origins are synchronized across 0ms/650ms frames; stop under motion-off/reduced-motion');
     }
 
     return { previewImage };
