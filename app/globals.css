@@ -358,3 +358,9 @@ html,body{max-width:100%;overflow-x:clip}
 }
 @media(prefers-reduced-motion:reduce){.game-avatar-motion svg [data-avatar-part$="articulated-arm"],.game-avatar-motion svg [data-avatar-part$="articulated-sleeve"],.game-avatar-motion svg [data-avatar-part$="articulated-fist"]{animation:none!important}}
 .motion-off .game-avatar-motion svg [data-avatar-part$="articulated-arm"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-sleeve"],.motion-off .game-avatar-motion svg [data-avatar-part$="articulated-fist"]{animation:none!important}
+
+/* Instructor preflight must not hide missing R recordings inside advanced details. */
+.host-audio-preflight{margin:4px 0 0;line-height:1.45;font-size:clamp(13px,1.05vw,16px);font-weight:650}
+.host-audio-preflight.missing{color:#ffd3a0}
+.host-audio-preflight.ready{color:#b1f7d0}
+.host-timing-preflight{margin:2px 0 0;opacity:.88;font-size:clamp(12px,.95vw,14px);line-height:1.4}
