@@ -12,7 +12,7 @@ test('raised forearms and their own sleeves form paired pose-specific animation 
  for(const id of ids)for(const shirtStyle of outfits)for(const pose of poses){
   const ctx=id+'/'+shirtStyle+'/'+pose;
   const svg=renderAvatar({presetId:id,bodyStyle:id[0]==='F'?'female':'male',shirtStyle,pose,materialPrefix:'joint-'+id+'-'+shirtStyle+'-'+pose});
-  const raised=pose==='wave'?['left']:pose==='celebrate'?['left','right']:[];
+  const raised=pose==='wave'?['left']:pose==='celebrate'||pose==='confident'?['left','right']:pose==='think'?['right']:[];
   for(const side of ['left','right']){
    const arm=(svg.match(new RegExp('data-avatar-part="'+side+'-articulated-arm"','g'))||[]).length;
    const sleeve=(svg.match(new RegExp('data-avatar-part="'+side+'-articulated-sleeve"','g'))||[]).length;
