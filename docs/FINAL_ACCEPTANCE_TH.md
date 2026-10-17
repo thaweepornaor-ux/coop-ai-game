@@ -1,36 +1,36 @@
-# Cooperative AI Game — on-site release acceptance
+# แผนตรวจรับเกมภารกิจ AI ในสหกรณ์ ก่อนเผยแพร่
 
-**Candidate:** review the current `main` SHA in GitHub before testing. This checklist never authorizes deployment.
+**สถานะ:** เป็นรายการตรวจรับ ไม่ใช่คำอนุญาตให้ Deploy ต้องบันทึก Commit SHA บน `main` ที่จะใช้จริงก่อนเริ่ม
 
-## Step A — pre-deployment safety
-1. Record the existing staging URL, currently served release SHA/version if visible, and its operational owner.
-2. Obtain **explicit approval** to replace the staging version. A GitHub merge is not deployment approval.
-3. Confirm an actual rollback path in Cloudflare for this project and the existing D1 database backup/restore procedure with the deployment owner; do not infer it from `wrangler.ci.jsonc`.
-4. Keep any existing classroom rooms, scores, and production database untouched. No reset, migration, or fake test data against hosted staging.
-5. Reconfirm the teaching rule: server currently uses **8 seconds per question after narration**, across 15 questions. If 15 seconds is required, do not deploy until the rule is resolved and retested.
+## A. ความปลอดภัยก่อนอัปเดต Staging
+- [ ] บันทึก URL, เวอร์ชันเดิม และผู้รับผิดชอบ Cloudflare Staging
+- [ ] ได้รับอนุญาตอย่างชัดเจนก่อนเปลี่ยนเวอร์ชัน การ Merge GitHub ไม่ใช่การอนุญาตเผยแพร่
+- [ ] ผู้ดูแลยืนยันขั้นตอนย้อนกลับเวอร์ชันเดิมและการสำรอง/กู้คืนฐานข้อมูล D1 ที่ใช้จริง
+- [ ] ห้ามล้างห้องเรียนเดิม คะแนน หรือโยนข้อมูลจำลองเข้าฐานข้อมูลของระบบออนไลน์
+- [ ] ยืนยันกติกาเวลา: โค้ดปัจจุบันกำหนด **8 วินาทีต่อข้อหลังเสียงบรรยาย** ครบ 15 ข้อ หากต้องการ 15 วินาทีต้องอนุมัติแก้กติกาและทดสอบใหม่ก่อน
 
-## Step B — automated proof (disposable preview)
-- [ ] Same candidate SHA: Game Smoke all green, 0 failed.
-- [ ] Same candidate SHA: Chromium/WebKit Browser Proof 14/14, 0 skipped.
-- [ ] Inspect current artifact `browser-proof/report.json` and selected 1920×1080/390px screenshots; check QR, 25 simulated tiles and 400 SVG character variants.
-- [ ] All CSS arm, cloth, fist joints share pivot and transformations, and motion-off/reduced-motion stop moving elements.
-- [ ] All 15 questions / 25 simulated learners / CSV export and room reset are exercised in isolated CI; **these are simulated users**.
+## B. ตรวจสอบอัตโนมัติในระบบทดสอบแยก
+- [ ] Smoke Tests ผ่านทั้งหมด โดยใช้ Commit SHA เดียวกับที่จะเผยแพร่
+- [ ] Chromium และ WebKit Browser Proof ผ่าน 14/14 ไม่มีข้อทดสอบถูกข้าม
+- [ ] ตรวจ `browser-proof/report.json`, ภาพจอ 1920×1080 และมือถือ 390px, QR, รายชื่อจำลอง 25 คน และตัวละคร SVG 400 รูปแบบ
+- [ ] แขน เสื้อ และกำปั้นใช้จุดหมุนตรงกัน รวมทั้งหยุดเมื่อปิด Motion หรือเปิด Reduced Motion
+- [ ] ตรวจคำถาม 15 ข้อ รายชื่อผู้เรียนจำลอง 25 คน CSV และเริ่มห้องใหม่ใน CI ที่แยกฐานข้อมูล **ห้ามอ้างว่าเป็นการทดสอบผู้เรียนจริง**
 
-## Step C — staging / physical review (only after explicit authorization)
-- [ ] Deploy the pinned, reviewed SHA via the project's **verified** Cloudflare deployment procedure; capture deployment URL, timestamp, and release identifier.
-- [ ] Confirm app health and audio assets Q01–Q15 and R01–R15; no synthetic CI fixtures are installed.
-- [ ] Projector: QR large and readable from rear seats; names/timer legible with 25 participants.
-- [ ] At least two physical phones: scan QR, select avatars, set Thai names, answer full 15 questions, see rankings. No manual room code.
-- [ ] Test with live classroom audio, no clipping, delayed playback or missing reveal sounds.
-- [ ] Export score CSV; open in Microsoft Excel and verify Thai text, columns, scores.
-- [ ] Check each of the 20 face presets and 4 garments in 5 poses at desktop and phone size; hand/finger/cuff/branding not detached during motion.
-- [ ] Test motion-off and OS reduced motion.
-- [ ] Rehearse with 25 real devices if physical concurrency assurance is required.
+## C. ตรวจอุปกรณ์จริงหลังได้รับอนุญาตให้อัปเดต Staging
+- [ ] อัปเดตจาก SHA ที่ตรวจแล้ว ด้วยวิธี Deploy ของโครงการที่ผู้ดูแลยืนยัน พร้อมบันทึก URL เวลา และ Release ID
+- [ ] ตรวจไฟล์เสียงคำถาม Q01–Q15 และเฉลย R01–R15 ว่าเป็นไฟล์จริง ไม่ใช่เสียงจำลองของ CI
+- [ ] โปรเจกเตอร์: QR อ่านได้จากแถวหลัง ตัวอักษร ชื่อผู้เรียน และเวลานับถอยหลังชัดเมื่อมี 25 คน
+- [ ] โทรศัพท์จริงอย่างน้อย 2 เครื่อง: สแกน QR เลือกตัวละคร ตั้งชื่อภาษาไทย เล่นครบ 15 ข้อ ดูอันดับ ไม่ต้องพิมพ์รหัสห้อง
+- [ ] ฟังเสียงผ่านลำโพงห้องอบรม ตรวจการหน่วง เสียงแตก เสียงขาดหาย และระดับเพลง
+- [ ] ส่งออก CSV แล้วเปิดใน Microsoft Excel ตรวจชื่อภาษาไทย คะแนน และหัวคอลัมน์
+- [ ] ตรวจใบหน้าตัวละคร 20 แบบ เสื้อ 4 ประเภท ท่า 5 ท่า โดยดูแขนเสื้อ นิ้ว มือ โลโก้ และ Motion ทั้งคอมกับมือถือ
+- [ ] ปิด Motion / Reduced Motion แล้วยืนยันว่าชิ้นส่วนแขน เสื้อ มือหยุดจริง
+- [ ] หากต้องรับรองจำนวนผู้เรียนพร้อมกัน 25 คน ต้องซ้อมด้วยอุปกรณ์จริง 25 เครื่อง
 
-## Step D — closure
-- [ ] User accepts visual quality and on-site functional behavior explicitly.
-- [ ] Record approved release SHA and acceptance notes in Issue #125.
-- [ ] Leave staging untouched until all pre-deploy permissions; production is separately authorized.
-- [ ] If any item fails, keep the old release and attach screenshots/repro steps to Issue #125; fix **concrete blockers only**.
+## D. ปิดงาน
+- [ ] ผู้ใช้งานตรวจรับภาพและการใช้งานหน้างานอย่างชัดเจน
+- [ ] บันทึก SHA ที่ผ่าน รายงาน และข้อสรุปใน GitHub Issue #125
+- [ ] หากไม่ผ่าน ให้คงเวอร์ชันเดิมและแนบภาพกับขั้นตอนทำให้เกิดปัญหา แก้เฉพาะปัญหาที่ตรวจพบ
+- [ ] การเผยแพร่ Production ต้องได้รับอนุญาตแยกจาก Staging
 
-**Known limitation:** The repo's `wrangler.ci.jsonc` is an isolated, dummy-ID database for CI. It is *not* the deployment or rollback configuration.
+**ข้อควรระวัง:** `wrangler.ci.jsonc` เป็นค่าฐานข้อมูลจำลองสำหรับ CI ไม่ใช่ค่าการ Deploy หรือ Rollback ของระบบจริง
