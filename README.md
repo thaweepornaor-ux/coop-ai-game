@@ -2,13 +2,15 @@
 
 Existing game source (do not rebuild from scratch). The active host/learner game is operated through the existing Cloudflare Staging deployment. Changes are reviewed in GitHub PRs before publication.
 
-## Current game contract (14 October 2026)
-- 15 multiple-choice scenario questions; **10-second answer window** per question.
+## Current implemented game contract (17 October 2026)
+- 15 multiple-choice scenario questions; **8-second answer window** per question.
 - Up to 25 learners in a room, QR join without entering a manual room code; learners choose a character and enter a name.
 - Teacher screen: join QR, live roster, 15 question recordings Q01–Q15, 15 answer recordings R01–R15, reveal/next, ranking, score CSV and new-room reset.
 - Visual theme: original rich blue/violet game-show palette with moderated glow. Never change submitted character uniforms, colors or logos through CSS recoloring or regenerated art.
 - Original image wrappers: `public/art/nhk-welcome-original.svg`, `nhk-presenter-original.svg`, `nhk-celebrate-original.svg`.
-- `main` includes merged PR #36; PR #37 is additional mobile/instructor polish on a **separate review branch**.
+- The current baseline includes merged avatar and browser QA PRs #110–#123; consult GitHub merge history for the precise release SHA.
+
+**Timing note:** All 15 questions currently use `timeLimitSeconds: 8` in `server/questions.ts`, consistent with the host countdown display and browser smoke test. This documentation update does **not** change the timer. An earlier requested timing variant must be approved as a separate game-rule change before any release.
 
 ## Verification boundaries
 GitHub Game Smoke Tests and Browser Proof check code/integration and simulated browser behavior. A passing check does **not** certify physical mobile devices, visual design quality, audio audibility in a classroom, a real group of 25 people or Excel's rendering of an exported CSV. Review screenshots and manually test the full learner journey before merging/deploying.
@@ -23,8 +25,8 @@ Avoid replacing the existing Cloudflare deployment, altering question scores/tim
 
 ## Final acceptance checklist (17 October 2026)
 
-The verified code baseline includes PRs #110–#122 on main. PR #123 adds a
-browser-level transform-origin guard; it does not modify character artwork or gameplay.
+The reviewed baseline includes PRs #110–#123 on main. PR #123 added a
+browser-level transform-origin guard and did not change artwork or gameplay.
 This section is a release checklist, **not** a claim that staging is already updated.
 
 ### Automated release blockers (must all pass on the release commit)
