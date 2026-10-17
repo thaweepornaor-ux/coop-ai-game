@@ -11,6 +11,8 @@ on:
       - 'vite.ci.config.ts'
       - 'wrangler.ci.jsonc'
       - 'scripts/test-browser-smoke.mjs'
+      - 'tests/release-game-contract.test.mjs'
+      - 'README.md'
       - '.github/workflows/browser-proof.yml'
   pull_request:
     branches: [main]
@@ -23,6 +25,8 @@ on:
       - 'vite.ci.config.ts'
       - 'wrangler.ci.jsonc'
       - 'scripts/test-browser-smoke.mjs'
+      - 'tests/release-game-contract.test.mjs'
+      - 'README.md'
       - '.github/workflows/browser-proof.yml'
   workflow_dispatch:
 permissions:
