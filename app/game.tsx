@@ -751,6 +751,8 @@ export default function Game({initialRole='choose'}:{initialRole?:Role}){
           <div className="voice-setup-copy"><strong>{voiceReady?'🎙 เสียงอ่านโจทย์พร้อมใช้งาน':'🔈 ยังไม่มีเสียงอ่านโจทย์'}</strong><span>{voiceReady?'ติดตั้งครบ 15 ข้อแล้ว เริ่มเกมจะเล่นเสียงให้อัตโนมัติ':'กดนำเข้า ZIP เสียงพากย์ไฟล์เดียว จากนั้นกดทดลองฟัง'}</span></div>
           <label className="voice-setup-upload"><input type="file" accept=".zip,application/zip,.mp3,audio/mpeg" multiple disabled={voiceImporting} onChange={e=>{void importVoiceSelection(Array.from(e.target.files||[]));e.currentTarget.value='';}}/>{voiceImporting?'กำลังติดตั้ง…':voiceReady?'เปลี่ยนเสียงโจทย์':'เลือกไฟล์เสียงโจทย์'}</label>
           <button type="button" className="voice-setup-test" disabled={!voiceReady||voiceImporting} onClick={testRecordedVoice}>{voiceTesting?'🔊 กำลังเล่นเสียงข้อ 1':'▶ ทดลองฟังข้อ 1'}</button>
+          <p className={'host-audio-preflight '+(answerVoiceReady?'ready':'missing')} role="status" aria-live="polite">{answerVoiceReady?'✓ เสียงเฉลย R01–R15 พร้อมบนเครื่องนี้':'⚠ เสียงเฉลย R01–R15 ยังไม่พร้อมบนเครื่องนี้ กรุณาเลือก ZIP และทดลองฟังก่อนเริ่มกิจกรรม'}</p>
+          <p className="host-timing-preflight">กติกาปัจจุบัน: อ่านโจทย์จบแล้ว เปิดให้ตอบ 8 วินาทีต่อข้อ</p>
           <details className="reveal-voice-settings">
             <summary aria-label={answerVoiceReady?'เสียงเฉลยใหม่พร้อม':'ยังไม่ได้ติดตั้งเสียงเฉลย R01 ถึง R15'}>{answerVoiceReady?'🎧 เสียงเฉลยพร้อม ✓':'⚠ เพิ่มเสียงเฉลย'}</summary>
             <div className="reveal-voice-settings-body">
