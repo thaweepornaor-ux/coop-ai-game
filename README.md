@@ -20,3 +20,37 @@ GitHub Game Smoke Tests and Browser Proof check code/integration and simulated b
 4. Only then merge and trigger the existing explicit staging deploy; confirm release identifier and scanability.
 
 Avoid replacing the existing Cloudflare deployment, altering question scores/timing/audio, or presenting tests as approval of artwork without actual visual inspection.
+
+## Final acceptance checklist (17 October 2026)
+
+The verified code baseline includes PRs #110–#122 on main. PR #123 adds a
+browser-level transform-origin guard; it does not modify character artwork or gameplay.
+This section is a release checklist, **not** a claim that staging is already updated.
+
+### Automated release blockers (must all pass on the release commit)
+- [ ] Run `npm test` / GitHub **Game smoke tests** on exact release SHA.
+- [ ] GitHub **Browser proof**: all 14 planned Chromium/WebKit host and learner cases pass,
+      zero skipped, including simulated 25-user roster, all 15 questions, score CSV,
+      old-room invalidation and new-room reset.
+- [ ] Confirm animation group movement, matching arm/fabric/fist transforms at 0 ms and
+      650 ms, matching shoulder pivot origins, reduced motion and explicit motion-off.
+- [ ] Inspect 400 SVG variants (20 presets × 4 shirts × 5 poses) from the **actual**
+      browser proof artifact. Confirm hair, shirts, logos, arms and hands are not occluded.
+- [ ] Confirm only reviewed commits and approved assets are included in release.
+
+### Manual acceptance (requires actual user/teacher approval)
+- [ ] On a real teacher projector, QR remains visible and readable at a distance.
+- [ ] Two different physical phones can scan, choose distinct avatars and join
+      without typing a room code; repeat through the full 15-question journey.
+- [ ] Check audible Thai questions Q01–Q15 and reveal audios R01–R15 from the
+      classroom loudspeaker, music mix and timings; no test fixture audio.
+- [ ] Run a real 25-person rehearsal if 25-person classroom reliability must be certified.
+- [ ] Open the exported score CSV in actual Excel and verify Thai names and columns.
+- [ ] Visually approve 20 preset characters, their arm/sleeve/finger anatomy and
+      animation on actual PC/phone, including stopping movement when motion is off.
+
+### Publish policy
+Do not trigger Cloudflare Staging deployment, production release, or announce
+the game as complete until automated checks are green **and** the user explicitly
+accepts the manual visual/operational gates. Preserve the current staging URL and
+existing server data; do not reset real classrooms while testing.
