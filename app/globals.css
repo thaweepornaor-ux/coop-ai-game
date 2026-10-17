@@ -120,13 +120,17 @@ em{color:#15906b}
 .quick-character strong{font-size:.78rem;margin-top:6px}
 .quick-check{position:absolute;top:4px;right:4px;width:23px;height:23px;display:grid;place-items:center;background:#168568;border-radius:50%;color:white;font-size:.8rem}
 .quick-more-toggle{width:100%;border:1px dashed #96bca7;border-radius:12px;background:#f7fbf8;color:#246b52;padding:11px;font-size:.84rem;font-weight:700;min-height:48px}
-.quick-options{display:grid;gap:12px;max-height:360px;overflow:auto;padding:4px 5px 12px}
+.quick-options{display:grid;gap:14px;max-height:none;overflow:visible;padding:4px 2px 12px}
 .quick-options fieldset{min-width:0;border:0;border-top:1px solid #dfebe1;padding:10px 0 0}
 .quick-options legend{font-size:.82rem;font-weight:800;color:#315d4b;padding-right:12px}
 .quick-option-list{display:flex;flex-wrap:wrap;gap:7px}
 .quick-option-list button{display:inline-flex;align-items:center;gap:6px;border-radius:10px;min-height:38px;border:1px solid #cbded2;background:white;color:#315b4d;padding:7px 11px;font-size:.76rem}
 .quick-option-list button[aria-pressed=true]{border-color:#188265;background:#d8f2e3;color:#115e46;font-weight:800}
 .quick-option-list i{width:18px;height:18px;border-radius:50%;border:1px solid #aac5b6}
+/* Keep the active learner customizer readable without a nested scroll panel. */
+.quick-options legend{font-size:.92rem}
+.quick-option-list button{font-size:.86rem;min-height:42px;white-space:normal;text-align:left}
+
 .lobby{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}
 .lobby .lobby-main{min-height:520px}
 .lobby h1{font-size:clamp(1.7rem,3.2vw,2.65rem)}
