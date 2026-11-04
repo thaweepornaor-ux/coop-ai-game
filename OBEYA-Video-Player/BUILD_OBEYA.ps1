@@ -39,7 +39,7 @@ function Make-Icon {
   $entries = New-Object 'System.Collections.Generic.List[byte[]]'
   try {
     foreach ($side in $sizes) {
-      $bmp = New-Object System.Drawing.Bitmap($side, $side, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+      $bmp = [System.Drawing.Bitmap]::new($side, $side, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
       $gfx = [System.Drawing.Graphics]::FromImage($bmp)
       try {
         $gfx.Clear([System.Drawing.Color]::Transparent)
