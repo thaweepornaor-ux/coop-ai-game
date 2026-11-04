@@ -26,7 +26,7 @@ try {
   $video = Find-OriginalFile 'video'
   $image = Find-OriginalFile 'icon'
   if (!$video) { throw 'OBEYA.mp4 is missing. Download OBEYA.mp4 from ChatGPT to your Downloads folder and rerun setup.' }
-  if (!$image) { throw 'OBEYA icon PNG is missing. Download Cinematic OBEYA Play Icon.png from ChatGPT to Downloads and rerun setup.' }
+  if (!$image) { Write-Host 'Original icon PNG not found. Using default browser icon for now.' -ForegroundColor Yellow }
 
   $app = Join-Path $env:LOCALAPPDATA 'OBEYA Video Player'
   if (!(Test-Path -LiteralPath $app)) { New-Item -Path $app -ItemType Directory | Out-Null }
@@ -35,11 +35,11 @@ try {
   $htmlTarget = Join-Path $app 'OBEYA.html'
   $icoTarget = Join-Path $app 'OBEYA.ico'
   Write-Host ('Video: ' + $video.FullName)
-  Write-Host ('Icon : ' + $image.FullName)
+  if ($image) { Write-Host ('Icon : ' + $image.FullName) }
   Write-Host ('MP4  : {0:N1} MB' -f ($video.Length / 1MB))
   Write-Host 'Copying the original video into the application folder...'
   if ($video.FullName -ine $mp4Target) { Copy-Item -LiteralPath $video.FullName -Destination $mp4Target -Force }
-  if ($image.FullName -ine $pngTarget) { Copy-Item -LiteralPath $image.FullName -Destination $pngTarget -Force }
+  if ($image -and $image.FullName -ine $pngTarget) { Copy-Item -LiteralPath $image.FullName -Destination $pngTarget -Force }
   if ((Get-Item -LiteralPath $mp4Target).Length -ne $video.Length) { throw 'Video copy verification failed.' }
 
   Write-Host 'Installing offline HTML player...'
@@ -50,6 +50,7 @@ try {
     throw 'The HTML video player download did not pass verification.'
   }
 
+  if ($image) {
   Write-Host 'Creating Windows icon from the original PNG...'
   $img = [System.Drawing.Image]::FromFile($pngTarget)
   $bmp = [System.Drawing.Bitmap]::new(256, 256)
@@ -78,6 +79,7 @@ try {
       $writer.Write($bytes); $writer.Flush()
     } finally { $writer.Dispose() }
   } finally { $graphics.Dispose(); $bmp.Dispose(); $img.Dispose() }
+  }
 
   $pf86 = [Environment]::GetEnvironmentVariable('ProgramFiles(x86)')
   $locations = @()
@@ -104,7 +106,7 @@ try {
   $shortcut.TargetPath = $browser
   $shortcut.Arguments = $arguments
   $shortcut.WorkingDirectory = $app
-  $shortcut.IconLocation = $icoTarget + ',0'
+  if ($image) { $shortcut.IconLocation = $icoTarget + ',0' }
   $shortcut.Description = 'OBEYA Video Player - offline presentation'
   $shortcut.Save()
   if (!(Test-Path -LiteralPath $shortcutPath)) { throw 'Desktop shortcut creation failed.' }
