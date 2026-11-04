@@ -1,0 +1,66 @@
+name: OBEYA Windows build check (synthetic media only)
+on:
+  push:
+    branches:
+      - obeya-player-build-kit
+    paths:
+      - 'OBEYA-Video-Player/**'
+      - '.github/workflows/obeya-build-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-check:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Create SYNTHETIC test assets (never uploads real OBEYA media)
+        shell: powershell
+        working-directory: OBEYA-Video-Player
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          [System.IO.File]::WriteAllBytes('OBEYA.mp4', [byte[]]@(0,0,0,24,102,116,121,112,105,115,111,109,0,0,0,0,105,115,111,109,109,112,52,50))
+          $img = New-Object System.Drawing.Bitmap -ArgumentList 512,512
+          $g = [System.Drawing.Graphics]::FromImage($img)
+          $g.Clear([System.Drawing.Color]::FromArgb(9,21,42))
+          $brush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(65,172,241))
+          $g.FillEllipse($brush,60,60,390,390)
+          $img.Save((Join-Path (Get-Location).Path 'OBEYA.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+          $brush.Dispose()
+          $g.Dispose()
+          $img.Dispose()
+      - name: Build Windows EXE with .NET Framework and PowerShell
+        shell: cmd
+        working-directory: OBEYA-Video-Player
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File BUILD_OBEYA.ps1
+          if not exist OBEYA.exe exit /b 2
+      - name: Inspect embedded EXE resources
+        shell: powershell
+        working-directory: OBEYA-Video-Player
+        run: |
+          $exe = (Resolve-Path .\OBEYA.exe).Path
+          $a = [System.Reflection.Assembly]::LoadFile($exe)
+          $names = $a.GetManifestResourceNames()
+          Write-Host ('Embedded: ' + ($names -join ', '))
+          foreach ($required in @('ObeyaVideo', 'ObeyaHTML', 'ObeyaIcon')) {
+            if ($names -notcontains $required) { throw ('Missing resource ' + $required) }
+          }
+          $media = $a.GetManifestResourceStream('ObeyaVideo')
+          try { if ($media.Length -ne 24) { throw 'Synthetic video was not embedded byte-for-byte.' } }
+          finally { $media.Dispose() }
+      - name: Check JavaScript syntax
+        shell: powershell
+        working-directory: OBEYA-Video-Player
+        run: |
+          $html = [System.IO.File]::ReadAllText((Resolve-Path .\OBEYA.html).Path)
+          $match = [regex]::Match($html,'(?s)<script>(.*?)</script>')
+          if (!$match.Success) { throw 'Missing player script' }
+          [System.IO.File]::WriteAllText((Join-Path (Get-Location).Path 'validate-player.js'),$match.Groups[1].Value)
+          node --check validate-player.js
