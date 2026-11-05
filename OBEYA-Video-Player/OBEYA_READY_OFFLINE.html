@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="dark">
 <title>OBEYA Video Player | Offline</title>
 <meta name="application-name" content="OBEYA Video Player">
+<link id="obeya-favicon" rel="icon" type="image/png" href="OBEYA(1).png">
+<meta name="theme-color" content="#070e1b">
 <style>
 :root{color-scheme:dark;font-family:Inter,"Segoe UI",Arial,sans-serif;--blue:#6fc6ff;--silver:#d9e6f4;--navy:#070e1b}
 *{box-sizing:border-box}
@@ -101,6 +103,17 @@ svg.icon-defs{position:absolute;width:0;height:0;overflow:hidden}
 var $=function(id){return document.getElementById(id)};
 var stage=$('stage'), video=$('video'), seek=$('seek'), times=$('times'), controls=$('controls');
 var idleTimer=0, noticeTimer=0, seeking=false;
+// Use the supplied OBEYA portrait artwork as the browser / app favicon.
+// The image is loaded locally and is never uploaded.
+var iconCandidates=['OBEYA.png','OBEYA(1).png','OBEYA(2).png','Cinematic OBEYA Play Icon.png','Cinematic OBEYA Play Icon(1).png','Cinematic OBEYA Play Icon(2).png'];
+function loadIcon(i){
+ if(i>=iconCandidates.length)return;
+ var img=new Image();
+ img.onload=function(){document.getElementById('obeya-favicon').href=img.src};
+ img.onerror=function(){loadIcon(i+1)};
+ img.src=encodeURI(iconCandidates[i]);
+}
+loadIcon(0);
 // When downloaded multiple times, Windows may append (1), (2), etc.
 var candidateFiles = location.protocol === 'file:'
   ? ['OBEYA.mp4','OBEYA(1).mp4','OBEYA(2).mp4','OBEYA(3).mp4','OBEYA(4).mp4','OBEYA(5).mp4']
