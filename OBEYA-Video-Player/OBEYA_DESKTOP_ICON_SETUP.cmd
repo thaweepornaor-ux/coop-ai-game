@@ -2,7 +2,7 @@
 setlocal
 title OBEYA - Install Desktop Icon
 set "OBEYA_SETUP_SELF=%~f0"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:OBEYA_SETUP_SELF); $mark='__OBEYA_PS_START__'; $i=$s.IndexOf($mark); if($i -lt 0){throw 'Missing installer data'}; Invoke-Expression ($s.Substring($i+$mark.Length))"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText($env:OBEYA_SETUP_SELF); $mark='__OBEYA_PS_START__'; $i=$s.LastIndexOf($mark); if($i -lt 0){throw 'Missing installer data'}; Invoke-Expression ($s.Substring($i+$mark.Length))"
 if errorlevel 1 (
   echo.
   echo OBEYA setup could not finish. Read the message above.
@@ -62,7 +62,7 @@ try {
   if($src.Length -lt 8000 -or !$src.Contains('id="video"') -or !$src.Contains('id="start"')){throw 'OBEYA HTML verification failed.'}
   # Keep the exact OBEYA artwork; resize only for the Windows icon container.
   $image=[System.Drawing.Image]::FromFile($destPng)
-  $bitmap=New-Object System.Drawing.Bitmap(256,256)
+  $bitmap=New-Object System.Drawing.Bitmap -ArgumentList 256,256
   $g=[System.Drawing.Graphics]::FromImage($bitmap)
   try {
     $g.Clear([System.Drawing.Color]::Transparent)
