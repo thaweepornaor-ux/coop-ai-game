@@ -51,12 +51,17 @@ try {
   if($mp4.FullName -ine $destVideo){Copy-Item -LiteralPath $mp4.FullName -Destination $destVideo -Force}
   if($png.FullName -ine $destPng){Copy-Item -LiteralPath $png.FullName -Destination $destPng -Force}
   if((Get-Item -LiteralPath $destVideo).Length -ne $mp4.Length){throw 'Video copy failed.'}
-  if($html){
-    Copy-Item -LiteralPath $html.FullName -Destination $destHtml -Force
-  } else {
-    $uri='https://raw.githubusercontent.com/thaweepornaor-ux/coop-ai-game/obeya-player-build-kit/OBEYA-Video-Player/OBEYA_READY_OFFLINE.html'
-    Write-Host 'Getting the HTML player (internet needed only for this first setup)...'
+  $uri='https://raw.githubusercontent.com/thaweepornaor-ux/coop-ai-game/obeya-player-build-kit/OBEYA-Video-Player/OBEYA_READY_OFFLINE.html'
+  try {
+    Write-Host 'Getting the updated OBEYA icon-enabled HTML player...'
     Invoke-WebRequest -UseBasicParsing -Uri $uri -OutFile $destHtml
+  } catch {
+    if($html){
+      Write-Host 'Using the local HTML player (offline setup).'
+      Copy-Item -LiteralPath $html.FullName -Destination $destHtml -Force
+    } else {
+      throw 'The HTML file was not downloaded. Save OBEYA_READY_OFFLINE.html in Downloads and run setup again.'
+    }
   }
   $src=[IO.File]::ReadAllText($destHtml)
   if($src.Length -lt 8000 -or !$src.Contains('id="video"') -or !$src.Contains('id="start"')){throw 'OBEYA HTML verification failed.'}
